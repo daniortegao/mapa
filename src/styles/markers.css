@@ -1,0 +1,291 @@
+/* ============================================
+   ESTILOS DE MARCADORES E ICONOS
+   ============================================ */
+
+/* Estilos base para los iconos del mapa */
+.leaflet-marker-icon {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ============================================
+   ESTILOS DE POPUPS ARRASTRABLES
+   ============================================ */
+
+/* Contenedor principal del popup */
+.leaflet-popup {
+  /* Permite al usuario seleccionar texto dentro del popup */
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Estado de dragging (mientras se arrastra) */
+.leaflet-popup.dragging {
+  /* Z-index alto para que el popup quede encima de todo */
+  z-index: 10000 !important;
+}
+
+/* Wrapper del contenido del popup (caja blanca) */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  /* Sin padding para que el header sea flush con los bordes */
+  padding: 0;
+  /* Sombra elegante */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  /* Fondo blanco */
+  background-color: white;
+}
+
+/* Ocultar la punta/flecha que apunta al marcador */
+.leaflet-popup-tip {
+  display: none !important;
+}
+
+/* Botón de cerrar (X) */
+.leaflet-popup-close-button {
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  /* Posición en la esquina superior derecha */
+  top: 6px;
+  right: 6px;
+  z-index: 10;
+  cursor: pointer;
+  /* Transparencia inicial */
+  opacity: 0.6;
+  /* Transición suave al hover */
+  transition: opacity 0.2s ease;
+  background: white;
+  border-radius: 50%;
+  border: none;
+}
+
+/* Botón de cerrar al pasar el mouse */
+.leaflet-popup-close-button:hover {
+  opacity: 1;
+  background: #f0f0f0;
+}
+
+/* ============================================
+   CONTENEDOR DEL POPUP PERSONALIZADO
+   ============================================ */
+
+.popup-container {
+  /* Evitar selección accidental de texto */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ============================================
+   HEADER DEL POPUP (zona de arrastre)
+   ============================================ */
+
+.popup-header {
+  /* Indicador visual de que es arrastrrable */
+  cursor: grab;
+  /* Evitar selección de texto */
+  user-select: none;
+  -webkit-user-select: none;
+  
+  /* Padding interno */
+  padding: 12px;
+  
+  /* Fondo con gradiente suave */
+  background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+  
+  /* Borde inferior para separar del contenido */
+  border-bottom: 1px solid #e0e0e0;
+  
+  /* Redondear esquinas superiores */
+  border-radius: 8px 8px 0 0;
+  
+  /* Layout flexbox para alinear items */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  
+  /* Márgenes negativos para que sea flush con el padre */
+  margin: 0;
+}
+
+/* Cambiar cursor a "grabbing" cuando se arrastra */
+.popup-header:active {
+  cursor: grabbing;
+}
+
+/* Logo/imagen en el header */
+.popup-header img {
+  /* Tamaño del logo */
+  width: 30px;
+  height: 30px;
+  /* Hacer circular */
+  border-radius: 50%;
+  /* Ajustar imagen dentro del círculo */
+  object-fit: cover;
+  /* Margen derecho respecto al título */
+  margin-right: 0; /* Ya hay gap en el flex */
+  /* No permitir que encoja */
+  flex-shrink: 0;
+}
+
+/* Título en el header */
+.popup-header h3 {
+  /* Sin margin por defecto */
+  margin: 0;
+  /* Tipografía */
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  /* Tomar espacio disponible */
+  flex: 1;
+  /* Evitar overflow de texto largo */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================
+   CONTENIDO DEL POPUP
+   ============================================ */
+
+.popup-content {
+  /* Padding interno */
+  padding: 12px;
+  /* Máximo alto para que sea scrolleable */
+  max-height: 300px;
+  /* Scroll vertical si es necesario */
+  overflow-y: auto;
+}
+
+/* Estilos de scroll personalizado */
+.popup-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.popup-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.popup-content::-webkit-scrollbar-thumb {
+  background: #d0d0d0;
+  border-radius: 3px;
+}
+
+.popup-content::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Párrafos de datos */
+.popup-data {
+  /* Tipografía */
+  font-size: 12px;
+  color: #666;
+  line-height: 1.6;
+  
+  /* Espaciado */
+  margin-bottom: 8px;
+}
+
+/* Etiquetas (Marca, Región, etc) */
+.popup-data strong {
+  color: #333;
+  font-weight: 600;
+}
+
+/* Línea divisoria entre secciones */
+.popup-divider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 12px 0;
+  border: none;
+}
+
+/* ============================================
+   ALERTA (Guerra de Precio)
+   ============================================ */
+
+.popup-section.alert {
+  /* Layout flexbox */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  
+  /* Padding y espaciado */
+  padding: 10px 12px;
+  
+  /* Fondo amarillo claro */
+  background: #fff3cd;
+  
+  /* Bordes redondeados */
+  border-radius: 8px;
+  
+  /* Borde izquierdo destacado */
+  border-left: 4px solid #ff9800;
+}
+
+/* Ícono de alerta */
+.alert-icon {
+  font-size: 18px;
+  /* No permitir que encoja */
+  flex-shrink: 0;
+}
+
+/* Texto de alerta */
+.alert-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #d32f2f;
+}
+
+/* ============================================
+   RESPONSIVO
+   ============================================ */
+
+@media (max-width: 600px) {
+  .leaflet-popup-content-wrapper {
+    /* Popup más pequeño en móvil */
+    max-width: 90vw;
+  }
+  
+  .popup-header {
+    padding: 10px;
+  }
+  
+  .popup-content {
+    padding: 10px;
+    max-height: 200px;
+  }
+}
+/* Asegurar que el popup puede ser arrastrado */
+.leaflet-popup {
+  pointer-events: auto;
+}
+
+.popup-header {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  padding: 12px;
+}
+
+.popup-header:active {
+  cursor: grabbing;
+}
+
+/* Popup arrastrrable con L.Draggable */
+.leaflet-popup-pane {
+  pointer-events: auto;
+}
+
+.leaflet-popup {
+  cursor: grab;
+}
+
+.leaflet-draggable {
+  cursor: grab;
+}
+
+.leaflet-dragging,
+.leaflet-dragging .leaflet-popup-content-wrapper {
+  cursor: grabbing !important;
+}
