@@ -13,6 +13,7 @@ function App() {
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState('Metropolitana de Santiago');
   const [filteredMarkers, setFilteredMarkers] = useState([]);
+  const [filteredMarkersForMercado, setFilteredMarkersForMercado] = useState([]);
   const [baseCompData, setBaseCompData] = useState([]);
   const { markers } = useMapData();
 
@@ -44,6 +45,15 @@ function App() {
     
     loadIt();
   }, []);
+
+  // ✅ Función para recibir ambos arrays del FilterPanel
+ const handleFiltersChange = (filtered, filteredForMercado) => {
+  setFilteredMarkers(filtered);
+  
+  // ✅ CLAVE: Siempre pasar regionMarkers para Mercado (sin EDS)
+  // Así el botón Mercado siempre busca en TODO sin importar qué EDS esté seleccionada
+  setFilteredMarkersForMercado(regionMarkers);
+};
 
   return (
     <div className="app-container">
@@ -89,18 +99,20 @@ function App() {
           <FilterPanel 
             markers={regionMarkers}
             selectedRegion={selectedRegion}
-            onFiltersChange={setFilteredMarkers}
+            onFiltersChange={handleFiltersChange}
           />
         </aside>
 
         {/* Mapa */}
         <div className="map-wrapper">
-          <MapComponent 
-            selectedRegion={selectedRegion}
-            regionCenter={REGION_COORDINATES[selectedRegion]}
-            markers={filteredMarkers.length > 0 ? filteredMarkers : regionMarkers}
-            baseCompData={baseCompData}
-          />
+     <MapComponent 
+  selectedRegion={selectedRegion}
+  regionCenter={REGION_COORDINATES[selectedRegion]}
+  markers={filteredMarkers.length > 0 ? filteredMarkers : regionMarkers}
+  markersForMercado={regionMarkers}  // ✅ SIEMPRE TODO SIN EDS
+  baseCompData={baseCompData}
+/>
+
           <div className="map-controls">
             <button className="map-btn">🖼️ Pantalla Completa</button>
           </div>

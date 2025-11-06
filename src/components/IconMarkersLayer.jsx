@@ -1,467 +1,185 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { useMap } from 'react-leaflet';
-import L from 'leaflet';
-import { createCustomIcon, createBrandLogo } from '../utils/iconHelpers';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { useMap } from "react-leaflet";
+import L from "leaflet";
+import { createCustomIcon, createBrandLogo } from "../utils/iconHelpers";
 
-const IconMarkersLayer = ({ markers, selectedRegion, baseCompData = [] }) => {
+const IconMarkersLayer = ({
+  markers,              // lista NORMAL (incluye EDS si aplica)
+  markersForMercado,    // lista SIN EDS (para Mercado)
+  selectedRegion,
+  baseCompData
+}) => {
   const map = useMap();
   const markersRef = useRef({});
-  const cacheRef = useRef({});
-  const updateInProgressRef = useRef(false);
   const zoomUpdateRef = useRef(null);
   const [showingAssociated, setShowingAssociated] = useState(false);
-  const [originalPopupMarker, setOriginalPopupMarker] = useState(null);
 
-  const makeDraggable = useCallback((popup) => {
-    if (!map || !popup || !popup._container) return;
-    try {
-      const pos = map.latLngToLayerPoint(popup.getLatLng());
-      L.DomUtil.setPosition(popup._wrapper.parentNode, pos);
-      const draggable = new L.Draggable(popup._container, popup._wrapper);
-      draggable.enable();
-    } catch (error) {
-      console.error('Error draggable:', error);
-    }
+  const clearMarkers = useCallback(() => {
+    if (!map) return;
+    Object.values(markersRef.current).forEach((marker) => {
+      try {
+        if (map.hasLayer(marker)) map.removeLayer(marker);
+      } catch {}
+    });
+    markersRef.current = {};
   }, [map]);
 
-  const addMarkers = useCallback((data, mapInstance) => {
-    data.forEach(marker => {
-      const lat = parseFloat(marker.lat);
-      const lng = parseFloat(marker.lng);
+  const makeDraggable = useCallback((popup) => {
+    if (!map || !popup || !popup.getElement) return;
+    const el = popup.getElement();
+    if (!el) return;
+    try {
+      const wrapper = el.querySelector(".leaflet-popup-content-wrapper");
+      if (!wrapper) return;
+      const draggable = new L.Draggable(el, wrapper);
+      draggable.enable();
+    } catch {}
+  }, [map]);
 
-      if (!isNaN(lat) && !isNaN(lng)) {
-        const iconUrl = createCustomIcon(marker.Marca);
-        const leafletMarker = L.marker([lat, lng], { icon: iconUrl }).addTo(mapInstance);
-
-        let popupContent = `
-          <div class="popup-container">
-            <div class="popup-header">
-              <img 
-                src="${createBrandLogo(marker.Marca)}"
-                alt="${marker.Marca}"
-                style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; margin-right: 8px;"
-                onerror="this.style.display='none'"
-              />
-              <h3 style="margin: 0;">${marker.nombre || marker.Marca}</h3>
-            </div>
-            <div class="popup-content">
-              <div class="popup-data">
-                <strong>Marca:</strong> ${marker.Marca}<br />
-                <strong>PBL:</strong> ${marker.pbl || '-'}<br />
-                <strong>Region:</strong> ${marker.Region}<br />
-                <strong>Comuna:</strong> ${marker.Comuna}<br />
-                ${marker.direccion ? `<strong>Dirección:</strong> ${marker.direccion}<br />` : ''}
-                ${marker.eds ? `<strong>EDS:</strong> ${marker.eds}<br />` : ''}
-              </div>
-              <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0" />
-              <div class="popup-data">
-                <strong>Precios:</strong><br />
-                G93: ${marker.precio_g93 ? `$${marker.precio_g93}` : 'N/A'}<br />
-                G95: ${marker.precio_g95 ? `$${marker.precio_g95}` : 'N/A'}<br />
-                Diesel: ${marker.precio_diesel ? `$${marker.precio_diesel}` : 'N/A'}<br />
-              </div>
-              ${marker.Guerra_Precio === 'Si' ? `
-                <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0" />
-                <div class="popup-data" style="color: #d32f2f; font-weight: bold;">
-                  ⚠️ Guerra de Precio Activa
-                </div>
-              ` : ''}
-            </div>
+  const bindPopupWithMercado = useCallback((leafletMarker, marker) => {
+    const popupHtml = `
+      <div class="popup-container">
+        <div class="popup-header">
+          <img src="${createBrandLogo(marker.Marca)}" alt="${marker.Marca}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;margin-right:8px" onerror="this.style.display='none'"/>
+          <h3 style="margin:0">${marker.nombre} - ${marker.Marca}</h3>
+        </div>
+        <div class="popup-content">
+          <div class="popup-data">
+            <strong>Marca</strong>: ${marker.Marca}<br/>
+            <strong>PBL</strong>: ${marker.pbl ?? "-"}<br/>
+            <strong>Región</strong>: ${marker.Region ?? "-"}<br/>
+            <strong>Comuna</strong>: ${marker.Comuna ?? "-"}<br/>
+            ${marker.direccion ? `<strong>Dirección</strong>: ${marker.direccion}<br/>` : ""}
+            ${marker.eds ? `<strong>EDS</strong>: ${marker.eds}<br/>` : ""}
           </div>
-        `;
+          <hr style="margin:10px 0;border:none;border-top:1px solid #e0e0e0"/>
+          <div class="popup-data">
+            <strong>Precios</strong><br/>
+            G93: ${marker.preciog93 ?? "NA"}<br/>
+            G95: ${marker.preciog95 ?? "NA"}<br/>
+            Diesel: ${marker.preciodiesel ?? "NA"}<br/>
+          </div>
+          ${marker.GuerraPrecio === "Si" ? `
+            <hr style="margin:10px 0;border:none;border-top:1px solid #e0e0e0"/>
+            <div class="popup-data" style="color:#d32f2f;font-weight:bold">Guerra de Precio Activa</div>
+          ` : ""}
+          <div style="margin-top:10px">
+            <button data-mercado="1" style="padding:6px 10px;border:1px solid #1976d2;color:#1976d2;background:#fff;border-radius:4px;cursor:pointer">
+              Mercado
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
 
-        if (marker.pbl && (marker.Marca === 'Aramco' || marker.Marca === 'Petrobras')) {
-          popupContent += `<button class="associated-button" onclick="window.showAssociatedIds && window.showAssociatedIds(${marker.pbl}, ${lat}, ${lng}, '${marker.id}')">Mercado</button>`;
-        }
+    const popup = L.popup({
+      autoClose: false,
+      closeOnClick: false,
+      keepInView: true,
+      autoPan: false
+    }).setContent(popupHtml);
 
-        const popup = L.popup({
-          autoClose: false,
-          closeOnClick: false,
-          keepInView: true,
-          autoPan: false
-        }).setContent(popupContent);
+    leafletMarker.bindPopup(popup);
 
-        leafletMarker.bindPopup(popup);
-        leafletMarker.on('popupopen', () => makeDraggable(popup));
-        leafletMarker.on('click', () => leafletMarker.openPopup());
+    leafletMarker.on("popupopen", () => {
+      makeDraggable(popup);
+      const el = popup.getElement();
+      if (!el) return;
+      const btn = el.querySelector('button[data-mercado="1"]');
+      if (btn) {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          showMercadoForPbl(marker.pbl);
+        };
       }
     });
+
+    leafletMarker.on("click", () => leafletMarker.openPopup());
   }, [makeDraggable]);
 
-  const updateIconsInViewport = useCallback((allMarkers, clearFirst = true) => {
-    if (!map || updateInProgressRef.current) return;
+  const addMarkers = useCallback((data) => {
+    if (!map) return;
+    data.forEach((m) => {
+      const lat = Number(m.lat);
+      const lng = Number(m.lng);
+      if (Number.isNaN(lat) || Number.isNaN(lng)) return;
 
-    updateInProgressRef.current = true;
-    const bounds = map.getBounds();
-    const visibleMarkers = allMarkers.filter(marker => {
-      return bounds.contains([marker.lat, marker.lng]);
+      const key = `${lat.toFixed(6)}_${lng.toFixed(6)}`;
+      if (markersRef.current[key] && map.hasLayer(markersRef.current[key])) return;
+
+      const icon = createCustomIcon(m.Marca);
+      const leafletMarker = L.marker([lat, lng], { icon }).addTo(map);
+
+      bindPopupWithMercado(leafletMarker, m);
+      markersRef.current[key] = leafletMarker;
     });
+  }, [map, bindPopupWithMercado]);
 
-    console.log(`🎯 Actualizando ${visibleMarkers.length} iconos...`);
+  const renderNormal = useCallback(() => {
+    if (!map) return;
+    clearMarkers();
+    if (!Array.isArray(markers) || markers.length === 0) return;
+    addMarkers(markers);
+  }, [map, markers, addMarkers, clearMarkers]);
 
-    if (clearFirst) {
-      Object.values(markersRef.current).forEach(marker => {
-        try {
-          if (map.hasLayer(marker)) {
-            map.removeLayer(marker);
-          }
-        } catch (error) {
-          console.error('Error removiendo:', error);
-        }
-      });
-      markersRef.current = {};
+  const showMercadoForPbl = useCallback((pbl) => {
+    if (!map) return;
 
-      map.eachLayer((layer) => {
-        if (layer instanceof L.Marker && !map.hasLayer(layer)) {
-          try {
-            map.removeLayer(layer);
-          } catch (e) {}
-        }
-      });
-    }
-
-    if (visibleMarkers.length === 0) {
-      updateInProgressRef.current = false;
-      return;
-    }
-
-    const markersByBrand = {};
-    visibleMarkers.forEach(marker => {
-      if (!markersByBrand[marker.Marca]) {
-        markersByBrand[marker.Marca] = [];
-      }
-      markersByBrand[marker.Marca].push(marker);
-    });
-
-    const brandOrder = ['Aramco', 'Petrobras', 'Copec', 'Shell', 'Blanco', 'Gulf', 'Petroprix'];
-    let delayOffset = 0;
-    const cacheKey = selectedRegion;
-    let totalBrands = brandOrder.filter(b => markersByBrand[b]).length;
-    let brandsProcessed = 0;
-    
-    brandOrder.forEach((brand) => {
-      if (!markersByBrand[brand] || markersByBrand[brand].length === 0) return;
-
-      const brandMarkers = markersByBrand[brand];
-      
-      setTimeout(() => {
-        console.log(`📍 Procesando ${brandMarkers.length} de ${brand}...`);
-
-        brandMarkers.forEach((marker) => {
-          try {
-            const markerId = `${cacheKey}-${marker.id}`;
-
-            if (markersRef.current[markerId]) {
-              return;
-            }
-
-            const lat = parseFloat(marker.lat);
-            const lng = parseFloat(marker.lng);
-
-            if (!isNaN(lat) && !isNaN(lng)) {
-              const iconUrl = createCustomIcon(marker.Marca);
-              const leafletMarker = L.marker([lat, lng], { icon: iconUrl }).addTo(map);
-
-              let popupContent = `
-                <div class="popup-container">
-                  <div class="popup-header">
-                    <img 
-                      src="${createBrandLogo(marker.Marca)}"
-                      alt="${marker.Marca}"
-                      style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; margin-right: 8px;"
-                      onerror="this.style.display='none'"
-                    />
-                    <h3 style="margin: 0;">${marker.nombre || marker.Marca}</h3>
-                  </div>
-                  <div class="popup-content">
-                    <div class="popup-data">
-                      <strong>Marca:</strong> ${marker.Marca}<br />
-                      <strong>PBL:</strong> ${marker.pbl || '-'}<br />
-                      <strong>Region:</strong> ${marker.Region}<br />
-                      <strong>Comuna:</strong> ${marker.Comuna}<br />
-                      ${marker.direccion ? `<strong>Dirección:</strong> ${marker.direccion}<br />` : ''}
-                      ${marker.eds ? `<strong>EDS:</strong> ${marker.eds}<br />` : ''}
-                    </div>
-                    <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0" />
-                    <div class="popup-data">
-                      <strong>Precios:</strong><br />
-                      G93: ${marker.precio_g93 ? `$${marker.precio_g93}` : 'N/A'}<br />
-                      G95: ${marker.precio_g95 ? `$${marker.precio_g95}` : 'N/A'}<br />
-                      Diesel: ${marker.precio_diesel ? `$${marker.precio_diesel}` : 'N/A'}<br />
-                    </div>
-                    ${marker.Guerra_Precio === 'Si' ? `
-                      <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0" />
-                      <div class="popup-data" style="color: #d32f2f; font-weight: bold;">
-                        ⚠️ Guerra de Precio Activa
-                      </div>
-                    ` : ''}
-                  </div>
-                </div>
-              `;
-
-              if (marker.pbl && (marker.Marca === 'Aramco' || marker.Marca === 'Petrobras')) {
-                popupContent += `<button class="associated-button" onclick="window.showAssociatedIds && window.showAssociatedIds(${marker.pbl}, ${lat}, ${lng}, '${marker.id}')">Mercado</button>`;
-              }
-
-              const popup = L.popup({
-                autoClose: false,
-                closeOnClick: false,
-                keepInView: true,
-                autoPan: false
-              }).setContent(popupContent);
-
-              leafletMarker.bindPopup(popup);
-
-              leafletMarker.on('popupopen', () => {
-                makeDraggable(popup);
-              });
-
-              leafletMarker.on('click', () => {
-                leafletMarker.openPopup();
-              });
-
-              markersRef.current[markerId] = leafletMarker;
-
-              cacheRef.current[markerId] = {
-                lat: marker.lat,
-                lng: marker.lng,
-                marca: marker.Marca,
-                nombre: marker.nombre,
-                region: marker.Region
-              };
-            }
-          } catch (error) {
-            console.error(`Error:`, error);
-          }
-        });
-
-        brandsProcessed++;
-        localStorage.setItem('markersCache', JSON.stringify(cacheRef.current));
-
-        if (brandsProcessed === totalBrands) {
-          updateInProgressRef.current = false;
-        }
-
-      }, delayOffset);
-
-      delayOffset += 60;
-    });
-  }, [map, makeDraggable, selectedRegion]);
-
-  const showAssociatedIds = useCallback((pbl, lat, lng, originalMarkerId) => {
-    console.log(`🔍 PBL seleccionado: ${pbl}`);
-    
-        if (showingAssociated) {
-      // Volver a mostrar todos - CON OPACITY (SIN REMOVER)
-      if (map) {
-        map.eachLayer((layer) => {
-          if (layer instanceof L.Marker) {
-            layer.setOpacity(1);
-          }
-        });
-      }
-      Object.values(markersRef.current).forEach(marker => {
-        try {
-          if (!map.hasLayer(marker)) {
-            map.addLayer(marker);
-          }
-          marker.setOpacity(1);
-        } catch (error) {
-          console.error('Error:', error);
-        }
-      });
-
+    // Toggle: si ya está activo, salir y restaurar
+    if (showingAssociated) {
       setShowingAssociated(false);
-      setOriginalPopupMarker(null);
+      renderNormal();
       return;
     }
 
-
-
-    const associatedData = baseCompData.filter(item => 
-      String(item.pbl).trim() === String(pbl).trim()
-    );
-    
-    console.log(`✅ Competencia encontrada:`, associatedData.length);
-
-    if (associatedData.length === 0) {
-      console.warn(`⚠️ Sin competencia para PBL: ${pbl}`);
+    // Validar pool SIN EDS
+    const pool = Array.isArray(markersForMercado) ? markersForMercado : [];
+    if (pool.length === 0) {
+      // No hay candidatos que mostrar
       return;
     }
 
-    const ids = associatedData.map(item => item.id);
-
-    if (map) {
-      // Encontrar el popup abierto ANTES de cambios
-      let openPopup = null;
-      map.eachLayer((layer) => {
-        if (layer instanceof L.Marker && layer._popup && layer._popup.isOpen()) {
-          openPopup = layer._popup;
-        }
-      });
-
-      // NO remover todo, solo cambiar lo que debe ser invisible
-      const visibleIds = new Set(ids);
-      visibleIds.add(lat + ',' + lng);
-
-      map.eachLayer((layer) => {
-        if (layer instanceof L.Marker) {
-          const mLatLng = layer.getLatLng();
-          
-          const shouldKeep = ids.some(id => {
-            const marker = markers.find(m => m.id === id);
-            return marker && marker.lat === mLatLng.lat && marker.lng === mLatLng.lng;
-          }) || (mLatLng.lat === lat && mLatLng.lng === lng);
-
-          if (!shouldKeep) {
-            map.removeLayer(layer);
-          }
-        }
-      });
-
-      Object.values(markersRef.current).forEach(marker => {
-        const mLatLng = marker.getLatLng();
-        const shouldKeep = ids.some(id => {
-          const m = markers.find(x => x.id === id);
-          return m && m.lat === mLatLng.lat && m.lng === mLatLng.lng;
-        }) || (mLatLng.lat === lat && mLatLng.lng === lng);
-
-        if (!shouldKeep) {
-          try {
-            if (map.hasLayer(marker)) {
-              map.removeLayer(marker);
-            }
-          } catch (error) {
-            console.error('Error:', error);
-          }
-        }
-      });
-
-      // Agregar nuevos marcadores de competencia
-      const associatedMarkers = markers.filter(item => ids.includes(item.id));
-      associatedMarkers.forEach(marker => {
-        const lat = parseFloat(marker.lat);
-        const lng = parseFloat(marker.lng);
-
-        if (!isNaN(lat) && !isNaN(lng)) {
-          let exists = false;
-          map.eachLayer((layer) => {
-            if (layer instanceof L.Marker) {
-              const mLatLng = layer.getLatLng();
-              if (mLatLng.lat === lat && mLatLng.lng === lng) {
-                exists = true;
-              }
-            }
-          });
-
-          if (!exists) {
-            const iconUrl = createCustomIcon(marker.Marca);
-            const leafletMarker = L.marker([lat, lng], { icon: iconUrl }).addTo(map);
-
-            let popupContent = `
-              <div class="popup-container">
-                <div class="popup-header">
-                  <img 
-                    src="${createBrandLogo(marker.Marca)}"
-                    alt="${marker.Marca}"
-                    style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; margin-right: 8px;"
-                    onerror="this.style.display='none'"
-                  />
-                  <h3 style="margin: 0;">${marker.nombre || marker.Marca}</h3>
-                </div>
-                <div class="popup-content">
-                  <div class="popup-data">
-                    <strong>Marca:</strong> ${marker.Marca}<br />
-                    <strong>PBL:</strong> ${marker.pbl || '-'}<br />
-                    <strong>Region:</strong> ${marker.Region}<br />
-                    <strong>Comuna:</strong> ${marker.Comuna}<br />
-                    ${marker.direccion ? `<strong>Dirección:</strong> ${marker.direccion}<br />` : ''}
-                    ${marker.eds ? `<strong>EDS:</strong> ${marker.eds}<br />` : ''}
-                  </div>
-                  <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0" />
-                  <div class="popup-data">
-                    <strong>Precios:</strong><br />
-                    G93: ${marker.precio_g93 ? `$${marker.precio_g93}` : 'N/A'}<br />
-                    G95: ${marker.precio_g95 ? `$${marker.precio_g95}` : 'N/A'}<br />
-                    Diesel: ${marker.precio_diesel ? `$${marker.precio_diesel}` : 'N/A'}<br />
-                  </div>
-                  ${marker.Guerra_Precio === 'Si' ? `
-                    <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0" />
-                    <div class="popup-data" style="color: #d32f2f; font-weight: bold;">
-                      ⚠️ Guerra de Precio Activa
-                    </div>
-                  ` : ''}
-                </div>
-              </div>
-            `;
-
-            if (marker.pbl && (marker.Marca === 'Aramco' || marker.Marca === 'Petrobras')) {
-              popupContent += `<button class="associated-button" onclick="window.showAssociatedIds && window.showAssociatedIds(${marker.pbl}, ${lat}, ${lng}, '${marker.id}')">Mercado</button>`;
-            }
-
-            const popup = L.popup({
-              autoClose: false,
-              closeOnClick: false,
-              keepInView: true,
-              autoPan: false
-            }).setContent(popupContent);
-
-            leafletMarker.bindPopup(popup);
-            leafletMarker.on('popupopen', () => makeDraggable(popup));
-            leafletMarker.on('click', () => leafletMarker.openPopup());
-          }
-        }
-      });
-
-      // Mantener popup abierto
-      if (openPopup) {
-        setTimeout(() => {
-          try {
-            openPopup._map = map;
-            openPopup.update();
-          } catch (e) {
-            console.log('Popup actualizado');
-          }
-        }, 50);
-      }
-
-      setShowingAssociated(true);
+    // Filtrar competencia desde baseCompData
+    const associated = Array.isArray(baseCompData)
+      ? baseCompData.filter((x) => String(x.pbl).trim() === String(pbl).trim())
+      : [];
+    if (associated.length === 0) {
+      return;
     }
-  }, [baseCompData, markers, map, createCustomIcon, makeDraggable, showingAssociated]);
 
+    // Normalizar tipos de id
+    const ids = new Set(associated.map((x) => String(x.id).trim()));
+    const toShow = pool.filter((m) => ids.has(String(m.id).trim()));
+    if (toShow.length === 0) {
+      // Puede ser que ids en baseCompData no coincidan con los id de markers (dataset distinto)
+      return;
+    }
+
+    clearMarkers();
+    addMarkers(toShow);
+    setShowingAssociated(true);
+  }, [map, showingAssociated, baseCompData, markersForMercado, addMarkers, clearMarkers, renderNormal]);
+
+  // Cuando cambian los marcadores normales, salir de Mercado y renderizar normal
   useEffect(() => {
-    window.showAssociatedIds = showAssociatedIds;
-  }, [showAssociatedIds]);
+    if (showingAssociated) setShowingAssociated(false);
+    renderNormal();
+  }, [renderNormal, showingAssociated]);
 
-  useEffect(() => {
-    if (!map || !markers || markers.length === 0) return;
-
-    console.log(`✅ Actualizando ${markers.length} marcadores`);
-    updateIconsInViewport(markers, true);
-
-  }, [map, markers, selectedRegion, updateIconsInViewport]);
-
+  // Re-render al moverse/zoomear sólo en modo normal
   useEffect(() => {
     if (!map) return;
 
-    const handleZoomEnd = () => {
-      if (zoomUpdateRef.current) clearTimeout(zoomUpdateRef.current);
-      
-      zoomUpdateRef.current = setTimeout(() => {
-        if (showingAssociated) {
-          console.log('🔍 Zoom en modo competencia - manteniendo filtro');
-        } else if (markers && markers.length > 0) {
-          updateIconsInViewport(markers, false);
-        }
-      }, 400);
+    const onMoveEnd = () => {
+      if (showingAssociated) return;
+      renderNormal();
     };
 
-    map.on('zoomend', handleZoomEnd);
-
+    map.on("moveend", onMoveEnd);
     return () => {
-      map.off('zoomend', handleZoomEnd);
+      map.off("moveend", onMoveEnd);
     };
-  }, [map, markers, updateIconsInViewport, showingAssociated]);
+  }, [map, renderNormal, showingAssociated]);
 
   return null;
 };

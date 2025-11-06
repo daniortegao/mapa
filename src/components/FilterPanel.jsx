@@ -7,6 +7,8 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
   const [selectedEds, setSelectedEds] = useState('');
   const [edsSearchTerm, setEdsSearchTerm] = useState('');
 
+  const tuasMarcas = ['Aramco', 'Petrobras'];
+
   const comunas = useMemo(() => {
     const filtered = markers.filter(m => m.Region === selectedRegion);
     return [...new Set(filtered.map(m => m.Comuna))].sort();
@@ -18,26 +20,35 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
   }, [markers, selectedRegion]);
 
   const jefesZona = useMemo(() => {
-    const filtered = markers.filter(m => 
-      m.Region === selectedRegion && m.nombre
+    const filtered = markers.filter(
+      m => m.Region === selectedRegion && m.nombre && tuasMarcas.includes(m.Marca)
     );
     return [...new Set(filtered.map(m => m.nombre))].sort();
-  }, [markers, selectedRegion]);
+  }, [markers, selectedRegion, tuasMarcas]);
+
+  const comunasDelJefe = useMemo(() => {
+    if (!selectedJefeZona) return [];
+    const jefeMarkers = markers.filter(m => m.nombre === selectedJefeZona);
+    return [...new Set(jefeMarkers.map(m => m.Comuna))];
+  }, [markers, selectedJefeZona]);
 
   const allEds = useMemo(() => {
-    return [...new Set(
-      markers
-        .filter(m => {
-          const regionMatch = m.Region === selectedRegion;
-          const comunaMatch = !selectedComuna || m.Comuna === selectedComuna;
-          const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
-          const jefeMatch = !selectedJefeZona || m.nombre === selectedJefeZona;
-          return regionMatch && comunaMatch && marcaMatch && jefeMatch;
-        })
-        .map(m => m.eds)
-        .filter(eds => eds)
-    )].sort();
-  }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona]);
+    let filtered = markers.filter(m => m.Region === selectedRegion);
+
+    if (selectedJefeZona) {
+      filtered = filtered.filter(m => comunasDelJefe.includes(m.Comuna));
+    }
+
+    if (selectedComuna) {
+      filtered = filtered.filter(m => m.Comuna === selectedComuna);
+    }
+
+    if (selectedMarca) {
+      filtered = filtered.filter(m => m.Marca === selectedMarca);
+    }
+
+    return [...new Set(filtered.map(m => m.eds).filter(eds => eds))].sort();
+  }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, comunasDelJefe]);
 
   const filteredEds = useMemo(() => {
     return allEds.filter(eds =>
@@ -45,20 +56,64 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
     );
   }, [allEds, edsSearchTerm]);
 
+  // ✅ Array CON filtro EDS (para mostrar en mapa)
   const filteredMarkers = useMemo(() => {
     return markers.filter(m => {
       const regionMatch = m.Region === selectedRegion;
-      const comunaMatch = !selectedComuna || m.Comuna === selectedComuna;
-      const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
-      const jefeMatch = !selectedJefeZona || m.nombre === selectedJefeZona;
       const edsMatch = !selectedEds || m.eds === selectedEds;
-      return regionMatch && comunaMatch && marcaMatch && jefeMatch && edsMatch;
+
+      if (selectedJefeZona) {
+        const esDelJefe = m.nombre === selectedJefeZona;
+        const esCompetenciaEnComunasDelJefe = comunasDelJefe.includes(m.Comuna);
+        const jefeMatch = esDelJefe || esCompetenciaEnComunasDelJefe;
+
+        return regionMatch && jefeMatch && edsMatch;
+      }
+
+      if (selectedComuna) {
+        const todasLasEstacionesEnComuna = m.Comuna === selectedComuna;
+        const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
+
+        return regionMatch && todasLasEstacionesEnComuna && marcaMatch && edsMatch;
+      }
+
+      const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
+
+      return regionMatch && marcaMatch && edsMatch;
     });
-  }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, selectedEds]);
+  }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, selectedEds, comunasDelJefe]);
+
+  // ✅ Array SIN filtro EDS (para botón Mercado)
+  const filteredMarkersForMercado = useMemo(() => {
+    return markers.filter(m => {
+      const regionMatch = m.Region === selectedRegion;
+      // NO incluir edsMatch
+
+      if (selectedJefeZona) {
+        const esDelJefe = m.nombre === selectedJefeZona;
+        const esCompetenciaEnComunasDelJefe = comunasDelJefe.includes(m.Comuna);
+        const jefeMatch = esDelJefe || esCompetenciaEnComunasDelJefe;
+
+        return regionMatch && jefeMatch;
+      }
+
+      if (selectedComuna) {
+        const todasLasEstacionesEnComuna = m.Comuna === selectedComuna;
+        const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
+
+        return regionMatch && todasLasEstacionesEnComuna && marcaMatch;
+      }
+
+      const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
+
+      return regionMatch && marcaMatch;
+    });
+  }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, comunasDelJefe]);
 
   React.useEffect(() => {
-    onFiltersChange(filteredMarkers);
-  }, [filteredMarkers, onFiltersChange]);
+    // Devolver AMBOS arrays
+    onFiltersChange(filteredMarkers, filteredMarkersForMercado);
+  }, [filteredMarkers, filteredMarkersForMercado, onFiltersChange]);
 
   const markersByBrand = useMemo(() => {
     const result = {};
@@ -78,126 +133,94 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
 
   return (
     <div className="filter-panel">
-      <h3 className="filter-title">📊 Estadísticas</h3>
-      <div className="stats-mini">
-        <div className="stat-item">
-          <span className="stat-label">Estaciones</span>
-          <span className="stat-value">{filteredMarkers.length}</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-label">Marcas</span>
-          <span className="stat-value">{Object.keys(markersByBrand).length}</span>
-        </div>
+      <div className="filter-group">
+        <label htmlFor="region-select">Región:</label>
+        <span className="region-name">{selectedRegion}</span>
       </div>
 
-      <h3 className="filter-title">🏢 Por Marca</h3>
-      <div className="brands-mini">
-        {Object.entries(markersByBrand)
-          .sort((a, b) => b[1] - a[1])
-          .map(([brand, count]) => (
-            <div key={brand} className="brand-mini">
-              <span>{brand}</span>
-              <span className="count">{count}</span>
-            </div>
-          ))}
-      </div>
-
-      <h3 className="filter-title">🔍 Filtros Avanzados</h3>
-
-      <div className="filter-item">
-        <label>Comuna</label>
+      <div className="filter-group">
+        <label htmlFor="comuna-select">Comuna:</label>
         <select
+          id="comuna-select"
           value={selectedComuna}
-          onChange={(e) => {
-            setSelectedComuna(e.target.value);
-            setSelectedEds('');
-            setEdsSearchTerm('');
-          }}
+          onChange={(e) => setSelectedComuna(e.target.value)}
         >
-          <option value="">Todas</option>
-          {comunas.map(c => (
-            <option key={c} value={c}>{c}</option>
+          <option value="">Todas las comunas</option>
+          {comunas.map(comuna => (
+            <option key={comuna} value={comuna}>
+              {comuna}
+            </option>
           ))}
         </select>
       </div>
 
-      <div className="filter-item">
-        <label>Marca</label>
+      <div className="filter-group">
+        <label htmlFor="marca-select">Marca:</label>
         <select
+          id="marca-select"
           value={selectedMarca}
           onChange={(e) => setSelectedMarca(e.target.value)}
         >
-          <option value="">Todas</option>
-          {marcas.map(m => (
-            <option key={m} value={m}>{m}</option>
+          <option value="">Todas las marcas</option>
+          {marcas.map(marca => (
+            <option key={marca} value={marca}>
+              {marca} ({markersByBrand[marca] || 0})
+            </option>
           ))}
         </select>
       </div>
 
-      <div className="filter-item">
-        <label>Jefe de Zona</label>
+      <div className="filter-group">
+        <label htmlFor="jefe-select">Jefe de Zona:</label>
         <select
+          id="jefe-select"
           value={selectedJefeZona}
-          onChange={(e) => {
-            setSelectedJefeZona(e.target.value);
-            setSelectedEds('');
-            setEdsSearchTerm('');
-          }}
+          onChange={(e) => setSelectedJefeZona(e.target.value)}
         >
-          <option value="">Todos</option>
+          <option value="">Selecciona un Jefe de Zona</option>
           {jefesZona.map(jefe => (
-            <option key={jefe} value={jefe}>{jefe}</option>
+            <option key={jefe} value={jefe}>
+              {jefe}
+            </option>
           ))}
         </select>
       </div>
 
-      <div className="filter-item">
-        <label>Buscar EDS</label>
+      <div className="filter-group">
+        <label htmlFor="eds-search">Buscar EDS:</label>
         <input
+          id="eds-search"
           type="text"
           placeholder="Escribe para buscar..."
           value={edsSearchTerm}
-          onChange={(e) => {
-            setEdsSearchTerm(e.target.value);
-            setSelectedEds('');
-          }}
+          onChange={(e) => setEdsSearchTerm(e.target.value)}
         />
-        
-        {edsSearchTerm && filteredEds.length > 0 && (
-          <div className="eds-dropdown">
-            {filteredEds.slice(0, 8).map(eds => (
-              <div
-                key={eds}
-                className="eds-option"
-                onClick={() => {
-                  setSelectedEds(eds);
-                  setEdsSearchTerm('');
-                }}
-              >
-                {eds}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {selectedEds && (
-          <div className="selected-eds">
-            <span>✓ {selectedEds}</span>
-            <button
-              onClick={() => {
-                setSelectedEds('');
-                setEdsSearchTerm('');
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        )}
       </div>
 
-      <button className="btn-clear" onClick={handleClearFilters}>
-        🔄 Limpiar Filtros
-      </button>
+      <div className="filter-group">
+        <label htmlFor="eds-select">EDS:</label>
+        <select
+          id="eds-select"
+          value={selectedEds}
+          onChange={(e) => setSelectedEds(e.target.value)}
+        >
+          <option value="">Todas las EDS</option>
+          {filteredEds.map(eds => (
+            <option key={eds} value={eds}>
+              {eds}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="filter-actions">
+        <button onClick={handleClearFilters} className="btn-clear">
+          Limpiar Filtros
+        </button>
+        <span className="marker-count">
+          Estaciones mostradas: {filteredMarkers.length}
+        </span>
+      </div>
     </div>
   );
 };
