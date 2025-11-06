@@ -11,7 +11,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-const MapComponent = ({ selectedRegion, regionCenter, markers = [], baseCompData = [] }) => {
+const MapComponent = ({ 
+  selectedRegion, 
+  regionCenter, 
+  markers = [], 
+  baseCompData = [],
+  markersForMercado = [], // ✅ Recibir array SIN filtro EDS
+  selectedEds = null, // ✅ Recibir EDS seleccionado
+}) => {
   const mapCenter = regionCenter || [-33.4474107, -70.5518946];
 
   return (
@@ -31,8 +38,10 @@ const MapComponent = ({ selectedRegion, regionCenter, markers = [], baseCompData
       {markers && markers.length > 0 && (
         <IconMarkersLayer 
           markers={markers} 
+          markersForMercado={markersForMercado} // ✅ Pasar array sin EDS
           selectedRegion={selectedRegion}
           baseCompData={baseCompData}
+          selectedEds={selectedEds} // ✅ Pasar EDS
         />
       )}
     </MapContainer>
