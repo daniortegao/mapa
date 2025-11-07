@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { createCustomIcon, createBrandLogo } from '../utils/iconHelpers';
+import '../styles/iconMarkersLayer.css';
 
 const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, baseCompData = [] }) => {
   const map = useMap();
@@ -13,6 +14,10 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
   const [originalPopupMarker, setOriginalPopupMarker] = useState(null);
   const [activeMercadoPbl, setActiveMercadoPbl] = useState(null);
   const competenciaMarkersRef = useRef([]);
+  const polylineRef = useRef([]);
+  const [debugTable, setDebugTable] = useState(null);
+  const [maxHeight, setMaxHeight] = useState(500);
+  const [activeTab, setActiveTab] = useState('precios'); // ✅ Control de tabs
 
   const makeDraggable = useCallback((popup) => {
     if (!map || !popup || !popup._container) return;
@@ -27,7 +32,6 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
   }, [map]);
 
   const clearCompetenciaMarkers = useCallback(() => {
-    console.log(`🗑️ Limpiando ${competenciaMarkersRef.current.length} marcadores de competencia`);
     competenciaMarkersRef.current.forEach(marker => {
       try {
         if (map && map.hasLayer(marker)) {
@@ -40,30 +44,158 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     competenciaMarkersRef.current = [];
   }, [map]);
 
-  const getButtonContent = useCallback((pbl) => {
-    const isActive = activeMercadoPbl === pbl && showingAssociated;
-    return isActive ? '❌ Cerrar Mercado' : '🛒 Abrir Mercado';
-  }, [activeMercadoPbl, showingAssociated]);
-
-  const updateMarkerButtons = useCallback(() => {
-    Object.values(markersRef.current).forEach(marker => {
-      if (marker._popup) {
-        const latLng = marker.getLatLng();
-        const markerData = markers.find(m => m.lat === latLng.lat && m.lng === latLng.lng);
-        
-        if (markerData && markerData.pbl && (markerData.Marca === 'Aramco' || markerData.Marca === 'Petrobras')) {
-          const oldContent = marker._popup.getContent();
-          if (typeof oldContent === 'string') {
-            const updatedContent = oldContent.replace(
-              /(<button class="associated-button"[^>]*>).*?(<\/button>)/g,
-              `$1${getButtonContent(markerData.pbl)}$2`
-            );
-            marker._popup.setContent(updatedContent);
-          }
+  const clearPolylines = useCallback(() => {
+    polylineRef.current.forEach(line => {
+      try {
+        if (map && map.hasLayer(line)) {
+          map.removeLayer(line);
         }
+      } catch (e) {
+        console.error('Error limpiando polyline:', e);
       }
     });
-  }, [markers, getButtonContent]);
+    polylineRef.current = [];
+  }, [map]);
+
+  const generarTablaPrecios = useCallback((datos, variant = 'primary') => {
+    if (!datos || datos.length === 0) {
+      return '<div style="padding: 12px; text-align: center; font-size: 12px; color: #999; font-style: italic;">Sin datos disponibles</div>';
+    }
+
+    const variantClass = variant === 'primary' ? '' : 'secondary';
+
+    let html = `<div class="popup-table-wrapper ${variantClass}">
+      <table class="popup-table ${variantClass}">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>G93</th>
+            <th>G95</th>
+            <th>G97</th>
+            <th>Diesel</th>
+            <th>Kero</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    datos.forEach((fila) => {
+      html += `
+        <tr>
+          <td>${fila.fecha}</td>
+          <td>${fila.g93}</td>
+          <td>${fila.g95}</td>
+          <td>${fila.g97}</td>
+          <td>${fila.diesel}</td>
+          <td>${fila.kero}</td>
+        </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    return html;
+  }, []);
+
+  const obtenerHistoricoMarker = useCallback((markerId, dataArray) => {
+    const datos = dataArray.filter(m => m.id === markerId);
+
+    return datos
+      .sort((a, b) => {
+        const fechaA = a.fecha_aplicacion ? new Date(a.fecha_aplicacion) : new Date(0);
+        const fechaB = b.fecha_aplicacion ? new Date(b.fecha_aplicacion) : new Date(0);
+        return fechaB - fechaA;
+      })
+      .map(item => ({
+        fecha: item.fecha_aplicacion || 'S/F',
+        g93: item.precio_g93 || '-',
+        g95: item.precio_g95 || '-',
+        g97: item.precio_g97 || '-',
+        diesel: item.precio_diesel || '-',
+        kero: item.precio_kero || '-'
+      }));
+  }, []);
+
+const generarPopupContent = useCallback((marker, datosTabla, tablaPreciosHtml, variant = 'primary') => {
+  const isSecondary = variant === 'secondary';
+  
+  // ✅ Construir URL completa del logo
+  const logoUrl = marker.logo 
+    ? (marker.logo.startsWith('http') 
+        ? marker.logo 
+        : `https://api.bencinaenlinea.cl${marker.logo}`)
+    : '';
+
+  let content = `
+    <div class="icon-markers-popup-content">
+      <!-- ✅ INFO COMPACTA con LOGO -->
+      <div class="popup-info-header">
+        ${logoUrl ? `
+          <img 
+            src="${logoUrl}" 
+            alt="Logo ${marker.Marca}" 
+            class="popup-logo"
+            onerror="this.style.display='none';"
+          />
+        ` : ''}
+        
+        <div class="popup-info-row">
+          <span class="popup-label">PBL:</span>
+          <span class="popup-value">${marker.pbl || '-'}</span>
+        </div>
+        <div class="popup-info-row">
+          <span class="popup-label">Estación:</span>
+          <span class="popup-value">${marker.nombre || '-'}</span>
+        </div>
+        <div class="popup-info-row">
+          <span class="popup-label">Jefe Zona:</span>
+          <span class="popup-value">${marker.Marca || '-'}</span>
+        </div>
+        <div class="popup-info-row">
+          <span class="popup-label">Operación:</span>
+          <span class="popup-value">Comisionista</span>
+        </div>
+      </div>
+
+      <div class="popup-tabs-container">
+        <div class="popup-tabs-header">
+          <button class="popup-tab-button active" data-tab="precios">Precios</button>
+          <button class="popup-tab-button" data-tab="coordenadas">Coordenadas</button>
+          <button class="popup-tab-button" data-tab="informacion">Información</button>
+        </div>
+
+        <div class="popup-tabs-content">
+          <div class="popup-tab-pane active" data-tab="precios">
+            ${tablaPreciosHtml}
+          </div>
+
+          <div class="popup-tab-pane" data-tab="coordenadas">
+            <div class="popup-info-box">
+              <p><strong>Latitud:</strong> ${marker.lat}</p>
+              <p><strong>Longitud:</strong> ${marker.lng}</p>
+              <p><strong>Región:</strong> ${marker.Region || '-'}</p>
+              <p><strong>Comuna:</strong> ${marker.Comuna || '-'}</p>
+            </div>
+          </div>
+
+          <div class="popup-tab-pane" data-tab="informacion">
+            <div class="popup-info-box">
+              <p><strong>EDS:</strong> ${marker.eds || '-'}</p>
+              <p><strong>Dirección:</strong> ${marker.direccion || '-'}</p>
+              ${marker.Guerra_Precio === 'Si' ? `<p><strong style="color: #d9534f;">⚠️ Guerra de Precio Activa</strong></p>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (marker.pbl && (marker.Marca === 'Aramco' || marker.Marca === 'Petrobras')) {
+    content += `<button class="popup-button-mercado" onclick="window.showAssociatedIds && window.showAssociatedIds(${marker.pbl}, ${marker.lat}, ${marker.lng}, '${marker.id}')">Mercado</button>`;
+  }
+
+  return content;
+}, []);
+
+
+
 
   const updateIconsInViewport = useCallback((allMarkers, clearFirst = true) => {
     if (!map || updateInProgressRef.current) return;
@@ -73,8 +205,6 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     const visibleMarkers = allMarkers.filter(marker => {
       return bounds.contains([marker.lat, marker.lng]);
     });
-
-    console.log(`🎯 Actualizando ${visibleMarkers.length} iconos...`);
 
     if (clearFirst) {
       Object.values(markersRef.current).forEach(marker => {
@@ -92,7 +222,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         if (layer instanceof L.Marker && !map.hasLayer(layer)) {
           try {
             map.removeLayer(layer);
-          } catch (e) {}
+          } catch (e) { }
         }
       });
     }
@@ -115,15 +245,13 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     const cacheKey = selectedRegion;
     let totalBrands = brandOrder.filter(b => markersByBrand[b]).length;
     let brandsProcessed = 0;
-    
+
     brandOrder.forEach((brand) => {
       if (!markersByBrand[brand] || markersByBrand[brand].length === 0) return;
 
       const brandMarkers = markersByBrand[brand];
-      
-      setTimeout(() => {
-        console.log(`📍 Procesando ${brandMarkers.length} de ${brand}...`);
 
+      setTimeout(() => {
         brandMarkers.forEach((marker) => {
           try {
             const markerId = `${cacheKey}-${marker.id}`;
@@ -139,58 +267,52 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
               const iconUrl = createCustomIcon(marker.Marca);
               const leafletMarker = L.marker([lat, lng], { icon: iconUrl }).addTo(map);
 
-              let popupContent = `
-                <div class="popup-container">
-                  <div class="popup-header">
-                    <img 
-                      src="${createBrandLogo(marker.Marca)}"
-                      alt="${marker.Marca}"
-                      style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; margin-right: 8px;"
-                      onerror="this.style.display='none'"
-                    />
-                    <h3 style="margin: 0;">${marker.nombre || marker.Marca}</h3>
-                  </div>
-                  <div class="popup-content">
-                    <div class="popup-data">
-                      <strong>Marca:</strong> ${marker.Marca}<br />
-                      <strong>PBL:</strong> ${marker.pbl || '-'}<br />
-                      <strong>Region:</strong> ${marker.Region}<br />
-                      <strong>Comuna:</strong> ${marker.Comuna}<br />
-                      ${marker.direccion ? `<strong>Dirección:</strong> ${marker.direccion}<br />` : ''}
-                      ${marker.eds ? `<strong>EDS:</strong> ${marker.eds}<br />` : ''}
-                    </div>
-                    <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0" />
-                    <div class="popup-data">
-                      <strong>Precios:</strong><br />
-                      G93: ${marker.precio_g93 ? `$${marker.precio_g93}` : 'N/A'}<br />
-                      G95: ${marker.precio_g95 ? `$${marker.precio_g95}` : 'N/A'}<br />
-                      Diesel: ${marker.precio_diesel ? `$${marker.precio_diesel}` : 'N/A'}<br />
-                    </div>
-                    ${marker.Guerra_Precio === 'Si' ? `
-                      <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0" />
-                      <div class="popup-data" style="color: #d32f2f; font-weight: bold;">
-                        ⚠️ Guerra de Precio Activa
-                      </div>
-                    ` : ''}
-                  </div>
-                </div>
-              `;
+              const datosTabla = obtenerHistoricoMarker(marker.id, allMarkers);
+              const tablaPreciosHtml = generarTablaPrecios(datosTabla, 'primary');
 
-              if (marker.pbl && (marker.Marca === 'Aramco' || marker.Marca === 'Petrobras')) {
-                popupContent += `<button class="associated-button" onclick="window.showAssociatedIds && window.showAssociatedIds(${marker.pbl}, ${marker.lat}, ${marker.lng}, '${marker.id}')">🛒 Abrir Mercado</button>`;
-              }
+              leafletMarker.on('popupopen', () => {
+                setDebugTable({
+                  titulo: `${marker.Marca} - ${marker.nombre}`,
+                  registros: datosTabla.length,
+                  html: tablaPreciosHtml
+                });
+                setActiveTab('precios'); // ✅ Reset tab
+              });
+
+              const popupContent = generarPopupContent(marker, datosTabla, tablaPreciosHtml, 'primary');
 
               const popup = L.popup({
                 autoClose: false,
                 closeOnClick: false,
                 keepInView: true,
-                autoPan: false
+                autoPan: false,
+                maxWidth: 450,
+                className: 'custom-popup'
               }).setContent(popupContent);
 
               leafletMarker.bindPopup(popup);
 
               leafletMarker.on('popupopen', () => {
                 makeDraggable(popup);
+                // ✅ Agregar funcionalidad a los tabs
+                setTimeout(() => {
+                  const tabButtons = document.querySelectorAll('.popup-tab-button');
+                  tabButtons.forEach(btn => {
+                    btn.addEventListener('click', function (e) {
+                      const tabName = this.getAttribute('data-tab');
+
+                      // Remover active de todos
+                      tabButtons.forEach(b => b.classList.remove('active'));
+                      document.querySelectorAll('.popup-tab-pane').forEach(pane => {
+                        pane.classList.remove('active');
+                      });
+
+                      // Agregar active al seleccionado
+                      this.classList.add('active');
+                      document.querySelector(`.popup-tab-pane[data-tab="${tabName}"]`).classList.add('active');
+                    });
+                  });
+                }, 0);
               });
 
               leafletMarker.on('click', () => {
@@ -223,19 +345,15 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
 
       delayOffset += 60;
     });
-  }, [map, makeDraggable, selectedRegion]);
+  }, [map, makeDraggable, selectedRegion, generarTablaPrecios, obtenerHistoricoMarker, generarPopupContent]);
 
   const showAssociatedIds = useCallback((pbl, lat, lng, originalMarkerId) => {
-    console.log(`🔍 PBL: ${pbl}, activeMercadoPbl: ${activeMercadoPbl}`);
-    
     const searchArray = markersForMercado && markersForMercado.length > 0 ? markersForMercado : markers;
-    
-    // ✅ Si el mercado del mismo PBL está activo, CERRAR
+
     if (showingAssociated && activeMercadoPbl === pbl) {
-      console.log('🔄 Cerrando mercado - mostrando todas las estaciones');
-      
       clearCompetenciaMarkers();
-      
+      clearPolylines();
+
       Object.values(markersRef.current).forEach(marker => {
         try {
           if (map.hasLayer(marker)) {
@@ -246,33 +364,28 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         }
       });
       markersRef.current = {};
-      
+
       setShowingAssociated(false);
       setActiveMercadoPbl(null);
       setOriginalPopupMarker(null);
-      
-      // ✅ USAR markersForMercado (sin filtro EDS) al cerrar mercado
+
       const markersToShow = markersForMercado && markersForMercado.length > 0 ? markersForMercado : markers;
-      
+
       if (map && markersToShow && markersToShow.length > 0) {
-        console.log(`📍 Recargando ${markersToShow.length} marcadores (sin filtro EDS)`);
         updateIconsInViewport(markersToShow, true);
       }
-      
+
       return;
     }
 
-    // ✅ ABRIR MERCADO - Mostrar competencia
     clearCompetenciaMarkers();
+    clearPolylines();
 
-    const associatedData = baseCompData.filter(item => 
+    const associatedData = baseCompData.filter(item =>
       String(item.pbl).trim() === String(pbl).trim()
     );
-    
-    console.log(`✅ Competencia en baseCompData: ${associatedData.length}`);
 
     if (associatedData.length === 0) {
-      console.warn(`⚠️ Sin competencia para PBL: ${pbl}`);
       return;
     }
 
@@ -289,7 +402,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       map.eachLayer((layer) => {
         if (layer instanceof L.Marker) {
           const mLatLng = layer.getLatLng();
-          
+
           const shouldKeep = ids.some(id => {
             const marker = searchArray.find(m => m.id === id);
             return marker && marker.lat === mLatLng.lat && marker.lng === mLatLng.lng;
@@ -341,57 +454,82 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
 
             competenciaMarkersRef.current.push(leafletMarker);
 
-            let popupContent = `
-              <div class="popup-container">
-                <div class="popup-header">
-                  <img 
-                    src="${createBrandLogo(marker.Marca)}"
-                    alt="${marker.Marca}"
-                    style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; margin-right: 8px;"
-                    onerror="this.style.display='none'"
-                  />
-                  <h3 style="margin: 0;">${marker.nombre || marker.Marca}</h3>
-                </div>
-                <div class="popup-content">
-                  <div class="popup-data">
-                    <strong>Marca:</strong> ${marker.Marca}<br />
-                    <strong>PBL:</strong> ${marker.pbl || '-'}<br />
-                    <strong>Region:</strong> ${marker.Region}<br />
-                    <strong>Comuna:</strong> ${marker.Comuna}<br />
-                    ${marker.direccion ? `<strong>Dirección:</strong> ${marker.direccion}<br />` : ''}
-                    ${marker.eds ? `<strong>EDS:</strong> ${marker.eds}<br />` : ''}
-                  </div>
-                  <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0" />
-                  <div class="popup-data">
-                    <strong>Precios:</strong><br />
-                    G93: ${marker.precio_g93 ? `$${marker.precio_g93}` : 'N/A'}<br />
-                    G95: ${marker.precio_g95 ? `$${marker.precio_g95}` : 'N/A'}<br />
-                    Diesel: ${marker.precio_diesel ? `$${marker.precio_diesel}` : 'N/A'}<br />
-                  </div>
-                  ${marker.Guerra_Precio === 'Si' ? `
-                    <hr style="margin: 10px 0; border: none; border-top: 1px solid #e0e0e0" />
-                    <div class="popup-data" style="color: #d32f2f; font-weight: bold;">
-                      ⚠️ Guerra de Precio Activa
-                    </div>
-                  ` : ''}
-                </div>
-              </div>
-            `;
+            const datosTabla = obtenerHistoricoMarker(marker.id, baseCompData);
+            const tablaPreciosHtml = generarTablaPrecios(datosTabla, 'secondary');
 
-            if (marker.pbl && (marker.Marca === 'Aramco' || marker.Marca === 'Petrobras')) {
-              popupContent += `<button class="associated-button" onclick="window.showAssociatedIds && window.showAssociatedIds(${marker.pbl}, ${marker.lat}, ${marker.lng}, '${marker.id}')">🛒 Abrir Mercado</button>`;
-            }
+            leafletMarker.on('popupopen', () => {
+              setDebugTable({
+                titulo: `${marker.Marca} - ${marker.nombre}`,
+                registros: datosTabla.length,
+                html: tablaPreciosHtml
+              });
+              setActiveTab('precios');
+            });
+
+            const popupContent = generarPopupContent(marker, datosTabla, tablaPreciosHtml, 'secondary');
 
             const popup = L.popup({
               autoClose: false,
               closeOnClick: false,
               keepInView: true,
-              autoPan: false
+              autoPan: false,
+              maxWidth: 450,
+              className: 'custom-popup'
             }).setContent(popupContent);
 
             leafletMarker.bindPopup(popup);
-            leafletMarker.on('popupopen', () => makeDraggable(popup));
+
+            leafletMarker.on('popupopen', () => {
+              makeDraggable(popup);
+              setTimeout(() => {
+                const tabButtons = document.querySelectorAll('.popup-tab-button');
+                tabButtons.forEach(btn => {
+                  btn.addEventListener('click', function (e) {
+                    const tabName = this.getAttribute('data-tab');
+
+                    tabButtons.forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.popup-tab-pane').forEach(pane => {
+                      pane.classList.remove('active');
+                    });
+
+                    this.classList.add('active');
+                    document.querySelector(`.popup-tab-pane[data-tab="${tabName}"]`).classList.add('active');
+                  });
+                });
+              }, 0);
+            });
+
             leafletMarker.on('click', () => leafletMarker.openPopup());
+          }
+        }
+      });
+
+      const mainMarkersData = associatedData.filter(m => m.Marcador_Principal === 'Si');
+      mainMarkersData.forEach(mainMarker => {
+        const markerWithCoords = searchArray.find(m => m.id === mainMarker.id);
+
+        if (markerWithCoords) {
+          const mainLat = parseFloat(markerWithCoords.lat);
+          const mainLng = parseFloat(markerWithCoords.lng);
+
+          if (!isNaN(mainLat) && !isNaN(mainLng)) {
+            const currentLat = parseFloat(lat);
+            const currentLng = parseFloat(lng);
+
+            const polyline = L.polyline(
+              [
+                [currentLat, currentLng],
+                [mainLat, mainLng]
+              ],
+              {
+                color: '#FF6B6B',
+                weight: 3,
+                opacity: 0.8,
+                dashArray: '5, 5'
+              }
+            ).addTo(map);
+
+            polylineRef.current.push(polyline);
           }
         }
       });
@@ -409,37 +547,32 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
 
       setShowingAssociated(true);
       setActiveMercadoPbl(pbl);
-      console.log(`✅ Mostrando ${associatedMarkers.length} estaciones`);
     }
-  }, [baseCompData, markers, markersForMercado, map, makeDraggable, showingAssociated, activeMercadoPbl, updateIconsInViewport, clearCompetenciaMarkers]);
+  }, [baseCompData, markers, markersForMercado, map, makeDraggable, showingAssociated, activeMercadoPbl, updateIconsInViewport, clearCompetenciaMarkers, clearPolylines, generarTablaPrecios, obtenerHistoricoMarker, generarPopupContent]);
 
   useEffect(() => {
     window.showAssociatedIds = showAssociatedIds;
   }, [showAssociatedIds]);
 
   useEffect(() => {
-    updateMarkerButtons();
-  }, [showingAssociated, activeMercadoPbl, updateMarkerButtons]);
-
-  useEffect(() => {
     if (!map || !markers || markers.length === 0) return;
 
-    console.log(`✅ Cambio en markers - limpiando competencia anterior...`);
     clearCompetenciaMarkers();
+    clearPolylines();
     setShowingAssociated(false);
     setActiveMercadoPbl(null);
     setOriginalPopupMarker(null);
-    
+
     updateIconsInViewport(markers, true);
 
-  }, [map, markers, selectedRegion, updateIconsInViewport, clearCompetenciaMarkers]);
+  }, [map, markers, selectedRegion, updateIconsInViewport, clearCompetenciaMarkers, clearPolylines]);
 
   useEffect(() => {
     if (!map) return;
 
     const handleZoomEnd = () => {
       if (zoomUpdateRef.current) clearTimeout(zoomUpdateRef.current);
-      
+
       zoomUpdateRef.current = setTimeout(() => {
         if (showingAssociated) {
           console.log('🔍 Zoom en modo competencia - manteniendo filtro');
@@ -456,7 +589,32 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     };
   }, [map, markers, updateIconsInViewport, showingAssociated]);
 
-  return null;
+  /* return debugTable ? (
+     <div className="debug-table-container" style={{ maxHeight: `${maxHeight}px` }}>
+       <div className="debug-table-header">
+         <span>📊 {debugTable.titulo} ({debugTable.registros} registros)</span>
+         <button 
+           className="debug-table-close-btn"
+           onClick={() => setDebugTable(null)}
+         >
+           ✕
+         </button>
+       </div>
+       <div className="debug-table-content">
+         <div dangerouslySetInnerHTML={{ __html: debugTable.html }} />
+       </div>
+       <div className="debug-table-footer">
+         <input 
+           type="range" 
+           min="300" 
+           max="800" 
+           value={maxHeight}
+           onChange={(e) => setMaxHeight(parseInt(e.target.value))}
+         />
+         <small>Altura: {maxHeight}px</small>
+       </div>
+     </div>
+   ) : null;*/
 };
 
 export default IconMarkersLayer;

@@ -42,6 +42,7 @@ const MapComponent = ({
           selectedRegion={selectedRegion}
           baseCompData={baseCompData}
           selectedEds={selectedEds} // ✅ Pasar EDS
+          
         />
       )}
     </MapContainer>
