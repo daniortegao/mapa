@@ -23,21 +23,29 @@ export const getDataBaseComp = async () => {
   }
 };
 
-// Obtener coordenadas corregidas
+// ✅ Obtener coordenadas corregidas
 export const getCoordenadasCorregidas = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/coordenadas_corregidas`);
+    const response = await axios.get(`${BASE_URL}/coordenadas_corregidas_new`);
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
+    if (error.response && error.response.status === 404) {
+      console.log('📍 No hay coordenadas corregidas aún (archivo vacío)');
+      return [];
+    }
     console.error('Error al obtener coordenadas corregidas:', error);
     return [];
   }
 };
 
-// Guardar coordenada corregida
+// ✅ Guardar coordenada corregida
 export const guardarCoordenadaCorregida = async (coordenada) => {
   try {
-    await axios.post(`${BASE_URL}/guardar-coordenadas_corregidas`, coordenada);
+    const response = await axios.post(
+      `${BASE_URL}/guardar-coordenadas_corregidas_new`, 
+      coordenada
+    );
+    return response.data;
   } catch (error) {
     console.error('Error al guardar coordenada corregida:', error);
     throw error;

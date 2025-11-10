@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { createCustomIcon, createBrandLogo } from '../utils/iconHelpers';
+import { guardarCoordenadaCorregida } from '../services/apiService';
 import '../styles/iconMarkersLayer.css';
 
 const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, baseCompData = [] }) => {
@@ -17,7 +18,8 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
   const polylineRef = useRef([]);
   const [debugTable, setDebugTable] = useState(null);
   const [maxHeight, setMaxHeight] = useState(500);
-  const [activeTab, setActiveTab] = useState('precios'); // ✅ Control de tabs
+  const [activeTab, setActiveTab] = useState('precios');
+  const [modoCorreccion, setModoCorreccion] = useState(null);
 
   const makeDraggable = useCallback((popup) => {
     if (!map || !popup || !popup._container) return;
@@ -113,89 +115,104 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       }));
   }, []);
 
-const generarPopupContent = useCallback((marker, datosTabla, tablaPreciosHtml, variant = 'primary') => {
-  const isSecondary = variant === 'secondary';
-  
-  // ✅ Construir URL completa del logo
-  const logoUrl = marker.logo 
-    ? (marker.logo.startsWith('http') 
-        ? marker.logo 
-        : `https://api.bencinaenlinea.cl${marker.logo}`)
-    : '';
+  const generarPopupContent = useCallback((marker, datosTabla, tablaPreciosHtml, variant = 'primary') => {
+    const isSecondary = variant === 'secondary';
+    
+    const logoUrl = marker.logo 
+      ? (marker.logo.startsWith('http') 
+          ? marker.logo 
+          : `https://api.bencinaenlinea.cl${marker.logo}`)
+      : '';
 
-  let content = `
-    <div class="icon-markers-popup-content">
-      <!-- ✅ INFO COMPACTA con LOGO -->
-      <div class="popup-info-header">
-        ${logoUrl ? `
-          <img 
-            src="${logoUrl}" 
-            alt="Logo ${marker.Marca}" 
-            class="popup-logo"
-            onerror="this.style.display='none';"
-          />
-        ` : ''}
-        
-        <div class="popup-info-row">
-          <span class="popup-label">PBL:</span>
-          <span class="popup-value">${marker.pbl || '-'}</span>
-        </div>
-        <div class="popup-info-row">
-          <span class="popup-label">Estación:</span>
-          <span class="popup-value">${marker.nombre || '-'}</span>
-        </div>
-        <div class="popup-info-row">
-          <span class="popup-label">Jefe Zona:</span>
-          <span class="popup-value">${marker.Marca || '-'}</span>
-        </div>
-        <div class="popup-info-row">
-          <span class="popup-label">Operación:</span>
-          <span class="popup-value">Comisionista</span>
-        </div>
-      </div>
-
-      <div class="popup-tabs-container">
-        <div class="popup-tabs-header">
-          <button class="popup-tab-button active" data-tab="precios">Precios</button>
-          <button class="popup-tab-button" data-tab="coordenadas">Coordenadas</button>
-          <button class="popup-tab-button" data-tab="informacion">Información</button>
+    let content = `
+      <div class="icon-markers-popup-content">
+        <div class="popup-info-header">
+          ${logoUrl ? `
+            <img 
+              src="${logoUrl}" 
+              alt="Logo ${marker.Marca}" 
+              class="popup-logo"
+              onerror="this.style.display='none';"
+            />
+          ` : ''}
+          
+          <div class="popup-info-row">
+            <span class="popup-label">PBL:</span>
+            <span class="popup-value">${marker.pbl || '-'}</span>
+          </div>
+          <div class="popup-info-row">
+            <span class="popup-label">Estación:</span>
+            <span class="popup-value">${marker.nombre || '-'}</span>
+          </div>
+          <div class="popup-info-row">
+            <span class="popup-label">Jefe Zona:</span>
+            <span class="popup-value">${marker.Marca || '-'}</span>
+          </div>
+          <div class="popup-info-row">
+            <span class="popup-label">Operación:</span>
+            <span class="popup-value">Comisionista</span>
+          </div>
         </div>
 
-        <div class="popup-tabs-content">
-          <div class="popup-tab-pane active" data-tab="precios">
-            ${tablaPreciosHtml}
+        <div class="popup-tabs-container">
+          <div class="popup-tabs-header">
+            <button class="popup-tab-button active" data-tab="precios">Precios</button>
+            <button class="popup-tab-button" data-tab="coordenadas">Coordenadas</button>
+            <button class="popup-tab-button" data-tab="informacion">Información</button>
           </div>
 
-          <div class="popup-tab-pane" data-tab="coordenadas">
-            <div class="popup-info-box">
-              <p><strong>Latitud:</strong> ${marker.lat}</p>
-              <p><strong>Longitud:</strong> ${marker.lng}</p>
-              <p><strong>Región:</strong> ${marker.Region || '-'}</p>
-              <p><strong>Comuna:</strong> ${marker.Comuna || '-'}</p>
+          <div class="popup-tabs-content">
+            <div class="popup-tab-pane active" data-tab="precios">
+              ${tablaPreciosHtml}
+            </div>
+
+            <div class="popup-tab-pane" data-tab="coordenadas">
+              <div class="popup-info-box">
+                <p><strong>Lat corregida:</strong> <span id="lat-actual-${marker.pbl || marker.id}">${marker.lat.toFixed(6)}</span></p>
+                <p><strong>Lon corregida:</strong> <span id="lon-actual-${marker.pbl || marker.id}">${marker.lng.toFixed(6)}</span></p>
+                <hr style="margin: 8px 0; border: none; border-top: 1px solid #dee2e6;">
+                <p><strong>Región:</strong> ${marker.Region || '-'}</p>
+                <p><strong>Comuna:</strong> ${marker.Comuna || '-'}</p>
+              </div>
+              
+              <div style="display: flex; gap: 8px; margin-top: 10px;">
+                <button 
+                  id="activar-coord-${marker.pbl || marker.id}"
+                  style="flex: 1; padding: 8px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;"
+                  onclick="window.activarCorreccionCoordenadas('${marker.pbl || ''}', '${marker.id || ''}', '${marker.eds}', '${marker.Marca}')"
+                >
+                  Activar Coord
+                </button>
+                
+                <button 
+                  id="guardar-coord-${marker.pbl || marker.id}"
+                  style="flex: 1; padding: 8px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; opacity: 0.5;"
+                  onclick="window.guardarCorreccionCoordenadas('${marker.pbl || ''}', '${marker.id || ''}', '${marker.eds}', '${marker.Marca}')"
+                  disabled
+                >
+                  Guardar
+                </button>
+              </div>
+            </div>
+
+            <div class="popup-tab-pane" data-tab="informacion">
+              <div class="popup-info-box">
+                <p><strong>EDS:</strong> ${marker.eds || '-'}</p>
+                <p><strong>Dirección:</strong> ${marker.direccion || '-'}</p>
+                ${marker.Guerra_Precio === 'Si' ? `<p><strong style="color: #d9534f;">⚠️ Guerra de Precio Activa</strong></p>` : ''}
+              </div>
             </div>
           </div>
-
-          <div class="popup-tab-pane" data-tab="informacion">
-            <div class="popup-info-box">
-              <p><strong>EDS:</strong> ${marker.eds || '-'}</p>
-              <p><strong>Dirección:</strong> ${marker.direccion || '-'}</p>
-              ${marker.Guerra_Precio === 'Si' ? `<p><strong style="color: #d9534f;">⚠️ Guerra de Precio Activa</strong></p>` : ''}
-            </div>
-          </div>
         </div>
       </div>
-    </div>
-  `;
+    `;
 
-  if (marker.pbl && (marker.Marca === 'Aramco' || marker.Marca === 'Petrobras')) {
-    content += `<button class="popup-button-mercado" onclick="window.showAssociatedIds && window.showAssociatedIds(${marker.pbl}, ${marker.lat}, ${marker.lng}, '${marker.id}')">Mercado</button>`;
-  }
+    if (marker.pbl && (marker.Marca === 'Aramco' || marker.Marca === 'Petrobras')) {
+      content += `<button class="popup-button-mercado" onclick="window.showAssociatedIds && window.showAssociatedIds(${marker.pbl}, ${marker.lat}, ${marker.lng}, '${marker.id}')">Mercado</button>`;
+    }
 
-  return content;
-}, []);
-
-
-
+    return content;
+  }, []);
 
   const updateIconsInViewport = useCallback((allMarkers, clearFirst = true) => {
     if (!map || updateInProgressRef.current) return;
@@ -276,7 +293,7 @@ const generarPopupContent = useCallback((marker, datosTabla, tablaPreciosHtml, v
                   registros: datosTabla.length,
                   html: tablaPreciosHtml
                 });
-                setActiveTab('precios'); // ✅ Reset tab
+                setActiveTab('precios');
               });
 
               const popupContent = generarPopupContent(marker, datosTabla, tablaPreciosHtml, 'primary');
@@ -294,20 +311,17 @@ const generarPopupContent = useCallback((marker, datosTabla, tablaPreciosHtml, v
 
               leafletMarker.on('popupopen', () => {
                 makeDraggable(popup);
-                // ✅ Agregar funcionalidad a los tabs
                 setTimeout(() => {
                   const tabButtons = document.querySelectorAll('.popup-tab-button');
                   tabButtons.forEach(btn => {
                     btn.addEventListener('click', function (e) {
                       const tabName = this.getAttribute('data-tab');
 
-                      // Remover active de todos
                       tabButtons.forEach(b => b.classList.remove('active'));
                       document.querySelectorAll('.popup-tab-pane').forEach(pane => {
                         pane.classList.remove('active');
                       });
 
-                      // Agregar active al seleccionado
                       this.classList.add('active');
                       document.querySelector(`.popup-tab-pane[data-tab="${tabName}"]`).classList.add('active');
                     });
@@ -589,32 +603,177 @@ const generarPopupContent = useCallback((marker, datosTabla, tablaPreciosHtml, v
     };
   }, [map, markers, updateIconsInViewport, showingAssociated]);
 
-  /* return debugTable ? (
-     <div className="debug-table-container" style={{ maxHeight: `${maxHeight}px` }}>
-       <div className="debug-table-header">
-         <span>📊 {debugTable.titulo} ({debugTable.registros} registros)</span>
-         <button 
-           className="debug-table-close-btn"
-           onClick={() => setDebugTable(null)}
-         >
-           ✕
-         </button>
-       </div>
-       <div className="debug-table-content">
-         <div dangerouslySetInnerHTML={{ __html: debugTable.html }} />
-       </div>
-       <div className="debug-table-footer">
-         <input 
-           type="range" 
-           min="300" 
-           max="800" 
-           value={maxHeight}
-           onChange={(e) => setMaxHeight(parseInt(e.target.value))}
-         />
-         <small>Altura: {maxHeight}px</small>
-       </div>
-     </div>
-   ) : null;*/
+  useEffect(() => {
+    window.activarCorreccionCoordenadas = (pbl, id, eds, marca) => {
+      const identifier = pbl || id;
+      console.log('🎯 Activado para:', { pbl, id, identifier, marca });
+      
+      if (map) map.getContainer().style.cursor = 'crosshair';
+      setModoCorreccion({ pbl, id, eds, marca, lat: null, lng: null });
+      
+      const btnGuardar = document.getElementById(`guardar-coord-${identifier}`);
+      if (btnGuardar) {
+        btnGuardar.disabled = true;
+        btnGuardar.style.opacity = '0.5';
+      }
+      
+      const btnActivar = document.getElementById(`activar-coord-${identifier}`);
+      if (btnActivar) {
+        btnActivar.textContent = 'Click en mapa...';
+        btnActivar.style.background = '#ffc107';
+      }
+    };
+
+    window.guardarCorreccionCoordenadas = async (pbl, id, eds, marca) => {
+      if (!modoCorreccion || !modoCorreccion.lat || !modoCorreccion.lng) {
+        alert('⚠️ Primero selecciona una ubicación');
+        return;
+      }
+
+      const identifier = pbl || id;
+      console.log('💾 Guardando:', { pbl, id, identifier, marca });
+
+      // ✅ Buscar usando pbl O id según corresponda
+      let marker = null;
+      
+      if (pbl) {
+        marker = markers.find(m => m.pbl === pbl);
+        if (!marker && markersForMercado) {
+          marker = markersForMercado.find(m => m.pbl === pbl);
+        }
+        if (!marker && baseCompData) {
+          marker = baseCompData.find(m => m.pbl === pbl);
+        }
+      }
+      
+      if (!marker && id) {
+        marker = markers.find(m => m.id === id);
+        if (!marker && markersForMercado) {
+          marker = markersForMercado.find(m => m.id === id);
+        }
+        if (!marker && baseCompData) {
+          marker = baseCompData.find(m => m.id === id);
+        }
+      }
+
+      if (!marker) {
+        console.error('❌ Marcador no encontrado:', { pbl, id });
+        alert('❌ Error: No se encontró el marcador');
+        return;
+      }
+
+      try {
+        const coordenada = {
+          id: id || marker.id || pbl,
+          pbl: pbl || marker.pbl || id,
+          eds: eds || marker.eds || '',
+          marca: marca || marker.Marca || '',
+          comuna: marker.Comuna || '',
+          lat_corregida: modoCorreccion.lat,
+          lon_corregida: modoCorreccion.lng
+        };
+
+        console.log('📤 Enviando coordenada:', coordenada);
+
+        // ✅ Guardar en el backend
+        await guardarCoordenadaCorregida(coordenada);
+        console.log('✅ Coordenada guardada en backend');
+        
+        // ✅ Buscar el marcador en Leaflet
+        const cacheKey = selectedRegion;
+        const markerId = `${cacheKey}-${marker.id}`;
+        let leafletMarker = markersRef.current[markerId];
+        
+        // Si no está en markersRef, buscar en competenciaMarkersRef
+        if (!leafletMarker && competenciaMarkersRef.current.length > 0) {
+          leafletMarker = competenciaMarkersRef.current.find(m => {
+            const latLng = m.getLatLng();
+            return latLng.lat === marker.lat && latLng.lng === marker.lng;
+          });
+        }
+        
+        if (leafletMarker && map) {
+          // Mover el marcador a la nueva posición
+          const newLatLng = L.latLng(modoCorreccion.lat, modoCorreccion.lng);
+          leafletMarker.setLatLng(newLatLng);
+          
+          // Centrar el mapa en la nueva posición
+          map.setView(newLatLng, map.getZoom());
+          
+          // Actualizar el popup si está abierto
+          if (leafletMarker.isPopupOpen()) {
+            leafletMarker.closePopup();
+            
+            setTimeout(() => {
+              leafletMarker.openPopup();
+            }, 100);
+          }
+          
+          console.log('✅ Marcador movido a:', modoCorreccion.lat, modoCorreccion.lng);
+        } else {
+          console.warn('⚠️ No se encontró el marcador de Leaflet, pero la coordenada fue guardada');
+        }
+        
+        // ✅ Actualizar el objeto marker en memoria
+        marker.lat = modoCorreccion.lat;
+        marker.lng = modoCorreccion.lng;
+        
+    
+        
+        // ✅ Limpiar estado
+        setModoCorreccion(null);
+        if (map) map.getContainer().style.cursor = '';
+        
+      } catch (error) {
+        console.error('❌ Error:', error);
+        alert('❌ Error al guardar: ' + error.message);
+      }
+    };
+
+    return () => {
+      delete window.activarCorreccionCoordenadas;
+      delete window.guardarCorreccionCoordenadas;
+    };
+  }, [map, modoCorreccion, markers, markersForMercado, baseCompData, selectedRegion]);
+
+  useEffect(() => {
+    if (!map || !modoCorreccion) return;
+
+    const handleMapClick = (e) => {
+      const { lat, lng } = e.latlng;
+      
+      setModoCorreccion(prev => ({ ...prev, lat, lng }));
+      
+      const identifier = modoCorreccion.pbl || modoCorreccion.id;
+      const latSpan = document.getElementById(`lat-actual-${identifier}`);
+      const lngSpan = document.getElementById(`lon-actual-${identifier}`);
+      
+      if (latSpan) latSpan.textContent = lat.toFixed(6);
+      if (lngSpan) lngSpan.textContent = lng.toFixed(6);
+      
+      const btnGuardar = document.getElementById(`guardar-coord-${identifier}`);
+      if (btnGuardar) {
+        btnGuardar.disabled = false;
+        btnGuardar.style.opacity = '1';
+      }
+      
+      const btnActivar = document.getElementById(`activar-coord-${identifier}`);
+      if (btnActivar) {
+        btnActivar.textContent = 'Coord. Seleccionada ✓';
+        btnActivar.style.background = '#28a745';
+      }
+      
+      map.getContainer().style.cursor = '';
+    };
+
+    map.on('click', handleMapClick);
+
+    return () => {
+      map.off('click', handleMapClick);
+    };
+  }, [map, modoCorreccion]);
+
+  return null;
 };
 
 export default IconMarkersLayer;

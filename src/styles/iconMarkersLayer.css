@@ -1,399 +1,428 @@
-  /* ============================================
-    ICON MARKERS LAYER STYLES
-    ============================================ */
+/* ============================================
+   ICON MARKERS LAYER STYLES - OPTIMIZADO
+   ============================================ */
 
-  .icon-markers-popup-content {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    width: 400px;
-    color: #333;
-    max-height: 400px;
-    overflow-y: auto;
+.icon-markers-popup-content {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width: 420px;
+  color: #333;
+}
+
+/* ============================================
+   INFO HEADER - COMPACTO Y CON NEGRITAS
+   ============================================ */
+
+.popup-info-header {
+  position: relative;
+  padding: 8px 140px 8px 12px; /* ✅ Padding reducido */
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 2px solid #17a2b8;
+  margin-bottom: 12px;
+}
+
+.popup-info-row {
+  display: flex;
+  justify-content: flex-start; /* ✅ Alineado a la izquierda */
+  gap: 6px; /* ✅ Espacio entre label y valor */
+  padding: 2px 0; /* ✅ Padding reducido */
+  font-size: 11px;
+  line-height: 1.3; /* ✅ Altura de línea compacta */
+}
+
+.popup-info-row:last-child {
+  padding-bottom: 0;
+}
+
+.popup-label {
+  font-weight: 700; /* ✅ MÁS NEGRITA */
+  color: #333;
+  min-width: auto; /* ✅ Sin ancho mínimo */
+}
+
+.popup-value {
+  font-weight: 400; /* ✅ Peso normal */
+  color: #555;
+}
+
+
+/* ============================================
+   LOGO
+   ============================================ */
+
+.popup-logo {
+  position: absolute;
+  top: 8px;
+  right: 50px;
+  width: 110px;
+  height: auto;
+  max-height: 55px;
+  object-fit: contain;
+  z-index: 10;
+  background: white;
+  padding: 6px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================
+   POPUP TABS SYSTEM
+   ============================================ */
+
+.popup-tabs-container {
+  width: 100%;
+  border: 1px solid #c0c0c0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0;
+}
+
+.popup-tabs-header {
+  display: flex;
+  gap: 0;
+  background: #e8f4f8;
+  border-bottom: 2px solid #17a2b8;
+  margin: 0;
+  border-radius: 0;
+}
+
+.popup-tab-button {
+  flex: 1;
+  padding: 8px 4px;
+  border: none;
+  background: #e8f4f8;
+  color: #333;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 10px;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  position: relative;
+  bottom: -2px;
+  border-right: 1px solid #17a2b8;
+}
+
+.popup-tab-button:last-child {
+  border-right: none;
+}
+
+.popup-tab-button:hover {
+  background: #d4e9f2;
+}
+
+.popup-tab-button.active {
+  background: #17a2b8;
+  color: white;
+  border-bottom-color: #138496;
+}
+
+.popup-tab-button.active:hover {
+  background: #138496;
+}
+
+/* ============================================
+   TABS CONTENT - ALTURA FIJA
+   ============================================ */
+
+.popup-tabs-content {
+  padding: 8px 10px;
+  background: white;
+  min-height: 220px; /* ✅ ALTURA FIJA */
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.popup-tab-pane {
+  display: none;
+}
+
+.popup-tab-pane.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
-
-  /* ============================================
-    POPUP TABS SYSTEM (CONTAINER)
-    ============================================ */
-
-  .popup-tabs-container {
-    width: 350px;                    /* ✅ ANCHO COMPACTO */
-    border: 1px solid #c0c0c0;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-left: 20px;
+  to {
+    opacity: 1;
   }
+}
 
-  .popup-tabs-header {
-    display: flex;
-    gap: 0;
-    background: #e8f4f8;
-    border-bottom: 2px solid #17a2b8;
-    margin: 0;
-    border-radius: 0;
-  }
+/* ============================================
+   INFO BOX (COORDENADAS E INFORMACIÓN)
+   ============================================ */
 
-  .popup-tab-button {
-    flex: 1;
-    padding: 8px 4px;
-    border: none;
-    background: #e8f4f8;
-    color: #333;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 10px;
-    transition: all 0.3s ease;
-    border-bottom: 3px solid transparent;
-    position: relative;
-    bottom: -2px;
-    border-right: 1px solid #17a2b8;
-  }
+.popup-info-box {
+  background: #f8f9fa;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  border: 1px solid #e9ecef;
+}
 
-  .popup-tab-button:last-child {
-    border-right: none;
-  }
+.popup-info-box p {
+  margin: 4px 0;
+  font-size: 10px;
+}
 
-  .popup-tab-button:hover {
-    background: #d4e9f2;
-  }
+.popup-info-box strong {
+  font-weight: 600;
+  color: #333;
+}
 
-  .popup-tab-button.active {
-    background: #17a2b8;
-    color: white;
-    border-bottom-color: #138496;
-  }
+/* ============================================
+   TABLA PRECIOS (TU ESTILO ORIGINAL)
+   ============================================ */
 
-  .popup-tab-button.active:hover {
-    background: #138496;
-  }
+.popup-table-wrapper {
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-x: auto;
+}
 
-  .popup-tabs-content {
-    padding: 6px 8px;
-    background: white;
-  }
+.popup-table-wrapper.secondary {
+  border-color: transparent;
+}
 
-  .popup-tab-pane {
-    display: none;
-  }
+.popup-table {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 7px;
+  background: white;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
 
-  .popup-tab-pane.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
-  }
+.popup-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
+.popup-table thead tr {
+  background: #007bff;
+  color: white;
+  border: none;
+}
 
-  /* POPUP INFO BOX */
-  .popup-info-box {
-    background: #f8f9fa;
-    padding: 6px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-  }
+.popup-table.secondary thead tr {
+  background: #28a745;
+}
 
-  .popup-info-box p {
-    margin: 3px 0;
-    font-size: 10px;
-  }
+.popup-table th {
+  padding: 2px 12px;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+  text-align: center;
+  font-size: 10px;
+  white-space: nowrap;
+  line-height: 1.1;
+}
 
-  .popup-info-box strong {
-    font-weight: 600;
-    color: #333;
-  }
+.popup-table.secondary th {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
 
-  /* ============================================
-    TABLA PRECIOS (INDEPENDIENTE)
-    ============================================ */
+.popup-table tbody tr {
+  background: transparent;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid #e8e8e8;
+}
 
-  .popup-table-wrapper {
-    width: 100%;
-    max-height: 200px;
-    overflow-y: auto;
-    overflow-x: auto;
-  }
+.popup-table tbody tr:nth-child(even) {
+  background: #f9f9f9;
+}
 
-  .popup-table-wrapper.secondary {
-    border-color: transparent;
-  }
+.popup-table tbody tr:hover {
+  background: #e7f3ff !important;
+}
 
-  .popup-table {
-    width: 100px;
-    table-layout: auto;
-    border-collapse: collapse;
-    border-spacing: 0;
-    font-size: 7px;
-    background: white;
-    margin: 0;
-    font-variant-numeric: tabular-nums;
-  }
+.popup-table.secondary tbody tr:hover {
+  background: #e8f5e9 !important;
+}
 
-  .popup-table thead {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
+.popup-table tbody tr:last-child {
+  border-bottom: none;
+}
 
-  .popup-table thead tr {
-    background: #007bff;
-    color: white;
-    border: none;
-  }
+.popup-table td {
+  padding: 2px 5px;
+  border: none;
+  text-align: center;
+  font-size: 10px;
+  color: #555;
+  white-space: nowrap;
+  line-height: 1.1;
+}
 
-  .popup-table.secondary thead tr {
-    background: #28a745;
-  }
+.popup-table td:not(:first-child) {
+  font-weight: 500;
+  color: #333;
+}
 
-  .popup-table th {
-    padding: 2px 12px;
-    border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-    font-weight: 600;
-    text-align: center;
-    font-size: 10px;
-    white-space: nowrap;
-    line-height: 1.1;
-  
-  }
+/* ============================================
+   BOTÓN MERCADO - MINIMALISTA
+   ============================================ */
 
-  .popup-table.secondary th {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-  }
+.popup-button-mercado {
+  width: 100px;
+ 
+  padding: 5px 5px;
+  margin: 10px;
+  display: block;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 11px;
+  transition: background 0.2s ease;
+}
 
-  .popup-table tbody tr {
-    background: transparent;
-    transition: background 0.2s ease;
-    border-bottom: 1px solid #e8e8e8;
-  }
+.popup-button-mercado:hover {
+  background: #0056b3;
+}
 
-  .popup-table tbody tr:nth-child(even) {
-    background: #f9f9f9;
-  }
+.popup-button-mercado.secondary {
+  background: #28a745;
+}
 
-  .popup-table tbody tr:hover {
-    background: #e7f3ff !important;
-  }
+.popup-button-mercado.secondary:hover {
+  background: #1e7e34;
+}
 
-  .popup-table.secondary tbody tr:hover {
-    background: #e8f5e9 !important;
-  }
+/* ============================================
+   LEAFLET POPUP CUSTOMIZATION
+   ============================================ */
 
-  .popup-table tbody tr:last-child {
-    border-bottom: none;
-  }
+.leaflet-popup {
+  margin-bottom: 0;
+}
 
-  .popup-table td {
-    padding: 2px 5px;
-    border: none;
-    text-align: center;
-    font-size: 10px;
-    color: #555;
-    white-space: nowrap;
-    line-height: 1.1;
-  }
+.leaflet-popup-content-wrapper {
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0;
+  border: 1px solid #dee2e6;
+}
 
-  .popup-table td:not(:first-child) {
-    font-weight: 500;
-    color: #333;
-  }
+.leaflet-popup-content {
+  margin: 0;
+  width: 420px !important; /* ✅ NO RESPONSIVE */
+  padding: 0;
+}
 
-  /* ============================================
-    BOTÓN MERCADO
-    ============================================ */
+.leaflet-popup-tip {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
 
-  .popup-button-mercado {
-    width: auto;
-    min-width: 100px;
-    padding: 6px 12px;
-    margin: 10px auto 0 auto;
-    display: block;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 11px;
-    transition: background 0.2s ease;
-  }
+/* ============================================
+   SCROLLBAR PERSONALIZADO
+   ============================================ */
 
-  .popup-button-mercado:hover {
-    background: #0056b3;
-  }
+.icon-markers-popup-content::-webkit-scrollbar,
+.popup-tabs-content::-webkit-scrollbar {
+  width: 6px;
+}
 
-  .popup-button-mercado.secondary {
-    background: #28a745;
-  }
+.icon-markers-popup-content::-webkit-scrollbar-track,
+.popup-tabs-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
 
-  .popup-button-mercado.secondary:hover {
-    background: #1e7e34;
-  }
+.icon-markers-popup-content::-webkit-scrollbar-thumb,
+.popup-tabs-content::-webkit-scrollbar-thumb {
+  background: #17a2b8;
+  border-radius: 3px;
+}
 
-  /* ============================================
-    LOGO
-    ============================================ */
+.icon-markers-popup-content::-webkit-scrollbar-thumb:hover,
+.popup-tabs-content::-webkit-scrollbar-thumb:hover {
+  background: #138496;
+}
 
-  .popup-logo {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 50px;
-    height: auto;
-    max-height: 50px;
-    object-fit: contain;
-    z-index: 10;
-  }
+/* ============================================
+   DEBUG TABLE STYLES
+   ============================================ */
 
-  /* ============================================
-    LEAFLET POPUP CUSTOMIZATION
-    ============================================ */
+.debug-table-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 600px;
+  max-height: 500px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  border: 2px solid #007bff;
+  z-index: 1000;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
-  .leaflet-popup {
-    margin-bottom: 0;
-  }
+.debug-table-header {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  padding: 12px 15px;
+  border-radius: 6px 6px 0 0;
+  font-weight: 600;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  border-bottom: 2px solid #0056b3;
+}
 
-  .leaflet-popup-content-wrapper {
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    padding: 0;
-  }
+.debug-table-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 5px;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
 
-  .leaflet-popup-content {
-    margin: 0;
-    width:390px;
-  
-    padding: 0;
-  }
+.debug-table-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
 
-  .icon-markers-popup-content::-webkit-scrollbar {
-    width: 6px;
-  }
+.debug-table-content {
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+}
 
-  .icon-markers-popup-content::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-  }
+.debug-table-footer {
+  padding: 8px 12px;
+  border-top: 1px solid #e0e0e0;
+  font-size: 11px;
+  color: #666;
+  flex-shrink: 0;
+  background: #f8f9fa;
+}
 
-  .icon-markers-popup-content::-webkit-scrollbar-thumb {
-    background: #17a2b8;
-    border-radius: 3px;
-  }
+.debug-table-footer input[type="range"] {
+  width: 100%;
+  cursor: pointer;
+  height: 4px;
+  margin-bottom: 4px;
+}
 
-  .icon-markers-popup-content::-webkit-scrollbar-thumb:hover {
-    background: #138496;
-  }
-
-  /* ============================================
-    DEBUG TABLE STYLES
-    ============================================ */
-
-  .debug-table-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 600px;
-    max-height: 500px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-    border: 2px solid #007bff;
-    z-index: 1000;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
-
-  .debug-table-header {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-    color: white;
-    padding: 12px 15px;
-    border-radius: 6px 6px 0 0;
-    font-weight: 600;
-    font-size: 13px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-    border-bottom: 2px solid #0056b3;
-  }
-
-  .debug-table-close-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 0 5px;
-    border-radius: 3px;
-    transition: background 0.2s;
-  }
-
-  .debug-table-close-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
-
-  .debug-table-content {
-    padding: 12px;
-    overflow-y: auto;
-    flex: 1;
-  }
-
-  .debug-table-footer {
-    padding: 8px 12px;
-    border-top: 1px solid #e0e0e0;
-    font-size: 11px;
-    color: #666;
-    flex-shrink: 0;
-    background: #f8f9fa;
-  }
-
-  .debug-table-footer input[type="range"] {
-    width: 100%;
-    cursor: pointer;
-    height: 4px;
-    margin-bottom: 4px;
-  }
-
-  .debug-table-footer small {
-    display: block;
-    text-align: center;
-    margin-top: 4px;
-  }
-
-  /* ============================================
-    RESPONSIVE
-    ============================================ */
-
-  @media (max-width: 768px) {
-    .debug-table-container {
-      width: calc(100% - 40px);
-      bottom: 10px;
-      right: 10px;
-      left: 10px;
-      max-height: 400px;
-    }
-
-    .icon-markers-popup-content {
-      width: 320px;
-      max-height: 400px;
-    }
-
-    .popup-table {
-      font-size: 6px;
-    }
-
-    .popup-table th,
-    .popup-table td {
-      padding: 2px 2px;
-      font-size: 6px;
-    }
-
-    .popup-table-wrapper {
-      max-height: 200px;
-    }
-  }
+.debug-table-footer small {
+  display: block;
+  text-align: center;
+  margin-top: 4px;
+}

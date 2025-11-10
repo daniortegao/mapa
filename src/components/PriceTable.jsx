@@ -17,7 +17,9 @@ const PriceTable = ({ datos, variant = 'primary', titulo }) => {
     <div className="price-table-wrapper">
       {titulo && <h4 className="price-table-titulo">{titulo}</h4>}
       <div className="price-table-scroll">
+
         <table className={`price-table price-table--${variant}`}>
+          
           <thead>
             <tr>
               <th>Actualización</th>

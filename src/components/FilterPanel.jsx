@@ -186,17 +186,7 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
         </select>
       </div>
 
-      <div className="filter-group">
-        <label htmlFor="eds-search">Buscar EDS:</label>
-        <input
-          id="eds-search"
-          type="text"
-          placeholder="Escribe para buscar..."
-          value={edsSearchTerm}
-          onChange={(e) => setEdsSearchTerm(e.target.value)}
-        />
-      </div>
-
+     
       <div className="filter-group">
         <label htmlFor="eds-select">EDS:</label>
         <select
