@@ -1290,3 +1290,127 @@
   background: #17a2b8;
   border-radius: 3px;
 }
+
+/* ============================================
+   FILTER PANEL - COMPACTO
+   ============================================ */
+
+.filter-panel {
+  padding: 12px;
+}
+
+.filter-group {
+  margin-bottom: 10px; /* ✅ Reducido de 15px */
+}
+
+.filter-group label {
+  display: block;
+  margin-bottom: 4px; /* ✅ Reducido de 6px */
+  font-size: 12px; /* ✅ Reducido de 14px */
+  font-weight: 600;
+  color: #333;
+}
+
+.filter-group select,
+.filter-group input[type="text"] {
+  width: 100%;
+  padding: 6px 8px; /* ✅ Reducido de 8px 10px */
+  font-size: 12px; /* ✅ Reducido de 14px */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.filter-group select:focus,
+.filter-group input[type="text"]:focus {
+  outline: none;
+  border-color: #17a2b8;
+}
+
+.filter-group select option {
+  padding: 4px; /* ✅ Más compacto */
+}
+
+/* ✅ CHECKBOX DE GUERRA DE PRECIOS */
+.filter-checkbox {
+  margin-top: 12px;
+  padding: 8px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.checkbox-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #856404;
+}
+
+.region-name {
+  display: block;
+  padding: 6px 8px;
+  font-size: 12px;
+  background: #e9ecef;
+  border-radius: 4px;
+  color: #495057;
+  font-weight: 600;
+}
+
+.filter-actions {
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-clear {
+  width: 100%;
+  padding: 8px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-clear:hover {
+  background: #c82333;
+}
+
+.marker-count {
+  font-size: 11px;
+  color: #6c757d;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* ✅ CHECKBOX DE ESTACIONES PES */
+.filter-checkbox-pes {
+  background: #d1ecf1;
+  border: 1px solid #17a2b8;
+}
+
+.filter-checkbox-pes .checkbox-text {
+  color: #0c5460;
+}

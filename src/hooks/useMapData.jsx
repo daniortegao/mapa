@@ -38,7 +38,11 @@ export const useMapData = () => {
         Comuna: item.Comuna || '',
         Guerra_Precio: item.Guerra_Precio || 'No',
         Actualizacion: item.Actualizacion || '',
-        fecha_aplicacion: item.fecha_aplicacion || ''
+        fecha_aplicacion: item.fecha_aplicacion || '',
+        Surtidores_Autoservicio: item.Surtidores_Autoservicio || null,
+    Posicion_Surtidor: item.Posicion_Surtidor || null,
+    Tipo_Isla: item.Tipo_Isla || null
+
       };
     }).filter(m => !isNaN(m.lat) && !isNaN(m.lng));
   };

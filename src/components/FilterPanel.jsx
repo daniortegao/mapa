@@ -6,6 +6,8 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
   const [selectedJefeZona, setSelectedJefeZona] = useState('');
   const [selectedEds, setSelectedEds] = useState('');
   const [edsSearchTerm, setEdsSearchTerm] = useState('');
+  const [soloGuerraPrecios, setSoloGuerraPrecios] = useState(false);
+  const [soloEstacionesPES, setSoloEstacionesPES] = useState(false); // ✅ NUEVO
 
   const tuasMarcas = ['Aramco', 'Petrobras'];
 
@@ -34,84 +36,76 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
 
   const allEds = useMemo(() => {
     let filtered = markers.filter(m => m.Region === selectedRegion);
-
     if (selectedJefeZona) {
       filtered = filtered.filter(m => comunasDelJefe.includes(m.Comuna));
     }
-
     if (selectedComuna) {
       filtered = filtered.filter(m => m.Comuna === selectedComuna);
     }
-
     if (selectedMarca) {
       filtered = filtered.filter(m => m.Marca === selectedMarca);
     }
-
-    return [...new Set(filtered.map(m => m.eds).filter(eds => eds))].sort();
+    return [...new Set(filtered.map(m => m.eds))].filter(eds => eds).sort();
   }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, comunasDelJefe]);
 
   const filteredEds = useMemo(() => {
-    return allEds.filter(eds =>
+    return allEds.filter(eds => 
       eds.toLowerCase().includes(edsSearchTerm.toLowerCase())
     );
   }, [allEds, edsSearchTerm]);
 
-  // ✅ Array CON filtro EDS (para mostrar en mapa)
+  // ✅ Array CON filtro EDS para mostrar en mapa
   const filteredMarkers = useMemo(() => {
     return markers.filter(m => {
       const regionMatch = m.Region === selectedRegion;
       const edsMatch = !selectedEds || m.eds === selectedEds;
+      const guerraMatch = !soloGuerraPrecios || m.Guerra_Precio === 'Si';
+      const pesMatch = !soloEstacionesPES || (m.Surtidores_Autoservicio && m.Surtidores_Autoservicio !== null && m.Surtidores_Autoservicio !== ''); // ✅ NUEVO
 
       if (selectedJefeZona) {
         const esDelJefe = m.nombre === selectedJefeZona;
         const esCompetenciaEnComunasDelJefe = comunasDelJefe.includes(m.Comuna);
         const jefeMatch = esDelJefe || esCompetenciaEnComunasDelJefe;
-
-        return regionMatch && jefeMatch && edsMatch;
+        return regionMatch && jefeMatch && edsMatch && guerraMatch && pesMatch;
       }
 
       if (selectedComuna) {
         const todasLasEstacionesEnComuna = m.Comuna === selectedComuna;
         const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
-
-        return regionMatch && todasLasEstacionesEnComuna && marcaMatch && edsMatch;
+        return regionMatch && todasLasEstacionesEnComuna && marcaMatch && edsMatch && guerraMatch && pesMatch;
       }
 
       const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
-
-      return regionMatch && marcaMatch && edsMatch;
+      return regionMatch && marcaMatch && edsMatch && guerraMatch && pesMatch;
     });
-  }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, selectedEds, comunasDelJefe]);
+  }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, selectedEds, comunasDelJefe, soloGuerraPrecios, soloEstacionesPES]);
 
-  // ✅ Array SIN filtro EDS (para botón Mercado)
+  // ✅ Array SIN filtro EDS para botón Mercado
   const filteredMarkersForMercado = useMemo(() => {
     return markers.filter(m => {
       const regionMatch = m.Region === selectedRegion;
-      // NO incluir edsMatch
+      const guerraMatch = !soloGuerraPrecios || m.Guerra_Precio === 'Si';
+      const pesMatch = !soloEstacionesPES || (m.Surtidores_Autoservicio && m.Surtidores_Autoservicio !== null && m.Surtidores_Autoservicio !== ''); // ✅ NUEVO
 
       if (selectedJefeZona) {
         const esDelJefe = m.nombre === selectedJefeZona;
         const esCompetenciaEnComunasDelJefe = comunasDelJefe.includes(m.Comuna);
         const jefeMatch = esDelJefe || esCompetenciaEnComunasDelJefe;
-
-        return regionMatch && jefeMatch;
+        return regionMatch && jefeMatch && guerraMatch && pesMatch;
       }
 
       if (selectedComuna) {
         const todasLasEstacionesEnComuna = m.Comuna === selectedComuna;
         const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
-
-        return regionMatch && todasLasEstacionesEnComuna && marcaMatch;
+        return regionMatch && todasLasEstacionesEnComuna && marcaMatch && guerraMatch && pesMatch;
       }
 
       const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
-
-      return regionMatch && marcaMatch;
+      return regionMatch && marcaMatch && guerraMatch && pesMatch;
     });
-  }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, comunasDelJefe]);
+  }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, comunasDelJefe, soloGuerraPrecios, soloEstacionesPES]);
 
   React.useEffect(() => {
-    // Devolver AMBOS arrays
     onFiltersChange(filteredMarkers, filteredMarkersForMercado);
   }, [filteredMarkers, filteredMarkersForMercado, onFiltersChange]);
 
@@ -129,17 +123,21 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
     setSelectedJefeZona('');
     setSelectedEds('');
     setEdsSearchTerm('');
+    setSoloGuerraPrecios(false);
+    setSoloEstacionesPES(false); // ✅ NUEVO
   };
 
   return (
     <div className="filter-panel">
       <div className="filter-group">
-        <label htmlFor="region-select">Región:</label>
-        <span className="region-name">{selectedRegion}</span>
+        <label htmlFor="region-select">Región</label>
+        <div>
+          <span className="region-name">{selectedRegion}</span>
+        </div>
       </div>
 
       <div className="filter-group">
-        <label htmlFor="comuna-select">Comuna:</label>
+        <label htmlFor="comuna-select">Comuna</label>
         <select
           id="comuna-select"
           value={selectedComuna}
@@ -147,15 +145,13 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
         >
           <option value="">Todas las comunas</option>
           {comunas.map(comuna => (
-            <option key={comuna} value={comuna}>
-              {comuna}
-            </option>
+            <option key={comuna} value={comuna}>{comuna}</option>
           ))}
         </select>
       </div>
 
       <div className="filter-group">
-        <label htmlFor="marca-select">Marca:</label>
+        <label htmlFor="marca-select">Marca</label>
         <select
           id="marca-select"
           value={selectedMarca}
@@ -164,14 +160,14 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
           <option value="">Todas las marcas</option>
           {marcas.map(marca => (
             <option key={marca} value={marca}>
-              {marca} ({markersByBrand[marca] || 0})
+              {marca} {markersByBrand[marca] ? `(${markersByBrand[marca]})` : ''}
             </option>
           ))}
         </select>
       </div>
 
       <div className="filter-group">
-        <label htmlFor="jefe-select">Jefe de Zona:</label>
+        <label htmlFor="jefe-select">Jefe de Zona</label>
         <select
           id="jefe-select"
           value={selectedJefeZona}
@@ -179,16 +175,24 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
         >
           <option value="">Selecciona un Jefe de Zona</option>
           {jefesZona.map(jefe => (
-            <option key={jefe} value={jefe}>
-              {jefe}
-            </option>
+            <option key={jefe} value={jefe}>{jefe}</option>
           ))}
         </select>
       </div>
 
-     
       <div className="filter-group">
-        <label htmlFor="eds-select">EDS:</label>
+        <label htmlFor="eds-search">Buscar EDS</label>
+        <input
+          id="eds-search"
+          type="text"
+          placeholder="Escribe para buscar..."
+          value={edsSearchTerm}
+          onChange={(e) => setEdsSearchTerm(e.target.value)}
+        />
+      </div>
+
+      <div className="filter-group">
+        <label htmlFor="eds-select">EDS</label>
         <select
           id="eds-select"
           value={selectedEds}
@@ -196,11 +200,35 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
         >
           <option value="">Todas las EDS</option>
           {filteredEds.map(eds => (
-            <option key={eds} value={eds}>
-              {eds}
-            </option>
+            <option key={eds} value={eds}>{eds}</option>
           ))}
         </select>
+      </div>
+
+      {/* ✅ FILTRO DE GUERRA DE PRECIOS */}
+      <div className="filter-group filter-checkbox">
+        <label htmlFor="guerra-precios-checkbox" className="checkbox-label">
+          <input
+            id="guerra-precios-checkbox"
+            type="checkbox"
+            checked={soloGuerraPrecios}
+            onChange={(e) => setSoloGuerraPrecios(e.target.checked)}
+          />
+          <span className="checkbox-text">Solo Guerra de Precios</span>
+        </label>
+      </div>
+
+      {/* ✅ NUEVO FILTRO DE ESTACIONES PES */}
+      <div className="filter-group filter-checkbox filter-checkbox-pes">
+        <label htmlFor="estaciones-pes-checkbox" className="checkbox-label">
+          <input
+            id="estaciones-pes-checkbox"
+            type="checkbox"
+            checked={soloEstacionesPES}
+            onChange={(e) => setSoloEstacionesPES(e.target.checked)}
+          />
+          <span className="checkbox-text">Solo Estaciones PES</span>
+        </label>
       </div>
 
       <div className="filter-actions">

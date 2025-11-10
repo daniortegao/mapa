@@ -14,7 +14,7 @@
 
 .popup-info-header {
   position: relative;
-  padding: 8px 140px 8px 12px; /* ✅ Padding reducido */
+  padding: 8px 140px 8px 12px;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-bottom: 2px solid #17a2b8;
   margin-bottom: 12px;
@@ -22,11 +22,11 @@
 
 .popup-info-row {
   display: flex;
-  justify-content: flex-start; /* ✅ Alineado a la izquierda */
-  gap: 6px; /* ✅ Espacio entre label y valor */
-  padding: 2px 0; /* ✅ Padding reducido */
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 2px 0;
   font-size: 11px;
-  line-height: 1.3; /* ✅ Altura de línea compacta */
+  line-height: 1.3;
 }
 
 .popup-info-row:last-child {
@@ -34,16 +34,15 @@
 }
 
 .popup-label {
-  font-weight: 700; /* ✅ MÁS NEGRITA */
+  font-weight: 700;
   color: #333;
-  min-width: auto; /* ✅ Sin ancho mínimo */
+  min-width: auto;
 }
 
 .popup-value {
-  font-weight: 400; /* ✅ Peso normal */
+  font-weight: 400;
   color: #555;
 }
-
 
 /* ============================================
    LOGO
@@ -127,7 +126,7 @@
 .popup-tabs-content {
   padding: 8px 10px;
   background: white;
-  min-height: 220px; /* ✅ ALTURA FIJA */
+  min-height: 220px;
   max-height: 220px;
   overflow-y: auto;
 }
@@ -272,7 +271,6 @@
 
 .popup-button-mercado {
   width: 100px;
- 
   padding: 5px 5px;
   margin: 10px;
   display: block;
@@ -315,7 +313,7 @@
 
 .leaflet-popup-content {
   margin: 0;
-  width: 420px !important; /* ✅ NO RESPONSIVE */
+  width: 420px !important;
   padding: 0;
 }
 
@@ -426,3 +424,19 @@
   text-align: center;
   margin-top: 4px;
 }
+
+/* ============================================
+   ICONO DE GUERRA (MARCADOR SEPARADO)
+   ============================================ */
+
+.icono-guerra {
+  z-index: 1000 !important;
+  pointer-events: none;
+  border-radius: 50%;
+  border: 2px solid #ff0000 !important;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.6) !important;
+  animation: pulse-guerra 1.5s ease-in-out infinite;
+}
+
+
+
