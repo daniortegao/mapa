@@ -51,3 +51,32 @@ export const guardarCoordenadaCorregida = async (coordenada) => {
     throw error;
   }
 };
+
+export const getMercadoAlerta = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/Mercado_Alerta`);
+    // 👉 Aquí el cambio importante
+    if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    // Si por algún motivo no hay array, retorna array vacío
+    return [];
+  } catch (error) {
+    console.error('Error al obtener Mercado_Alerta:', error);
+    return [];
+  }
+};
+
+export const getHistoricoAlerta = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/Historico_alerta`);
+    // 👉 Aquí el cambio
+    if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error al obtener Historico_alerta:', error);
+    return [];
+  }
+};

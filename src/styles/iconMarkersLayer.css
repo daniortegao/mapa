@@ -1,5 +1,5 @@
 /* ============================================
-   ICON MARKERS LAYER STYLES - OPTIMIZADO
+   ICON MARKERS LAYER STYLES - ARAMCO
    ============================================ */
 
 .icon-markers-popup-content {
@@ -9,14 +9,14 @@
 }
 
 /* ============================================
-   INFO HEADER - COMPACTO Y CON NEGRITAS
+   INFO HEADER - GRADIENTE ARAMCO
    ============================================ */
 
 .popup-info-header {
   position: relative;
   padding: 8px 140px 8px 12px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-bottom: 2px solid #17a2b8;
+  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
+  border-bottom: 2px solid #02d6a8;
   margin-bottom: 12px;
 }
 
@@ -35,13 +35,13 @@
 
 .popup-label {
   font-weight: 700;
-  color: #333;
+  color: #ffffff;
   min-width: auto;
 }
 
 .popup-value {
   font-weight: 400;
-  color: #555;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 /* ============================================
@@ -65,12 +65,12 @@
 }
 
 /* ============================================
-   POPUP TABS SYSTEM
+   POPUP TABS SYSTEM - ARAMCO
    ============================================ */
 
 .popup-tabs-container {
   width: 100%;
-  border: 1px solid #c0c0c0;
+  border: 1px solid #dee2e6;
   border-radius: 4px;
   overflow: hidden;
   margin: 0;
@@ -79,8 +79,8 @@
 .popup-tabs-header {
   display: flex;
   gap: 0;
-  background: #e8f4f8;
-  border-bottom: 2px solid #17a2b8;
+  background: #f8f9fa;
+  border-bottom: 2px solid #02d6a8;
   margin: 0;
   border-radius: 0;
 }
@@ -89,16 +89,18 @@
   flex: 1;
   padding: 8px 4px;
   border: none;
-  background: #e8f4f8;
-  color: #333;
+  background: #f8f9fa;
+  color: #495057;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 10px;
   transition: all 0.3s ease;
   border-bottom: 3px solid transparent;
   position: relative;
   bottom: -2px;
-  border-right: 1px solid #17a2b8;
+  border-right: 1px solid #dee2e6;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .popup-tab-button:last-child {
@@ -106,21 +108,23 @@
 }
 
 .popup-tab-button:hover {
-  background: #d4e9f2;
+  background: #e9ecef;
+  color: #212529;
 }
 
 .popup-tab-button.active {
-  background: #17a2b8;
+  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
   color: white;
-  border-bottom-color: #138496;
+  border-bottom-color: #02d6a8;
+  font-weight: 700;
 }
 
 .popup-tab-button.active:hover {
-  background: #138496;
+  background: linear-gradient(135deg, #01b894 0%, #0568b0 100%);
 }
 
 /* ============================================
-   TABS CONTENT - ALTURA FIJA
+   TABS CONTENT
    ============================================ */
 
 .popup-tabs-content {
@@ -172,7 +176,7 @@
 }
 
 /* ============================================
-   TABLA PRECIOS (TU ESTILO ORIGINAL)
+   TABLA PRECIOS - ARAMCO
    ============================================ */
 
 .popup-table-wrapper {
@@ -204,13 +208,13 @@
 }
 
 .popup-table thead tr {
-  background: #007bff;
+  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
   color: white;
   border: none;
 }
 
 .popup-table.secondary thead tr {
-  background: #28a745;
+  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
 }
 
 .popup-table th {
@@ -239,11 +243,11 @@
 }
 
 .popup-table tbody tr:hover {
-  background: #e7f3ff !important;
+  background: #e6f9f5 !important;
 }
 
 .popup-table.secondary tbody tr:hover {
-  background: #e8f5e9 !important;
+  background: #e6f9f5 !important;
 }
 
 .popup-table tbody tr:last-child {
@@ -266,7 +270,7 @@
 }
 
 /* ============================================
-   BOTÓN MERCADO - MINIMALISTA
+   BOTÓN MERCADO - ARAMCO
    ============================================ */
 
 .popup-button-mercado {
@@ -274,26 +278,31 @@
   padding: 5px 5px;
   margin: 10px;
   display: block;
-  background: #007bff;
+  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 600;
   font-size: 11px;
-  transition: background 0.2s ease;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(2, 214, 168, 0.3);
 }
 
 .popup-button-mercado:hover {
-  background: #0056b3;
+  background: linear-gradient(135deg, #01b894 0%, #0568b0 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(2, 214, 168, 0.4);
 }
 
 .popup-button-mercado.secondary {
-  background: #28a745;
+  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
 }
 
 .popup-button-mercado.secondary:hover {
-  background: #1e7e34;
+  background: linear-gradient(135deg, #01b894 0%, #0568b0 100%);
 }
 
 /* ============================================
@@ -322,7 +331,7 @@
 }
 
 /* ============================================
-   SCROLLBAR PERSONALIZADO
+   SCROLLBAR PERSONALIZADO - ARAMCO
    ============================================ */
 
 .icon-markers-popup-content::-webkit-scrollbar,
@@ -338,17 +347,17 @@
 
 .icon-markers-popup-content::-webkit-scrollbar-thumb,
 .popup-tabs-content::-webkit-scrollbar-thumb {
-  background: #17a2b8;
+  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
   border-radius: 3px;
 }
 
 .icon-markers-popup-content::-webkit-scrollbar-thumb:hover,
 .popup-tabs-content::-webkit-scrollbar-thumb:hover {
-  background: #138496;
+  background: linear-gradient(135deg, #01b894 0%, #0568b0 100%);
 }
 
 /* ============================================
-   DEBUG TABLE STYLES
+   DEBUG TABLE STYLES - ARAMCO
    ============================================ */
 
 .debug-table-container {
@@ -360,7 +369,7 @@
   background: white;
   border-radius: 8px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-  border: 2px solid #007bff;
+  border: 2px solid #02d6a8;
   z-index: 1000;
   padding: 0;
   display: flex;
@@ -369,7 +378,7 @@
 }
 
 .debug-table-header {
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
   color: white;
   padding: 12px 15px;
   border-radius: 6px 6px 0 0;
@@ -379,7 +388,7 @@
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
-  border-bottom: 2px solid #0056b3;
+  border-bottom: 2px solid #02d6a8;
 }
 
 .debug-table-close-btn {
@@ -417,6 +426,7 @@
   cursor: pointer;
   height: 4px;
   margin-bottom: 4px;
+  accent-color: #02d6a8;
 }
 
 .debug-table-footer small {
@@ -438,5 +448,13 @@
   animation: pulse-guerra 1.5s ease-in-out infinite;
 }
 
-
-
+@keyframes pulse-guerra {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}

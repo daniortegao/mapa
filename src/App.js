@@ -4,13 +4,16 @@ import './styles/layout.css';
 import './styles/markers.css';
 import MapComponent from './components/MapComponent';
 import FilterPanel from './components/FilterPanel';
+import AlertPanel from './components/AlertPanel'; // ✅ NUEVO
 import { REGION_COORDINATES, REGIONES_ORDENADAS } from './utils/constants';
 import { useMapData } from './hooks/useMapData';
-import { getDataBaseComp } from './services/apiService';
+import { getDataBaseComp, getMercadoAlerta } from './services/apiService'; // ✅ NUEVO
 
 function App() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [rightPanelVisible, setRightPanelVisible] = useState(false);
+  const [alertPanelVisible, setAlertPanelVisible] = useState(false); // ✅ NUEVO
+  const [alertCount, setAlertCount] = useState(0); // ✅ NUEVO
   const [selectedRegion, setSelectedRegion] = useState('Metropolitana de Santiago');
   const [filteredMarkers, setFilteredMarkers] = useState([]);
   const [filteredMarkersForMercado, setFilteredMarkersForMercado] = useState([]);
@@ -40,6 +43,35 @@ function App() {
     loadIt();
   }, []);
 
+  // ✅ NUEVO: Cargar contador de alertas
+ useEffect(() => {
+  const loadAlertCount = async () => {
+    try {
+      const alertas = await getMercadoAlerta();
+
+      // Función para contar estaciones únicas
+      const getStationCount = (alerts) => {
+        const estaciones = {};
+        alerts.forEach(a => {
+          estaciones[a.Nom_Eds || 'Sin nombre'] = true;
+        });
+        return Object.keys(estaciones).length;
+      };
+
+      const count = getStationCount(alertas);
+      setAlertCount(count);
+    } catch (err) {
+      console.error('Error al cargar alertas:', err);
+      setAlertCount(0);
+    }
+  };
+
+  loadAlertCount();
+  const interval = setInterval(loadAlertCount, 60000); // Actualiza cada minuto
+  return () => clearInterval(interval);
+}, []);
+
+
   const handleFiltersChange = (filtered, filteredForMercado) => {
     setFilteredMarkers(filtered);
     setFilteredMarkersForMercado(regionMarkers);
@@ -63,9 +95,13 @@ function App() {
     }, 300);
   };
 
+  // ✅ NUEVO: Toggle panel de alertas
+  const toggleAlertPanel = () => {
+    setAlertPanelVisible(!alertPanelVisible);
+  };
+
   return (
     <div className="app-container">
-      {/* ✅ NAVBAR MEJORADO */}
       <nav className="navbar">
         <div className="navbar-container">
           <div className="navbar-left">
@@ -73,16 +109,27 @@ function App() {
             <span className="navbar-subtitle">{selectedRegion}</span>
           </div>
           
-         <div className="navbar-right">
- 
-  <img 
-    src={`${process.env.PUBLIC_URL}/iconos/aramco.jpg`} 
-    alt="Aramco Logo" 
-    className="navbar-logo"
-    onError={(e) => e.target.style.display = 'none'}
-  />
-</div>
+          <div className="navbar-right">
+            {/* ✅ NUEVO: Botón de alertas con badge animado */}
+            <button 
+              className="navbar-alert-btn"
+              onClick={toggleAlertPanel}
+              aria-label="Ver alertas de mercado"
+              title="Alertas de mercado"
+            >
+              🔔
+              {alertCount > 0 && (
+                <span className="alert-badge">{alertCount}</span>
+              )}
+            </button>
 
+            <img 
+              src={`${process.env.PUBLIC_URL}/iconos/aramco.jpg`} 
+              alt="Aramco Logo" 
+              className="navbar-logo"
+              onError={(e) => e.target.style.display = 'none'}
+            />
+          </div>
         </div>
       </nav>
 
@@ -164,8 +211,14 @@ function App() {
             </table>
           </div>
         </aside>
-         
+
+        {/* ✅ NUEVO: Panel de alertas lateral */}
+        <AlertPanel 
+          isVisible={alertPanelVisible}
+          onClose={toggleAlertPanel}
+        />
       </div>
+
       <div className="navbar-version">v2.0</div>
     </div>
   );
