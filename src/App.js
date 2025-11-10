@@ -9,8 +9,8 @@ import { useMapData } from './hooks/useMapData';
 import { getDataBaseComp } from './services/apiService';
 
 function App() {
-  const [sidebarVisible, setSidebarVisible] = useState(false); // ✅ CERRADO por defecto
-  const [rightPanelVisible, setRightPanelVisible] = useState(false); // ✅ CERRADO por defecto
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [rightPanelVisible, setRightPanelVisible] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState('Metropolitana de Santiago');
   const [filteredMarkers, setFilteredMarkers] = useState([]);
   const [filteredMarkersForMercado, setFilteredMarkersForMercado] = useState([]);
@@ -65,21 +65,24 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* ✅ NAVBAR MEJORADO */}
       <nav className="navbar">
         <div className="navbar-container">
-          <div className="navbar-logo">
-            <span>🗺️</span>
-            ARAMCO - Mapa de Estaciones
+          <div className="navbar-left">
+            <h1 className="navbar-title">Sistema de Monitoreo de Estaciones</h1>
+            <span className="navbar-subtitle">{selectedRegion}</span>
           </div>
-          <ul className="navbar-menu">
-            <li><a href="#/" className="active">Mapa Resumen</a></li>
-            <li><a href="#/mercado">Mapa Mercado</a></li>
-            <li><a href="#/movimiento">Movimiento Mercado</a></li>
-            <li><a href="#/reportes">Reportes Power BI</a></li>
-          </ul>
-          <div className="navbar-brand">
-            <strong>aramco</strong>
-          </div>
+          
+         <div className="navbar-right">
+ 
+  <img 
+    src={`${process.env.PUBLIC_URL}/iconos/aramco.jpg`} 
+    alt="Aramco Logo" 
+    className="navbar-logo"
+    onError={(e) => e.target.style.display = 'none'}
+  />
+</div>
+
         </div>
       </nav>
 
@@ -161,7 +164,9 @@ function App() {
             </table>
           </div>
         </aside>
+         
       </div>
+      <div className="navbar-version">v2.0</div>
     </div>
   );
 }

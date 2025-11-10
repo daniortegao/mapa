@@ -129,12 +129,7 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
 
   return (
     <div className="filter-panel">
-      <div className="filter-group">
-        <label htmlFor="region-select">Región</label>
-        <div>
-          <span className="region-name">{selectedRegion}</span>
-        </div>
-      </div>
+      
 
       <div className="filter-group">
         <label htmlFor="comuna-select">Comuna</label>
@@ -180,17 +175,7 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
         </select>
       </div>
 
-      <div className="filter-group">
-        <label htmlFor="eds-search">Buscar EDS</label>
-        <input
-          id="eds-search"
-          type="text"
-          placeholder="Escribe para buscar..."
-          value={edsSearchTerm}
-          onChange={(e) => setEdsSearchTerm(e.target.value)}
-        />
-      </div>
-
+      
       <div className="filter-group">
         <label htmlFor="eds-select">EDS</label>
         <select
@@ -214,7 +199,7 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
             checked={soloGuerraPrecios}
             onChange={(e) => setSoloGuerraPrecios(e.target.checked)}
           />
-          <span className="checkbox-text">Solo Guerra de Precios</span>
+          <span className="checkbox-text">Guerra de Precios</span>
         </label>
       </div>
 
@@ -227,18 +212,11 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
             checked={soloEstacionesPES}
             onChange={(e) => setSoloEstacionesPES(e.target.checked)}
           />
-          <span className="checkbox-text">Solo Estaciones PES</span>
+          <span className="checkbox-text">Estaciones PES</span>
         </label>
       </div>
 
-      <div className="filter-actions">
-        <button onClick={handleClearFilters} className="btn-clear">
-          Limpiar Filtros
-        </button>
-        <span className="marker-count">
-          Estaciones mostradas: {filteredMarkers.length}
-        </span>
-      </div>
+      
     </div>
   );
 };
