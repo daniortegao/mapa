@@ -1,11 +1,11 @@
 /* ============================================
-   ALERT PANEL - ESTILO ARAMCO
+   ALERT PANEL - ESTRUCTURA PRINCIPAL
    ============================================ */
 .alert-panel {
   position: fixed;
   right: 0;
   top: 70px;
-  width: 720px; /* antes 400px, puedes ajustar a 600, 700, 800 según tu preferencia! */
+  width: 720px;
   height: calc(100vh - 70px);
   background: #ffffff;
   border-left: 2px solid #dee2e6;
@@ -15,7 +15,6 @@
   flex-direction: column;
   transition: transform 0.3s ease;
 }
-
 
 .alert-panel.hidden {
   transform: translateX(100%);
@@ -56,6 +55,7 @@
   align-items: center;
   justify-content: center;
 }
+
 .alert-panel-close:hover {
   background: rgba(255, 255, 255, 0.3);
   transform: scale(1.1);
@@ -70,6 +70,7 @@
   border-bottom: 2px solid #dee2e6;
   flex-shrink: 0;
 }
+
 .alert-tab {
   flex: 1;
   padding: 14px;
@@ -84,13 +85,16 @@
   letter-spacing: 0.5px;
   border-right: 1px solid #dee2e6;
 }
+
 .alert-tab:last-child {
   border-right: none;
 }
+
 .alert-tab:hover {
   background: #e9ecef;
   color: #212529;
 }
+
 .alert-tab.active {
   background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
   color: white;
@@ -107,6 +111,7 @@
   padding: 16px;
   background: #f8f9fa;
 }
+
 .alert-loading,
 .alert-empty {
   text-align: center;
@@ -115,18 +120,20 @@
   font-size: 14px;
   font-weight: 500;
 }
+
 .alert-empty {
   color: #28a745;
 }
 
 /* ============================================
-   ALERT CARDS
+   ALERTAS ACTIVAS - CARDS
    ============================================ */
 .alerts-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
+
 .alert-card {
   background: white;
   border: 2px solid #dee2e6;
@@ -135,33 +142,44 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
 }
+
 .alert-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
   border-color: #02d6a8;
 }
+
+.alert-card.guerra {
+  border: 2px solid #ff9800;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
+}
+
 .alert-card-header {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-bottom: 10px;
 }
+
 .alert-icon {
   font-size: 24px;
   flex-shrink: 0;
 }
+
 .alert-card-info {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
+
 .alert-card-info strong {
   font-size: 14px;
   color: #212529;
   font-weight: 700;
   line-height: 1.2;
 }
+
 .alert-marca {
   font-size: 11px;
   color: #6c757d;
@@ -169,32 +187,14 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-.alert-diff {
-  font-size: 18px;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 6px;
-  flex-shrink: 0;
-}
-.alert-diff.positive {
-  color: #28a745;
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
-}
-.alert-diff.negative {
-  color: #dc3545;
-  background: #f8d7da;
-  border: 1px solid #f5c6cb;
-}
 
-/* ============================================
-   TABLA DE COMBUSTIBLES (AGRUPADA)
-   ============================================ */
+/* Tabla de combustibles en alertas */
 .alert-combs-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 8px;
 }
+
 .alert-combs-table th,
 .alert-combs-table td {
   font-size: 12px;
@@ -202,87 +202,469 @@
   border: 1px solid #eee;
   text-align: center;
 }
+
 .alert-combs-table th {
   background: #f2f4f7;
   font-weight: 700;
 }
-.alert-combs-table td.negative { color: #dc3545; font-weight: 700; }
-.alert-combs-table td.positive { color: #28a745; font-weight: 700; }
+
+.alert-combs-table td.negative {
+  color: #dc3545;
+  font-weight: 700;
+}
+
+.alert-combs-table td.positive {
+  color: #28a745;
+  font-weight: 700;
+}
 
 /* ============================================
-   HISTÓRICO TABLE
+   GUERRA DE PRECIOS - PANEL
    ============================================ */
-.historico-wrapper {
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #dee2e6;
+.guerra-panel-wrapper {
+  padding: 10px;
 }
-.historico-table {
-  width: 100%;
-  border-collapse: collapse;
+
+.guerra-panel-header {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  padding: 12px 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  color: white;
+}
+
+.guerra-panel-header h4 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.guerra-subtitle {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.guerra-list {
+  max-height: 600px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.guerra-card {
+  background: white;
+  border: 2px solid #f5576c;
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.guerra-card:hover {
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+  transform: translateY(-2px);
+}
+
+.guerra-card-header {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  
+  padding-bottom: 2px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.guerra-badge {
+  font-size: 15px;
+  animation: pulse 1.5s infinite;
+}
+
+.guerra-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.guerra-estacion {
+  font-size: 13px;
+  color: #212529;
+  font-weight: 700;
+}
+
+.guerra-marca {
+  font-size: 11px;
+  color: #6c757d;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.guerra-pbl {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.pbl-label {
+  font-size: 15px;
+  color: #0b0b0b;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.pbl-value {
+  font-size: 14px;
+  color: #f5576c;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.guerra-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guerra-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 11px;
 }
-.historico-table thead {
-  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
+
+.detail-label {
+  color: #6c757d;
+  font-weight: 600;
+  min-width: 140px;
+}
+
+.detail-value {
+  color: #212529;
+  font-weight: 500;
+}
+
+.combustibles-tags {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.comb-tag {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+}
+
+.comb-g93 {
+  background: #28a745;
+}
+
+.comb-g95 {
+  background: #007bff;
+}
+
+.comb-g97 {
+  background: #6f42c1;
+}
+
+.comb-diesel {
+  background: #fd7e14;
+}
+
+.comb-kero,
+.comb-kerosene {
+  background: #dc3545;
+}
+
+/* ============================================
+   HISTÓRICO - TABLA COMPACTA
+   ============================================ */
+.historico-wrapper {
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: auto;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.historico-table-compact {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  background: white;
+}
+
+.historico-table-compact thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   position: sticky;
   top: 0;
   z-index: 10;
 }
-.historico-table th {
-  padding: 10px 8px;
-  text-align: left;
+
+.historico-table-compact thead th {
+  padding: 6px 3px;
+  font-size: 9px;
   font-weight: 700;
-  color: white;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  text-align: center;
   border-right: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
 }
-.historico-table th:last-child {
+
+.historico-table-compact thead th:last-child {
   border-right: none;
 }
-.historico-table tbody tr {
-  border-bottom: 1px solid #f1f3f5;
-  transition: background 0.2s;
+
+.historico-table-compact tbody tr {
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s;
 }
-.historico-table tbody tr:hover {
-  background: #e6f9f5;
+
+.historico-table-compact tbody tr:hover {
+  background-color: #f8f9fa;
 }
-.historico-table td {
-  padding: 10px 8px;
+
+.historico-table-compact tbody td {
+  padding: 5px 3px;
+  text-align: center;
+  font-size: 9px;
+}
+
+/* Celdas específicas */
+.td-estacion {
+  text-align: left;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-left: 6px !important;
+  font-size: 9px;
+}
+
+.td-marca {
+  font-weight: 600;
+  color: #495057;
+  text-transform: uppercase;
+  font-size: 9px;
+}
+
+.td-cne {
+  font-size: 8px;
+  color: #6c757d;
+  font-family: monospace;
+}
+
+.td-pbl {
+  font-size: 9px;
+  color: #495057;
+  font-weight: 600;
+}
+
+.td-combustible {
+  padding: 3px 2px !important;
+}
+
+.combustible-badge {
+  display: inline-block;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+}
+
+.combustible-g93 {
+  background: #28a745;
+}
+
+.combustible-g95 {
+  background: #007bff;
+}
+
+.combustible-g97 {
+  background: #6f42c1;
+}
+
+.combustible-diesel {
+  background: #fd7e14;
+}
+
+.combustible-kero,
+.combustible-kerosene {
+  background: #dc3545;
+}
+
+.td-precio {
+  font-weight: 700;
+  color: #212529;
+  font-size: 10px;
+}
+
+.td-anterior {
+  color: #adb5bd;
+  font-size: 9px;
+}
+
+.td-diferencia {
+  font-weight: 700;
+  font-size: 9px;
+}
+
+/* Colores de diferencia de precios */
+.precio-sube {
+  color: #28a745; /* VERDE para subida (positivo) */
+}
+
+.precio-baja {
+  color: #dc3545; /* ROJO para bajada (negativo) */
+}
+
+.precio-igual {
+  color: #6c757d; /* GRIS para sin cambio */
+}
+
+.td-tipo {
+  font-size: 12px;
+}
+
+.td-horario {
+  padding: 4px 6px !important;
+  font-size: 9px;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.horario-texto {
+  font-size: 9px;
   color: #495057;
   font-weight: 500;
 }
-.historico-table td.negative {
-  color: #dc3545;
-  font-weight: 700;
+
+.td-fecha {
+  padding: 3px 2px !important;
 }
-.historico-table td.positive {
-  color: #28a745;
-  font-weight: 700;
+
+.fecha-compacta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
 }
-.historico-table td.fecha-small {
-  font-size: 10px;
-  color: #6c757d;
+
+.fecha-dia {
+  font-size: 8px;
+  color: #495057;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fecha-hora {
+  font-size: 7px;
+  color: #adb5bd;
+}
+
+.td-principal {
+  font-size: 13px;
+}
+
+.principal-icon {
+  display: inline-block;
+  animation: twinkle 2s infinite;
+}
+
+/* Filas especiales */
+.guerra-row {
+  background-color: #fff3cd !important;
+  border-left: 4px solid #f0ad4e !important;
+}
+
+.guerra-row:hover {
+  background-color: #ffe69c !important;
+}
+
+.principal-row {
+  border-left: 3px solid #667eea;
 }
 
 /* ============================================
-   SCROLLBAR
+   SCROLLBARS
    ============================================ */
-.alert-panel-content::-webkit-scrollbar {
+.alert-panel-content::-webkit-scrollbar,
+.historico-wrapper::-webkit-scrollbar,
+.guerra-list::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
-.alert-panel-content::-webkit-scrollbar-track {
+
+.alert-panel-content::-webkit-scrollbar-track,
+.historico-wrapper::-webkit-scrollbar-track {
   background: #f1f3f5;
   border-radius: 4px;
 }
+
 .alert-panel-content::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
   border-radius: 4px;
 }
+
 .alert-panel-content::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #01b894 0%, #0568b0 100%);
+}
+
+.historico-wrapper::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.historico-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.guerra-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.guerra-list::-webkit-scrollbar-thumb {
+  background: #f5576c;
+  border-radius: 4px;
+}
+
+.guerra-list::-webkit-scrollbar-thumb:hover {
+  background: #e04758;
+}
+
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* ============================================
@@ -303,11 +685,13 @@
   justify-content: center;
   color: white;
 }
+
 .navbar-alert-btn:hover {
   background: rgba(255, 255, 255, 0.25);
   transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
+
 .alert-badge {
   position: absolute;
   top: -6px;
@@ -326,81 +710,311 @@
   padding: 0 4px;
   animation: pulse 2s infinite;
 }
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
-  }
-  50% {
-    transform: scale(1.1);
-    box-shadow: 0 0 0 8px rgba(220, 53, 69, 0);
-  }
-}
 
 /* ============================================
    RESPONSIVE
    ============================================ */
+@media (max-width: 1200px) {
+  .historico-table-compact {
+    font-size: 8px;
+  }
+  
+  .td-estacion {
+    max-width: 80px;
+  }
+  
+  .combustible-badge {
+    font-size: 7px;
+    padding: 1px 3px;
+  }
+}
+
 @media (max-width: 768px) {
   .alert-panel {
     width: 100%;
     max-width: 400px;
   }
-  .alert-card-details {
-    flex-direction: column;
-    gap: 8px;
-  }
+}
+/* Estado activo/inactivo */
+.estado-activo {
+  color: #28a745;
+  font-weight: 700;
 }
 
-/* ============================================
-   GUERRA DE PRECIO
-   ============================================ */
-.alert-card.guerra {
-  border: 2px solid #ff9800;
-  background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
-}
-.alert-guerra-badge {
-  margin-top: 8px;
-  padding: 6px 10px;
-  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-  color: white;
-  font-size: 10px;
+.estado-inactivo {
+  color: #dc3545;
   font-weight: 700;
-  text-align: center;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  animation: pulse-guerra 2s infinite;
 }
-@keyframes pulse-guerra {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
-  }
-  50% {
-    transform: scale(1.02);
-    box-shadow: 0 4px 8px rgba(255, 152, 0, 0.5);
-  }
+.guerra-panel-wrapper {
+  padding: 12px 0 0 0;
 }
-/* ============================================
-   FECHAS EN CARDS
-   ============================================ */
-.alert-card-dates {
+.guerra-panel-header {
+  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
+  padding: 14px 18px;
+  border-radius: 8px 8px 0 0;
+  color: #fff;
+  margin-bottom: 10px;
+}
+.guerra-panel-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.guerra-subtitle {
+  margin: 0;
+  font-size: 11px;
+  opacity: 0.93;
+  font-weight: 500;
+}
+
+.guerra-list {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  max-height: 560px;
+  overflow-y: auto;
+  padding: 8px 0 12px 0;
+}
+
+.guerra-card-lista {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 10px rgba(2, 214, 168, 0.025), 0 2px 6px rgba(100, 127, 207, 0.05);
+  border: 1.5px solid #dee2e6;
+  padding: 10px 18px 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.guerra-card-lista.guerra-activa {
+  border: 2px solid #f5576c;
+  background: linear-gradient(98deg, #fff3e0 0%, #fff 70%);
+  box-shadow: 0 2px 12px rgba(245, 87, 108, 0.07);
+}
+
+.guerra-fila-nombre {
+  font-size: 15px;
+  font-weight: 700;
+  color: #212529;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.guerra-fila-nom {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 210px;
+  display: inline-block;
+}
+
+.guerra-chip {
+  background: linear-gradient(90deg, #f093fb 0%, #f5576c 90%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 2px 12px 2px 7px;
+  display: flex;
+  align-items: center;
+  letter-spacing: 0.7px;
   gap: 4px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #f1f3f5;
-  font-size: 10px;
+  margin-left: 2px;
+  box-shadow: 0 0 6px #f093fb44;
+  animation: pulse-guerra 2.5s infinite;
+}
+
+.guerra-flash {
+  font-size: 13px;
+  margin-right: 1.5px;
+  animation: vibrarGuerra 1s infinite;
+}
+
+@keyframes pulse-guerra {
+  0%, 100% {
+    filter: brightness(1.1);
+    box-shadow: 0 0 6px #f093fb44;
+  }
+  50% {
+    filter: brightness(1.3) drop-shadow(0 1px 4px #f5576cbb);
+    box-shadow: 0 0 10px #f5576c55;
+  }
+}
+@keyframes vibrarGuerra {
+  0% { transform: translateY(0.2px);}
+  20% { transform: translateY(-1.2px);}
+  40% { transform: translateY(0.2px);}
+  60% { transform: translateY(-0.9px);}
+  80% { transform: translateY(0.2px);}
+}
+
+.guerra-fila-datos {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.guerra-small-label {
+  font-size: 11px;
   color: #6c757d;
+  background: #f8f9fa;
+  padding: 2.5px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  margin-right: 2.5px;
 }
-/* ============================================
-   TABLA - FILA DE GUERRA
-   ============================================ */
-.historico-table tbody tr.guerra-row {
-  background: #fff3e0;
-  border-left: 3px solid #ff9800;
+
+.guerra-card-lista.guerra-activa .guerra-small-label {
+  background: #ffe0ec;
 }
-.historico-table tbody tr.guerra-row:hover {
-  background: #ffe0b2;
+
+.tipoeds.activo {
+  border: 1px solid #02d6a8;
+  color: #02d6a8 !important;
+}
+.tipoeds.inactivo,
+.estado.inactivo {
+  color: #dc3545 !important;
+  background: #fff3f3 !important;
+}
+.estado.activo {
+  background: #e5ffe6 !important;
+  color: #28a745 !important;
+}
+
+@media(max-width: 650px) {
+  .guerra-fila-nom {
+    max-width: 120px;
+  }
+  .guerra-list { max-height: 350px; }
+}
+.guerra-list-simple {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 6px;
+}
+.guerra-simple-card {
+  border: 2px solid #e4ebf5;
+  border-radius: 13px;
+  background: #fff;
+  padding: 17px 22px 10px 22px;
+  box-shadow: 0 2px 12px #eef1f457;
+  margin-bottom: 0;
+  transition: border .18s, box-shadow .18s;
+}
+.guerra-simple-card.gcard-guerra {
+  border: 2px solid #f5576c;
+  background: #fff6fa;
+}
+.gsc-header {
+  display: flex;
+  align-items: center;
+  font-size: 1.07rem;
+  font-weight: 700;
+  margin-bottom: 7px;
+  gap: 12px;
+  letter-spacing: -.2px;
+}
+.gsc-icon {
+  color: #adb5bd;
+  font-size: 16px;
+  margin-right: 1px;
+  margin-left: -2px;
+}
+.gsc-icon.guerra {
+  color: #f5576c;
+}
+.gsc-eds {
+  flex: 1;
+  font-weight: 700;
+  font-size: 1.01em;
+  color: #23272b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gsc-pbl {
+  font-size: 15px;
+  font-weight: 700;
+}
+.gsc-pbl-label {
+  color: #767575;
+  font-size: 11px;
+  font-weight: 500;
+  margin-right: 3px;
+}
+.gsc-pbl-value {
+  color: #f5576c;
+  font-size: 15px;
+  letter-spacing: .5px;
+  font-weight: 800;
+}
+.gsc-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 2px 0 0 0;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.gsc-label {
+  color: #8c96a5;
+  font-weight: 600;
+  font-size: 12.6px;
+}
+.gsc-value {
+  color: #212529;
+  font-weight: 600;
+  font-size: 13.5px;
+  margin-right: 6px;
+  letter-spacing: -.2px;
+}
+.estado {
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 11px;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+.estado.activo {
+  color: #23bd4f;
+}
+.estado.inactivo {
+  color: #dc3545;
+}
+.fila-seguimiento {
+  background: #fffbe7 !important;
+  border-left: 5px solid #ffb84d !important;
+}
+.historico-filtros {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 0 11px 0;
+}
+.input-filtro-hist {
+  border: 1.5px solid #e7eaf1;
+  border-radius: 6px;
+  background: #fcfcff;
+  font-size: 13px;
+  padding: 7px 14px;
+  min-width: 190px;
+  outline: none;
+}
+.input-filtro-hist:focus { border-color: #02d6a8; }
+.check-filtro-hist {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
 }

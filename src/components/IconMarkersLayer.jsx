@@ -5,6 +5,7 @@ import { createCustomIcon, createBrandLogo } from '../utils/iconHelpers';
 import { guardarCoordenadaCorregida } from '../services/apiService';
 import '../styles/iconMarkersLayer.css';
 
+
 const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, baseCompData = [] }) => {
   const map = useMap();
   const markersRef = useRef({});
@@ -22,6 +23,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
   const [activeTab, setActiveTab] = useState('precios');
   const [modoCorreccion, setModoCorreccion] = useState(null);
 
+
   const makeDraggable = useCallback((popup) => {
     if (!map || !popup || !popup._container) return;
     try {
@@ -33,6 +35,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       console.error('Error draggable:', error);
     }
   }, [map]);
+
 
   const clearCompetenciaMarkers = useCallback(() => {
     competenciaMarkersRef.current.forEach(marker => {
@@ -47,6 +50,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     competenciaMarkersRef.current = [];
   }, [map]);
 
+
   const clearPolylines = useCallback(() => {
     polylineRef.current.forEach(line => {
       try {
@@ -59,6 +63,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     });
     polylineRef.current = [];
   }, [map]);
+
 
   const clearGuerraMarkers = useCallback(() => {
     Object.values(guerraMarkersRef.current).forEach(marker => {
@@ -73,12 +78,15 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     guerraMarkersRef.current = {};
   }, [map]);
 
+
   const generarTablaPrecios = useCallback((datos, variant = 'primary') => {
     if (!datos || datos.length === 0) {
       return '<div style="padding: 12px; text-align: center; font-size: 12px; color: #999; font-style: italic;">Sin datos disponibles</div>';
     }
 
+
     const variantClass = variant === 'primary' ? '' : 'secondary';
+
 
     let html = `<div class="popup-table-wrapper ${variantClass}">
       <table class="popup-table ${variantClass}">
@@ -94,6 +102,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         </thead>
         <tbody>`;
 
+
     datos.forEach((fila) => {
       html += `
         <tr>
@@ -106,12 +115,15 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         </tr>`;
     });
 
+
     html += `</tbody></table></div>`;
     return html;
   }, []);
 
+
   const obtenerHistoricoMarker = useCallback((markerId, dataArray) => {
     const datos = dataArray.filter(m => m.id === markerId);
+
 
     return datos
       .sort((a, b) => {
@@ -129,6 +141,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       }));
   }, []);
 
+
  const generarPopupContent = useCallback((marker, datosTabla, tablaPreciosHtml, variant = 'primary') => {
   const isSecondary = variant === 'secondary';
   
@@ -137,6 +150,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         ? marker.logo 
         : `https://api.bencinaenlinea.cl${marker.logo}`)
     : '';
+
 
   let content = `
     <div class="icon-markers-popup-content">
@@ -168,6 +182,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         </div>
       </div>
 
+
       <div class="popup-tabs-container">
         <div class="popup-tabs-header">
           <button class="popup-tab-button active" data-tab="precios">Precios</button>
@@ -175,10 +190,12 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
           <button class="popup-tab-button" data-tab="informacion">Información</button>
         </div>
 
+
         <div class="popup-tabs-content">
           <div class="popup-tab-pane active" data-tab="precios">
             ${tablaPreciosHtml}
           </div>
+
 
           <div class="popup-tab-pane" data-tab="coordenadas">
             <div class="popup-info-box">
@@ -209,6 +226,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
             </div>
           </div>
 
+
           <div class="popup-tab-pane" data-tab="informacion">
             <div class="popup-info-box">
               <p><strong>Dirección:</strong> ${marker.direccion || '-'}</p>
@@ -223,22 +241,27 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     </div>
   `;
 
+
   if (marker.pbl && (marker.Marca === 'Aramco' || marker.Marca === 'Petrobras')) {
     content += `<button class="popup-button-mercado" onclick="window.showAssociatedIds && window.showAssociatedIds(${marker.pbl}, ${marker.lat}, ${marker.lng}, '${marker.id}')">Mercado</button>`;
   }
+
 
   return content;
 }, []);
 
 
+
   const updateIconsInViewport = useCallback((allMarkers, clearFirst = true) => {
     if (!map || updateInProgressRef.current) return;
+
 
     updateInProgressRef.current = true;
     const bounds = map.getBounds();
     const visibleMarkers = allMarkers.filter(marker => {
       return bounds.contains([marker.lat, marker.lng]);
     });
+
 
     if (clearFirst) {
       Object.values(markersRef.current).forEach(marker => {
@@ -253,6 +276,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       markersRef.current = {};
       clearGuerraMarkers();
 
+
       map.eachLayer((layer) => {
         if (layer instanceof L.Marker && !map.hasLayer(layer)) {
           try {
@@ -262,10 +286,12 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       });
     }
 
+
     if (visibleMarkers.length === 0) {
       updateInProgressRef.current = false;
       return;
     }
+
 
     const markersByBrand = {};
     visibleMarkers.forEach(marker => {
@@ -275,51 +301,59 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       markersByBrand[marker.Marca].push(marker);
     });
 
+
     const brandOrder = ['Aramco', 'Petrobras', 'Copec', 'Shell', 'Blanco', 'Gulf', 'Petroprix'];
     let delayOffset = 0;
     const cacheKey = selectedRegion;
     let totalBrands = brandOrder.filter(b => markersByBrand[b]).length;
     let brandsProcessed = 0;
 
+
     brandOrder.forEach((brand) => {
       if (!markersByBrand[brand] || markersByBrand[brand].length === 0) return;
 
+
       const brandMarkers = markersByBrand[brand];
+
 
       setTimeout(() => {
         brandMarkers.forEach((marker) => {
           try {
             const markerId = `${cacheKey}-${marker.id}`;
 
+
             if (markersRef.current[markerId]) {
               return;
             }
 
+
             const lat = parseFloat(marker.lat);
             const lng = parseFloat(marker.lng);
+
 
             if (!isNaN(lat) && !isNaN(lng)) {
               // ✅ CREAR MARCADOR NORMAL
               const iconUrl = createCustomIcon(marker.Marca);
               const leafletMarker = L.marker([lat, lng], { icon: iconUrl }).addTo(map);
 
+
               // ✅ SI TIENE GUERRA, CREAR MARCADOR SEPARADO CON LA CALAVERA
-            // ✅ SI TIENE GUERRA, CREAR MARCADOR SEPARADO CON LA CALAVERA
-const tieneGuerra = marker.Guerra_Precio === 'Si' || marker.guerraPrecios === true;
-if (tieneGuerra) {
-  const guerraIcon = L.icon({
-    iconUrl: `${process.env.PUBLIC_URL}/iconos/calavera.jpg`,
-    iconSize: [15, 15],
-    iconAnchor: [7.5, 7.5],
-    className: 'icono-guerra'
-  });
-  const guerraMarker = L.marker([lat, lng], { icon: guerraIcon, interactive: false }).addTo(map);
-  guerraMarkersRef.current[markerId] = guerraMarker;
-}
+              const tieneGuerra = marker.Guerra_Precio === 'Si' || marker.guerraPrecios === true;
+              if (tieneGuerra) {
+                const guerraIcon = L.icon({
+                  iconUrl: `${process.env.PUBLIC_URL}/iconos/calavera.jpg`,
+                  iconSize: [15, 15],
+                  iconAnchor: [7.5, 7.5],
+                  className: 'icono-guerra'
+                });
+                const guerraMarker = L.marker([lat, lng], { icon: guerraIcon, interactive: false }).addTo(map);
+                guerraMarkersRef.current[markerId] = guerraMarker;
+              }
 
 
               const datosTabla = obtenerHistoricoMarker(marker.id, allMarkers);
               const tablaPreciosHtml = generarTablaPrecios(datosTabla, 'primary');
+
 
               leafletMarker.on('popupopen', () => {
                 setDebugTable({
@@ -330,7 +364,9 @@ if (tieneGuerra) {
                 setActiveTab('precios');
               });
 
+
               const popupContent = generarPopupContent(marker, datosTabla, tablaPreciosHtml, 'primary');
+
 
               const popup = L.popup({
                 autoClose: false,
@@ -341,33 +377,41 @@ if (tieneGuerra) {
                 className: 'custom-popup'
               }).setContent(popupContent);
 
+
               leafletMarker.bindPopup(popup);
 
-              leafletMarker.on('popupopen', () => {
+
+              leafletMarker.on('popupopen', (e) => {
                 makeDraggable(popup);
                 setTimeout(() => {
-                  const tabButtons = document.querySelectorAll('.popup-tab-button');
+                  // ✅ CAMBIO: Usar popup._container para buscar solo en este popup
+                  const popupContainer = e.popup._container;
+                  const tabButtons = popupContainer.querySelectorAll('.popup-tab-button');
                   tabButtons.forEach(btn => {
                     btn.addEventListener('click', function (e) {
                       const tabName = this.getAttribute('data-tab');
 
-                      tabButtons.forEach(b => b.classList.remove('active'));
-                      document.querySelectorAll('.popup-tab-pane').forEach(pane => {
+                      // ✅ CAMBIO: Buscar solo dentro de este popup
+                      popupContainer.querySelectorAll('.popup-tab-button').forEach(b => b.classList.remove('active'));
+                      popupContainer.querySelectorAll('.popup-tab-pane').forEach(pane => {
                         pane.classList.remove('active');
                       });
 
                       this.classList.add('active');
-                      document.querySelector(`.popup-tab-pane[data-tab="${tabName}"]`).classList.add('active');
+                      popupContainer.querySelector(`.popup-tab-pane[data-tab="${tabName}"]`).classList.add('active');
                     });
                   });
                 }, 0);
               });
 
+
               leafletMarker.on('click', () => {
                 leafletMarker.openPopup();
               });
 
+
               markersRef.current[markerId] = leafletMarker;
+
 
               cacheRef.current[markerId] = {
                 lat: marker.lat,
@@ -382,26 +426,33 @@ if (tieneGuerra) {
           }
         });
 
+
         brandsProcessed++;
         localStorage.setItem('markersCache', JSON.stringify(cacheRef.current));
+
 
         if (brandsProcessed === totalBrands) {
           updateInProgressRef.current = false;
         }
 
+
       }, delayOffset);
+
 
       delayOffset += 60;
     });
   }, [map, makeDraggable, selectedRegion, generarTablaPrecios, obtenerHistoricoMarker, generarPopupContent, clearGuerraMarkers]);
 
+
   const showAssociatedIds = useCallback((pbl, lat, lng, originalMarkerId) => {
     const searchArray = markersForMercado && markersForMercado.length > 0 ? markersForMercado : markers;
+
 
     if (showingAssociated && activeMercadoPbl === pbl) {
       clearCompetenciaMarkers();
       clearPolylines();
       clearGuerraMarkers();
+
 
       Object.values(markersRef.current).forEach(marker => {
         try {
@@ -414,31 +465,40 @@ if (tieneGuerra) {
       });
       markersRef.current = {};
 
+
       setShowingAssociated(false);
       setActiveMercadoPbl(null);
       setOriginalPopupMarker(null);
 
+
       const markersToShow = markersForMercado && markersForMercado.length > 0 ? markersForMercado : markers;
+
 
       if (map && markersToShow && markersToShow.length > 0) {
         updateIconsInViewport(markersToShow, true);
       }
 
+
       return;
     }
 
+
     clearCompetenciaMarkers();
     clearPolylines();
+
 
     const associatedData = baseCompData.filter(item =>
       String(item.pbl).trim() === String(pbl).trim()
     );
 
+
     if (associatedData.length === 0) {
       return;
     }
 
+
     const ids = associatedData.map(item => item.id);
+
 
     if (map) {
       let openPopup = null;
@@ -448,14 +508,17 @@ if (tieneGuerra) {
         }
       });
 
+
       map.eachLayer((layer) => {
         if (layer instanceof L.Marker) {
           const mLatLng = layer.getLatLng();
+
 
           const shouldKeep = ids.some(id => {
             const marker = searchArray.find(m => m.id === id);
             return marker && marker.lat === mLatLng.lat && marker.lng === mLatLng.lng;
           }) || (mLatLng.lat === lat && mLatLng.lng === lng);
+
 
           if (!shouldKeep) {
             map.removeLayer(layer);
@@ -463,12 +526,14 @@ if (tieneGuerra) {
         }
       });
 
+
       Object.values(markersRef.current).forEach(marker => {
         const mLatLng = marker.getLatLng();
         const shouldKeep = ids.some(id => {
           const m = searchArray.find(x => x.id === id);
           return m && m.lat === mLatLng.lat && m.lng === mLatLng.lng;
         }) || (mLatLng.lat === lat && mLatLng.lng === lng);
+
 
         if (!shouldKeep) {
           try {
@@ -481,10 +546,12 @@ if (tieneGuerra) {
         }
       });
 
+
       const associatedMarkers = searchArray.filter(item => ids.includes(item.id));
       associatedMarkers.forEach(marker => {
         const markerLat = parseFloat(marker.lat);
         const markerLng = parseFloat(marker.lng);
+
 
         if (!isNaN(markerLat) && !isNaN(markerLng)) {
           let exists = false;
@@ -497,29 +564,32 @@ if (tieneGuerra) {
             }
           });
 
+
           if (!exists) {
             // ✅ CREAR MARCADOR NORMAL
             const iconUrl = createCustomIcon(marker.Marca);
             const leafletMarker = L.marker([markerLat, markerLng], { icon: iconUrl }).addTo(map);
 
-         
+
             // ✅ SI TIENE GUERRA, CREAR MARCADOR SEPARADO CON LA CALAVERA
-const tieneGuerra = marker.Guerra_Precio === 'Si' || marker.guerraPrecios === true;
-if (tieneGuerra) {
-  const guerraIcon = L.icon({
-    iconUrl: `${process.env.PUBLIC_URL}/iconos/calavera.jpg`,
-    iconSize: [15, 15],
-    iconAnchor: [7.5, 7.5],
-    className: 'icono-guerra'
-  });
-  L.marker([markerLat, markerLng], { icon: guerraIcon, interactive: false }).addTo(map);
-}
+            const tieneGuerra = marker.Guerra_Precio === 'Si' || marker.guerraPrecios === true;
+            if (tieneGuerra) {
+              const guerraIcon = L.icon({
+                iconUrl: `${process.env.PUBLIC_URL}/iconos/calavera.jpg`,
+                iconSize: [15, 15],
+                iconAnchor: [7.5, 7.5],
+                className: 'icono-guerra'
+              });
+              L.marker([markerLat, markerLng], { icon: guerraIcon, interactive: false }).addTo(map);
+            }
 
 
             competenciaMarkersRef.current.push(leafletMarker);
 
+
             const datosTabla = obtenerHistoricoMarker(marker.id, baseCompData);
             const tablaPreciosHtml = generarTablaPrecios(datosTabla, 'secondary');
+
 
             leafletMarker.on('popupopen', () => {
               setDebugTable({
@@ -530,7 +600,9 @@ if (tieneGuerra) {
               setActiveTab('precios');
             });
 
+
             const popupContent = generarPopupContent(marker, datosTabla, tablaPreciosHtml, 'secondary');
+
 
             const popup = L.popup({
               autoClose: false,
@@ -541,44 +613,54 @@ if (tieneGuerra) {
               className: 'custom-popup'
             }).setContent(popupContent);
 
+
             leafletMarker.bindPopup(popup);
 
-            leafletMarker.on('popupopen', () => {
+
+            leafletMarker.on('popupopen', (e) => {
               makeDraggable(popup);
               setTimeout(() => {
-                const tabButtons = document.querySelectorAll('.popup-tab-button');
+                // ✅ CAMBIO: Usar popup._container para buscar solo en este popup
+                const popupContainer = e.popup._container;
+                const tabButtons = popupContainer.querySelectorAll('.popup-tab-button');
                 tabButtons.forEach(btn => {
                   btn.addEventListener('click', function (e) {
                     const tabName = this.getAttribute('data-tab');
 
-                    tabButtons.forEach(b => b.classList.remove('active'));
-                    document.querySelectorAll('.popup-tab-pane').forEach(pane => {
+                    // ✅ CAMBIO: Buscar solo dentro de este popup
+                    popupContainer.querySelectorAll('.popup-tab-button').forEach(b => b.classList.remove('active'));
+                    popupContainer.querySelectorAll('.popup-tab-pane').forEach(pane => {
                       pane.classList.remove('active');
                     });
 
                     this.classList.add('active');
-                    document.querySelector(`.popup-tab-pane[data-tab="${tabName}"]`).classList.add('active');
+                    popupContainer.querySelector(`.popup-tab-pane[data-tab="${tabName}"]`).classList.add('active');
                   });
                 });
               }, 0);
             });
+
 
             leafletMarker.on('click', () => leafletMarker.openPopup());
           }
         }
       });
 
+
       const mainMarkersData = associatedData.filter(m => m.Marcador_Principal === 'Si');
       mainMarkersData.forEach(mainMarker => {
         const markerWithCoords = searchArray.find(m => m.id === mainMarker.id);
+
 
         if (markerWithCoords) {
           const mainLat = parseFloat(markerWithCoords.lat);
           const mainLng = parseFloat(markerWithCoords.lng);
 
+
           if (!isNaN(mainLat) && !isNaN(mainLng)) {
             const currentLat = parseFloat(lat);
             const currentLng = parseFloat(lng);
+
 
             const polyline = L.polyline(
               [
@@ -593,10 +675,12 @@ if (tieneGuerra) {
               }
             ).addTo(map);
 
+
             polylineRef.current.push(polyline);
           }
         }
       });
+
 
       if (openPopup) {
         setTimeout(() => {
@@ -609,17 +693,21 @@ if (tieneGuerra) {
         }, 50);
       }
 
+
       setShowingAssociated(true);
       setActiveMercadoPbl(pbl);
     }
   }, [baseCompData, markers, markersForMercado, map, makeDraggable, showingAssociated, activeMercadoPbl, updateIconsInViewport, clearCompetenciaMarkers, clearPolylines, clearGuerraMarkers, generarTablaPrecios, obtenerHistoricoMarker, generarPopupContent]);
 
+
   useEffect(() => {
     window.showAssociatedIds = showAssociatedIds;
   }, [showAssociatedIds]);
 
+
   useEffect(() => {
     if (!map || !markers || markers.length === 0) return;
+
 
     clearCompetenciaMarkers();
     clearPolylines();
@@ -628,15 +716,20 @@ if (tieneGuerra) {
     setActiveMercadoPbl(null);
     setOriginalPopupMarker(null);
 
+
     updateIconsInViewport(markers, true);
 
+
   }, [map, markers, selectedRegion, updateIconsInViewport, clearCompetenciaMarkers, clearPolylines, clearGuerraMarkers]);
+
 
   useEffect(() => {
     if (!map) return;
 
+
     const handleZoomEnd = () => {
       if (zoomUpdateRef.current) clearTimeout(zoomUpdateRef.current);
+
 
       zoomUpdateRef.current = setTimeout(() => {
         if (showingAssociated) {
@@ -647,12 +740,15 @@ if (tieneGuerra) {
       }, 400);
     };
 
+
     map.on('zoomend', handleZoomEnd);
+
 
     return () => {
       map.off('zoomend', handleZoomEnd);
     };
   }, [map, markers, updateIconsInViewport, showingAssociated]);
+
 
   useEffect(() => {
     window.activarCorreccionCoordenadas = (pbl, id, eds, marca) => {
@@ -675,14 +771,17 @@ if (tieneGuerra) {
       }
     };
 
+
     window.guardarCorreccionCoordenadas = async (pbl, id, eds, marca) => {
       if (!modoCorreccion || !modoCorreccion.lat || !modoCorreccion.lng) {
         alert('⚠️ Primero selecciona una ubicación');
         return;
       }
 
+
       const identifier = pbl || id;
       console.log('💾 Guardando:', { pbl, id, identifier, marca });
+
 
       let marker = null;
       
@@ -706,11 +805,13 @@ if (tieneGuerra) {
         }
       }
 
+
       if (!marker) {
         console.error('❌ Marcador no encontrado:', { pbl, id });
         alert('❌ Error: No se encontró el marcador');
         return;
       }
+
 
       try {
         const coordenada = {
@@ -723,7 +824,9 @@ if (tieneGuerra) {
           lon_corregida: modoCorreccion.lng
         };
 
+
         console.log('📤 Enviando coordenada:', coordenada);
+
 
         await guardarCoordenadaCorregida(coordenada);
         console.log('✅ Coordenada guardada en backend');
@@ -775,14 +878,17 @@ if (tieneGuerra) {
       }
     };
 
+
     return () => {
       delete window.activarCorreccionCoordenadas;
       delete window.guardarCorreccionCoordenadas;
     };
   }, [map, modoCorreccion, markers, markersForMercado, baseCompData, selectedRegion]);
 
+
   useEffect(() => {
     if (!map || !modoCorreccion) return;
+
 
     const handleMapClick = (e) => {
       const { lat, lng } = e.latlng;
@@ -811,14 +917,18 @@ if (tieneGuerra) {
       map.getContainer().style.cursor = '';
     };
 
+
     map.on('click', handleMapClick);
+
 
     return () => {
       map.off('click', handleMapClick);
     };
   }, [map, modoCorreccion]);
 
+
   return null;
 };
+
 
 export default IconMarkersLayer;

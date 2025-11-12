@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getMercadoAlerta, getHistoricoAlerta } from '../services/apiService';
+import { getMercadoAlerta, getHistoricoAlerta, getDataBaseguerra } from '../services/apiService';
 import '../styles/AlertPanel.css';
 
 // Agrupar alertas por estación
@@ -34,6 +34,7 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
   const [activeTab, setActiveTab] = useState('alertas');
   const [alertas, setAlertas] = useState([]);
   const [historico, setHistorico] = useState([]);
+  const [guerraData, setGuerraData] = useState([]); // ✅ NUEVO: Estado para datos de guerra
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
 
@@ -46,29 +47,54 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
     }
   }, [isVisible, alertasExternas]);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [alertasData, historicoData] = await Promise.all([
-        getMercadoAlerta(),
-        getHistoricoAlerta()
-      ]);
-      setAlertas(Array.isArray(alertasData) ? alertasData : []);
-      setHistorico(Array.isArray(historicoData) ? historicoData : []);
-    } catch {
-      setAlertas([]);
-      setHistorico([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+// Donde llamas a la función en AlertPanel:
+const loadData = async () => {
+  try {
+    setLoading(true);
+    const [alertasData, historicoData, guerraDataResult] = await Promise.all([
+      getMercadoAlerta(),
+      getHistoricoAlerta(),
+      getDataBaseguerra()
+    ]);
+    setAlertas(Array.isArray(alertasData) ? alertasData : []);
+    setHistorico(Array.isArray(historicoData) ? historicoData : []);
+  
+    // ESTA es la línea clave: revisa si la respuesta tiene un .data (estructura {data:[...]})
+    const guerraArr =
+      Array.isArray(guerraDataResult) ? guerraDataResult :
+      Array.isArray(guerraDataResult?.data) ? guerraDataResult.data : [];
+    setGuerraData(guerraArr);
+
+  } catch {
+    setAlertas([]);
+    setHistorico([]);
+    setGuerraData([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const agrupadas = useMemo(() => groupAlertsByStation(alertas), [alertas]);
   const cantidadEstaciones = useMemo(() => getStationCount(alertas), [alertas]);
 
+  // ✅ NUEVO: Procesar datos de guerra ordenados por estado
+  const estacionesGuerra = useMemo(() => {
+    if (!Array.isArray(guerraData)) return [];
+    
+    return guerraData
+      .filter(item => item.Activa === 'Si') // Solo estaciones activas
+      .sort((a, b) => {
+        // Primero las que están en guerra
+        if (a.Guerra_Precio === 'Si' && b.Guerra_Precio !== 'Si') return -1;
+        if (a.Guerra_Precio !== 'Si' && b.Guerra_Precio === 'Si') return 1;
+        // Luego por nombre
+        return (a.Nom_Eds || '').localeCompare(b.Nom_Eds || '');
+      });
+  }, [guerraData]);
+
   const totalPages = Math.max(1, Math.ceil(historico.length / ITEMS_PER_PAGE));
 
-  // Ordenar historial por fecha descendente usando parseFecha
   const historicoSorted = useMemo(() => {
     return [...historico].sort((a, b) => parseFecha(b.Fecha) - parseFecha(a.Fecha));
   }, [historico]);
@@ -92,6 +118,12 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
           Alertas Activas ({cantidadEstaciones})
         </button>
         <button
+          className={`alert-tab ${activeTab === 'guerra' ? 'active' : ''}`}
+          onClick={() => setActiveTab('guerra')}
+        >
+          En Seguimiento ({estacionesGuerra.length})
+        </button>
+        <button
           className={`alert-tab ${activeTab === 'historico' ? 'active' : ''}`}
           onClick={() => setActiveTab('historico')}
         >
@@ -101,19 +133,19 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
       <div className="alert-panel-content">
         {loading ? (
           <div className="alert-loading">Cargando...</div>
+        ) : activeTab === 'alertas' ? (
+          <AlertasActivas agrupadas={agrupadas} />
+        ) : activeTab === 'guerra' ? (
+          <GuerraPreciosPanel data={estacionesGuerra} />
         ) : (
-          activeTab === 'alertas' ? (
-            <AlertasActivas agrupadas={agrupadas} />
-          ) : (
-            <>
-              <HistoricoAlertas data={historicoPageSlice} />
-              <div style={{ marginTop: 10, textAlign: 'center' }}>
-                <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
-                <span style={{ margin: '0 10px' }}>Página {page} de {totalPages}</span>
-                <button onClick={handleNextPage} disabled={page === totalPages}>Siguiente</button>
-              </div>
-            </>
-          )
+          <>
+            <HistoricoAlertas data={historicoPageSlice} />
+            <div style={{ marginTop: 10, textAlign: 'center' }}>
+              <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
+              <span style={{ margin: '0 10px' }}>Página {page} de {totalPages}</span>
+              <button onClick={handleNextPage} disabled={page === totalPages}>Siguiente</button>
+            </div>
+          </>
         )}
       </div>
     </aside>
@@ -182,23 +214,65 @@ const AlertasActivas = ({ agrupadas }) => {
   );
 };
 
+const GuerraPreciosPanel = ({ data }) => {
+  if (!Array.isArray(data) || data.length === 0) {
+    return <div className="alert-empty">No hay estaciones disponibles</div>;
+  }
+  return (
+    <div className="guerra-list-simple">
+      {data.map((item, idx) => (
+        <div className={`guerra-simple-card${item.Guerra_Precio === 'Si' ? ' gcard-guerra' : ''}`} key={idx}>
+          <div className="gsc-header">
+            <span className={`gsc-icon${item.Guerra_Precio === 'Si' ? ' guerra' : ''}`}>⚡</span>
+            <span className="gsc-eds">{item.Nom_Eds}</span>
+            <span className="gsc-pbl">
+              <span className="gsc-pbl-label">PBL</span>
+              <span className="gsc-pbl-value">{item.PBL}</span>
+            </span>
+          </div>
+          <div className="gsc-row">
+            <span className="gsc-label">CNE:</span>
+            <span className="gsc-value">{item.ID_Cne}</span>
+            <span className="gsc-label">Tipo:</span>
+            <span className="gsc-value">{item.Tipo_EDS}</span>
+            <span className={`gsc-label estado ${item.Activa === 'Si' ? 'activo' : 'inactivo'}`}>
+              {item.Activa === 'Si' ? 'Activa' : 'Inactiva'}
+            </span>
+          </div>
+          <div className="gsc-row">
+            <span className="gsc-label">Región:</span>
+            <span className="gsc-value">{item.region}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+
 const HistoricoAlertas = ({ data }) => {
   if (!Array.isArray(data)) return <div className="alert-empty">⚠️ Error: Los datos no son un array</div>;
   if (data.length === 0) return <div className="alert-empty">📋 No hay histórico disponible</div>;
 
   return (
     <div className="historico-wrapper">
-      <table className="historico-table">
+      <table className="historico-table-compact">
         <thead>
           <tr>
-            <th>Estación</th>
-            <th>Marca</th>
-            <th>Comb.</th>
-            <th>Precio</th>
-            <th>Anterior</th>
-            <th>Dif</th>
-            <th>Tipo</th>
-            <th>Fecha</th>
+            <th title="Estación">Estación</th>
+            <th title="Marca">Marca</th>
+            <th title="Código CNE">CNE</th>
+            <th title="Combustible">Comb</th>
+            <th title="PBL">PBL</th>
+            <th title="Precio Actual">P Actual</th>
+            <th title="Precio Anterior">P Anterior</th>
+            <th title="Diferencia">Ajuste</th>
+            <th title="Tipo de Atención">Tipo</th>
+            <th title="Horario">Horario</th>
+            <th title="Fecha Cambio Actual">Fecha Actual</th>
+            <th title="Fecha Cambio Anterior">Fecha Anterior</th>
+            <th title="Fecha de Carga">Fecha Carga</th>
+            <th title="Marcador Principal">Marcador</th>
           </tr>
         </thead>
         <tbody>
@@ -207,18 +281,73 @@ const HistoricoAlertas = ({ data }) => {
             const precioAnterior = Number(item.PrecioAnterior) || 0;
             const diferencia = precioActual - precioAnterior;
             const guerra = item.Guerra_Precio === 'Si';
+            const marcadorPrincipal = item.Marcador_Principal === 'Si';
+            
+            const cambioClass = diferencia > 0 ? 'precio-sube' : diferencia < 0 ? 'precio-baja' : 'precio-igual';
+            const cambioIcon = diferencia > 0 ? '↑' : diferencia < 0 ? '↓' : '=';
+            const cambioSigno = diferencia > 0 ? '+' : '';
+            
+            const tipoIcon = item.tipo_atencion === 'Asistido' ? '👤' : item.tipo_atencion === 'Autoservicio' ? '⛽' : '❓';
+            
+            const formatFechaCompacta = (fechaStr) => {
+              if (!fechaStr) return { dia: '-', hora: '' };
+              const [fecha, hora] = fechaStr.split(' ');
+              return {
+                dia: fecha || '-',
+                hora: hora?.substring(0, 5) || ''
+              };
+            };
+            
+            const fechaActual = formatFechaCompacta(item.Fecha);
+            const fechaAnterior = formatFechaCompacta(item.FechaAnterior);
+            const fechaCarga = formatFechaCompacta(item.FechaCarga);
+            
             return (
-              <tr key={idx} className={guerra ? 'guerra-row' : ''}>
-                <td title={item.Nom_Eds}>{item.Nom_Eds?.slice(0, 20)}...</td>
-                <td>{item.marca}</td>
-                <td>{item.Combustible}</td>
-                <td>${precioActual}</td>
-                <td>${precioAnterior}</td>
-                <td className={diferencia < 0 ? 'negative' : 'positive'}>
-                  {diferencia > 0 ? '+' : ''}{diferencia}
+              <tr 
+                key={idx} 
+                className={`historico-row ${guerra ? 'guerra-row' : ''} ${marcadorPrincipal ? 'principal-row' : ''}`}
+              >
+                <td className="td-estacion" title={item.Nom_Eds}>
+                  {item.Nom_Eds?.slice(0, 18) || 'S/N'}
                 </td>
-                <td>{item.tipo_atencion}</td>
-                <td className="fecha-small">{item.Fecha}</td>
+                <td className="td-marca">{item.marca || '-'}</td>
+                <td className="td-cne" title={item.cod_cne}>{item.cod_cne?.slice(-6) || '-'}</td>
+                <td className="td-combustible">
+                  <span className={`combustible-badge combustible-${item.Combustible?.toLowerCase()}`}>
+                    {item.Combustible || '-'}
+                  </span>
+                </td>
+                <td className="td-pbl">{item.pbl || '-'}</td>
+                <td className="td-precio"><strong>${precioActual}</strong></td>
+                <td className="td-anterior">${precioAnterior}</td>
+                <td className={`td-diferencia ${cambioClass}`}>
+                  <strong>{cambioIcon} {cambioSigno}{diferencia}</strong>
+                </td>
+                <td className="td-tipo" title={item.tipo_atencion}>{tipoIcon}</td>
+                <td className="td-horario" title={item.Horario}>
+                  <span className="horario-texto">{item.Horario || '-'}</span>
+                </td>
+                <td className="td-fecha">
+                  <div className="fecha-compacta">
+                    <span className="fecha-dia">{fechaActual.dia}</span>
+                    <span className="fecha-hora">{fechaActual.hora}</span>
+                  </div>
+                </td>
+                <td className="td-fecha">
+                  <div className="fecha-compacta">
+                    <span className="fecha-dia">{fechaAnterior.dia}</span>
+                    <span className="fecha-hora">{fechaAnterior.hora}</span>
+                  </div>
+                </td>
+                <td className="td-fecha">
+                  <div className="fecha-compacta">
+                    <span className="fecha-dia">{fechaCarga.dia}</span>
+                    <span className="fecha-hora">{fechaCarga.hora}</span>
+                  </div>
+                </td>
+                <td className="td-principal">
+                  {marcadorPrincipal && <span className="principal-icon" title="Marcador Principal">SI</span>}
+                </td>
               </tr>
             );
           })}
