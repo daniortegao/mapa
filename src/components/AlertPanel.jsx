@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getMercadoAlerta, getHistoricoAlerta, getDataBaseguerra } from '../services/apiService';
+import { getMercadoAlerta, getHistoricoAlerta, getDataBaseguerra, getDataBaseajuste } from '../services/apiService';
 import '../styles/AlertPanel.css';
 
 // Agrupar alertas por estación
@@ -34,9 +34,18 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
   const [activeTab, setActiveTab] = useState('alertas');
   const [alertas, setAlertas] = useState([]);
   const [historico, setHistorico] = useState([]);
-  const [guerraData, setGuerraData] = useState([]); // ✅ NUEVO: Estado para datos de guerra
+  const [guerraData, setGuerraData] = useState([]);
+  const [ajustesData, setAjustesData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+
+  // Estados para filtros histórico
+  const [filterNombreEstacion, setFilterNombreEstacion] = useState('');
+  const [filterSoloGuerra, setFilterSoloGuerra] = useState(false);
+
+  // Estados para filtros ajustes
+  const [filterNombreAjuste, setFilterNombreAjuste] = useState('');
+  const [filterCombustible, setFilterCombustible] = useState('');
 
   useEffect(() => {
     if (alertasExternas) {
@@ -47,62 +56,122 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
     }
   }, [isVisible, alertasExternas]);
 
-// Donde llamas a la función en AlertPanel:
-const loadData = async () => {
-  try {
-    setLoading(true);
-    const [alertasData, historicoData, guerraDataResult] = await Promise.all([
-      getMercadoAlerta(),
-      getHistoricoAlerta(),
-      getDataBaseguerra()
-    ]);
-    setAlertas(Array.isArray(alertasData) ? alertasData : []);
-    setHistorico(Array.isArray(historicoData) ? historicoData : []);
-  
-    // ESTA es la línea clave: revisa si la respuesta tiene un .data (estructura {data:[...]})
-    const guerraArr =
-      Array.isArray(guerraDataResult) ? guerraDataResult :
-      Array.isArray(guerraDataResult?.data) ? guerraDataResult.data : [];
-    setGuerraData(guerraArr);
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [alertasData, historicoData, guerraDataResult, ajustesDataResult] = await Promise.all([
+        getMercadoAlerta(),
+        getHistoricoAlerta(),
+        getDataBaseguerra(),
+        getDataBaseajuste()
+      ]);
+      
+      setAlertas(Array.isArray(alertasData) ? alertasData : []);
+      setHistorico(Array.isArray(historicoData) ? historicoData : []);
+    
+      const guerraArr =
+        Array.isArray(guerraDataResult) ? guerraDataResult :
+        Array.isArray(guerraDataResult?.data) ? guerraDataResult.data : [];
+      setGuerraData(guerraArr);
 
-  } catch {
-    setAlertas([]);
-    setHistorico([]);
-    setGuerraData([]);
-  } finally {
-    setLoading(false);
-  }
-};
+      const ajustesArr =
+        Array.isArray(ajustesDataResult) ? ajustesDataResult :
+        Array.isArray(ajustesDataResult?.data) ? ajustesDataResult.data : [];
+      setAjustesData(ajustesArr);
 
+    } catch {
+      setAlertas([]);
+      setHistorico([]);
+      setGuerraData([]);
+      setAjustesData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const agrupadas = useMemo(() => groupAlertsByStation(alertas), [alertas]);
   const cantidadEstaciones = useMemo(() => getStationCount(alertas), [alertas]);
 
-  // ✅ NUEVO: Procesar datos de guerra ordenados por estado
   const estacionesGuerra = useMemo(() => {
     if (!Array.isArray(guerraData)) return [];
     
     return guerraData
-      .filter(item => item.Activa === 'Si') // Solo estaciones activas
+      .filter(item => item.Activa === 'Si')
       .sort((a, b) => {
-        // Primero las que están en guerra
         if (a.Guerra_Precio === 'Si' && b.Guerra_Precio !== 'Si') return -1;
         if (a.Guerra_Precio !== 'Si' && b.Guerra_Precio === 'Si') return 1;
-        // Luego por nombre
         return (a.Nom_Eds || '').localeCompare(b.Nom_Eds || '');
       });
   }, [guerraData]);
 
-  const totalPages = Math.max(1, Math.ceil(historico.length / ITEMS_PER_PAGE));
+  // Filtrado del histórico
+  const historicoFiltrado = useMemo(() => {
+    let filtered = [...historico];
+
+    if (filterNombreEstacion.trim() !== '') {
+      const searchTerm = filterNombreEstacion.toLowerCase();
+      filtered = filtered.filter(item => 
+        (item.Nom_Eds || '').toLowerCase().includes(searchTerm)
+      );
+    }
+
+    if (filterSoloGuerra) {
+      const estacionesEnGuerra = new Set(
+        guerraData
+          .filter(g => g.Guerra_Precio === 'Si')
+          .map(g => g.Nom_Eds)
+      );
+      filtered = filtered.filter(item => estacionesEnGuerra.has(item.Nom_Eds));
+    }
+
+    return filtered;
+  }, [historico, filterNombreEstacion, filterSoloGuerra, guerraData]);
 
   const historicoSorted = useMemo(() => {
-    return [...historico].sort((a, b) => parseFecha(b.Fecha) - parseFecha(a.Fecha));
-  }, [historico]);
+    return [...historicoFiltrado].sort((a, b) => parseFecha(b.Fecha) - parseFecha(a.Fecha));
+  }, [historicoFiltrado]);
 
+  // Filtrado de ajustes
+  const ajustesFiltrado = useMemo(() => {
+    let filtered = [...ajustesData];
+
+    if (filterNombreAjuste.trim() !== '') {
+      const searchTerm = filterNombreAjuste.toLowerCase();
+      filtered = filtered.filter(item => 
+        (item.Nom_Eds || '').toLowerCase().includes(searchTerm)
+      );
+    }
+
+    if (filterCombustible.trim() !== '') {
+      filtered = filtered.filter(item => 
+        item.combustible === filterCombustible
+      );
+    }
+
+    return filtered;
+  }, [ajustesData, filterNombreAjuste, filterCombustible]);
+
+  const ajustesSorted = useMemo(() => {
+    return [...ajustesFiltrado];
+  }, [ajustesFiltrado]);
+
+  const totalPages = Math.max(1, Math.ceil(historicoSorted.length / ITEMS_PER_PAGE));
+  const totalPagesAjustes = Math.max(1, Math.ceil(ajustesSorted.length / ITEMS_PER_PAGE));
+  
   const historicoPageSlice = historicoSorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  const ajustesPageSlice = ajustesSorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   const handlePrevPage = () => setPage(p => Math.max(p - 1, 1));
-  const handleNextPage = () => setPage(p => Math.min(p + 1, totalPages));
+  const handleNextPage = () => setPage(p => Math.min(p + 1, activeTab === 'ajustes' ? totalPagesAjustes : totalPages));
+
+  // Reset página al cambiar filtros o tab
+  useEffect(() => {
+    setPage(1);
+  }, [filterNombreEstacion, filterSoloGuerra, filterNombreAjuste, filterCombustible, activeTab]);
+
+  const combustiblesUnicos = useMemo(() => {
+    return [...new Set(ajustesData.map(a => a.combustible))].filter(Boolean);
+  }, [ajustesData]);
 
   return (
     <aside className={`alert-panel${!isVisible ? ' hidden' : ''}`}>
@@ -117,17 +186,24 @@ const loadData = async () => {
         >
           Alertas Activas ({cantidadEstaciones})
         </button>
+        
+        <button
+          className={`alert-tab ${activeTab === 'historico' ? 'active' : ''}`}
+          onClick={() => setActiveTab('historico')}
+        >
+          Histórico Movimiento ({historicoSorted.length})
+        </button>
+        <button
+          className={`alert-tab ${activeTab === 'ajustes' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ajustes')}
+        >
+          Ajustes PES ({ajustesSorted.length})
+        </button>
         <button
           className={`alert-tab ${activeTab === 'guerra' ? 'active' : ''}`}
           onClick={() => setActiveTab('guerra')}
         >
           En Seguimiento ({estacionesGuerra.length})
-        </button>
-        <button
-          className={`alert-tab ${activeTab === 'historico' ? 'active' : ''}`}
-          onClick={() => setActiveTab('historico')}
-        >
-          Histórico ({historico.length})
         </button>
       </div>
       <div className="alert-panel-content">
@@ -137,13 +213,37 @@ const loadData = async () => {
           <AlertasActivas agrupadas={agrupadas} />
         ) : activeTab === 'guerra' ? (
           <GuerraPreciosPanel data={estacionesGuerra} />
-        ) : (
+        ) : activeTab === 'historico' ? (
           <>
-            <HistoricoAlertas data={historicoPageSlice} />
-            <div style={{ marginTop: 10, textAlign: 'center' }}>
+            <HistoricoAlertas 
+              data={historicoPageSlice}
+              filterNombreEstacion={filterNombreEstacion}
+              setFilterNombreEstacion={setFilterNombreEstacion}
+              filterSoloGuerra={filterSoloGuerra}
+              setFilterSoloGuerra={setFilterSoloGuerra}
+              totalItems={historicoSorted.length}
+            />
+            <div style={{ marginTop: 10, textAlign: 'center', padding: '10px', background: 'white' }}>
               <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
               <span style={{ margin: '0 10px' }}>Página {page} de {totalPages}</span>
               <button onClick={handleNextPage} disabled={page === totalPages}>Siguiente</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <AjustesTabla
+              data={ajustesPageSlice}
+              filterNombreAjuste={filterNombreAjuste}
+              setFilterNombreAjuste={setFilterNombreAjuste}
+              filterCombustible={filterCombustible}
+              setFilterCombustible={setFilterCombustible}
+              combustiblesUnicos={combustiblesUnicos}
+              totalItems={ajustesSorted.length}
+            />
+            <div style={{ marginTop: 10, textAlign: 'center', padding: '10px', background: 'white' }}>
+              <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
+              <span style={{ margin: '0 10px' }}>Página {page} de {totalPagesAjustes}</span>
+              <button onClick={handleNextPage} disabled={page === totalPagesAjustes}>Siguiente</button>
             </div>
           </>
         )}
@@ -249,13 +349,41 @@ const GuerraPreciosPanel = ({ data }) => {
   );
 };
 
-
-const HistoricoAlertas = ({ data }) => {
+const HistoricoAlertas = ({ 
+  data, 
+  filterNombreEstacion, 
+  setFilterNombreEstacion, 
+  filterSoloGuerra, 
+  setFilterSoloGuerra,
+  totalItems 
+}) => {
   if (!Array.isArray(data)) return <div className="alert-empty">⚠️ Error: Los datos no son un array</div>;
   if (data.length === 0) return <div className="alert-empty">📋 No hay histórico disponible</div>;
 
   return (
     <div className="historico-wrapper">
+      <div className="historico-filtros">
+        <input
+          id="filter-nombre"
+          type="text"
+          className="input-filtro-hist"
+          placeholder="Buscar estación..."
+          value={filterNombreEstacion}
+          onChange={(e) => setFilterNombreEstacion(e.target.value)}
+        />
+        <label className="check-filtro-hist">
+          <input
+            type="checkbox"
+            checked={filterSoloGuerra}
+            onChange={(e) => setFilterSoloGuerra(e.target.checked)}
+          />
+          <span>Solo estaciones en guerra</span>
+        </label>
+        <span style={{ marginLeft: 'auto', color: '#666', fontSize: '13px', fontWeight: 600 }}>
+          Mostrando {data.length} de {totalItems}
+        </span>
+      </div>
+
       <table className="historico-table-compact">
         <thead>
           <tr>
@@ -356,5 +484,276 @@ const HistoricoAlertas = ({ data }) => {
     </div>
   );
 };
+
+const AjustesTabla = ({ 
+  data, 
+  filterNombreAjuste,
+  setFilterNombreAjuste,
+  filterCombustible,
+  setFilterCombustible,
+  combustiblesUnicos,
+  totalItems
+}) => {
+  const [vistaDetallada, setVistaDetallada] = useState(false);
+
+  // ✅ Agrupar por cod_cne y luego por combinación de Diferencia_Competencia + Estrategia_Propia
+  const agrupadosPorEstacion = useMemo(() => {
+    const grupos = {};
+    data.forEach(item => {
+      const key = item.cod_cne || 'sin_cne';
+      if (!grupos[key]) {
+        grupos[key] = {
+          Nom_Eds: item.Nom_Eds,
+          marca: item.marca,
+          cod_cne: item.cod_cne,
+          pbl: item.pbl,
+          combustibles: []
+        };
+      }
+      grupos[key].combustibles.push(item);
+    });
+    
+    // Sub-agrupar combustibles por combinación única de diferencias
+    return Object.values(grupos).map(grupo => {
+      const subgrupos = {};
+      grupo.combustibles.forEach(comb => {
+        const difComp = comb.Diferencia_Competencia || 0;
+        const difPropia = comb.Estrategia_Propia || 0;
+        const combinedKey = `${difComp}_${difPropia}`;
+        
+        if (!subgrupos[combinedKey]) {
+          subgrupos[combinedKey] = {
+            diferencia_competencia: difComp,
+            diferencia_propia: difPropia,
+            combustibles: []
+          };
+        }
+        subgrupos[combinedKey].combustibles.push(comb);
+      });
+      
+      return {
+        ...grupo,
+        subgrupos: Object.values(subgrupos)
+      };
+    });
+  }, [data]);
+
+  if (data.length === 0) 
+    return <div className="alert-empty">📋 No hay datos de ajustes disponibles</div>;
+
+  const formatFecha = (fechaStr) => {
+    if (!fechaStr || fechaStr === 'Mantiene Fecha') return { dia: 'Mantiene', hora: '' };
+    const [datePart, timePart] = fechaStr.split(' ');
+    return {
+      dia: datePart || '-',
+      hora: timePart?.substring(0, 5) || ''
+    };
+  };
+
+  return (
+    <div className="historico-wrapper">
+      <div className="historico-filtros">
+        <input
+          type="text"
+          className="input-filtro-hist"
+          placeholder="Buscar estación..."
+          value={filterNombreAjuste}
+          onChange={(e) => setFilterNombreAjuste(e.target.value)}
+        />
+        <select
+          className="input-filtro-hist"
+          value={filterCombustible}
+          onChange={(e) => setFilterCombustible(e.target.value)}
+          style={{ minWidth: '150px' }}
+        >
+          <option value="">Todos los combustibles</option>
+          {combustiblesUnicos.map(comb => (
+            <option key={comb} value={comb}>{comb}</option>
+          ))}
+        </select>
+        
+        <label className="check-filtro-hist">
+          <input
+            type="checkbox"
+            checked={vistaDetallada}
+            onChange={(e) => setVistaDetallada(e.target.checked)}
+          />
+          <span>Vista detallada</span>
+        </label>
+
+        <span style={{ marginLeft: 'auto', color: '#666', fontSize: '13px', fontWeight: 600 }}>
+          Mostrando {vistaDetallada ? data.length : agrupadosPorEstacion.length} registros
+        </span>
+      </div>
+
+      {vistaDetallada ? (
+        /* Vista Detallada */
+        <table className="historico-table-compact">
+          <thead>
+            <tr>
+              <th>Estación</th>
+              <th>Marca</th>
+              <th>CNE</th>
+              <th>Combustible</th>
+              <th>PBL</th>
+              <th>Precio Asistido</th>
+              <th>Precio Autoservicio</th>
+              <th>Dif. Competencia</th>
+              <th>Estrategia Propia</th>
+              <th>Cambio Precio</th>
+              <th>Fecha Autoservicio</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item, idx) => {
+              const fechaAutoservicio = formatFecha(item.fecha_autoservicio);
+              const difEstrategia = item.Estrategia_Propia || 0;
+              const difCompetencia = item.Diferencia_Competencia || 0;
+              
+              return (
+                <tr key={idx}>
+                  <td className="td-estacion" title={item.Nom_Eds}>
+                    {item.Nom_Eds?.slice(0, 18) || 'S/N'}
+                  </td>
+                  <td className="td-marca">{item.marca || '-'}</td>
+                  <td className="td-cne" title={item.cod_cne}>{item.cod_cne?.slice(-6) || '-'}</td>
+                  <td className="td-combustible">
+                    <span className={`combustible-badge combustible-${item.combustible?.toLowerCase()}`}>
+                      {item.combustible || '-'}
+                    </span>
+                  </td>
+                  <td className="td-pbl">{item.pbl || '-'}</td>
+                  <td className="td-precio"><strong>${item.precio_asistido || 0}</strong></td>
+                  <td className="td-precio"><strong>${item.precio_autoservicio || 0}</strong></td>
+                  <td className={`td-diferencia ${difCompetencia > 0 ? 'precio-sube' : difCompetencia < 0 ? 'precio-baja' : 'precio-igual'}`}>
+                    <strong>{difCompetencia > 0 ? '+' : ''}{difCompetencia}</strong>
+                  </td>
+                  <td className={`td-diferencia ${difEstrategia > 0 ? 'precio-sube' : difEstrategia < 0 ? 'precio-baja' : 'precio-igual'}`}>
+                    <strong>{difEstrategia > 0 ? '+' : ''}{difEstrategia}</strong>
+                  </td>
+                  <td style={{ fontSize: '8px', maxWidth: '100px', textAlign: 'center' }}>
+                    {item.cambio_precio || '-'}
+                  </td>
+                  <td className="td-fecha">
+                    <div className="fecha-compacta">
+                      <span className="fecha-dia">{fechaAutoservicio.dia}</span>
+                      <span className="fecha-hora">{fechaAutoservicio.hora}</span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      ) : (
+        /* Vista Simplificada - Agrupada por combinación única de diferencias */
+        <table className="historico-table-compact ajustes-simplified">
+          <thead>
+            <tr>
+              <th>EDS</th>
+              <th>Marca</th>
+              <th colSpan="2">Diferencia Competencia</th>
+              <th colSpan="2">Diferencia Propia</th>
+              <th>Cambio</th>
+            </tr>
+          </thead>
+          <tbody>
+            {agrupadosPorEstacion.map((grupo, idx) => (
+              grupo.subgrupos.map((subgrupo, subIdx) => (
+                <tr key={`${idx}-${subIdx}`}>
+                  {/* Nombre de estación y marca solo en primera fila del grupo */}
+                  {subIdx === 0 ? (
+                    <>
+                      <td 
+                        className="td-estacion" 
+                        style={{ fontSize: '11px', fontWeight: '600' }}
+                        rowSpan={grupo.subgrupos.length}
+                      >
+                        {grupo.Nom_Eds || 'S/N'}
+                      </td>
+                      <td 
+                        className="td-marca" 
+                        style={{ fontSize: '10px' }}
+                        rowSpan={grupo.subgrupos.length}
+                      >
+                        {grupo.marca || '-'}
+                      </td>
+                    </>
+                  ) : null}
+                  
+                  {/* Diferencia Competencia - Una línea por valor único */}
+                  <td colSpan="2" style={{ padding: '4px 8px' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        {subgrupo.combustibles.map((comb, i) => (
+                          <span 
+                            key={i}
+                            className={`combustible-badge combustible-${comb.combustible?.toLowerCase()}`}
+                          >
+                            {comb.combustible}
+                          </span>
+                        ))}
+                      </div>
+                      <span className={`td-diferencia ${
+                        subgrupo.diferencia_competencia > 0 ? 'precio-sube' : 
+                        subgrupo.diferencia_competencia < 0 ? 'precio-baja' : 'precio-igual'
+                      }`} style={{ fontWeight: '700', fontSize: '11px', minWidth: '40px', textAlign: 'right' }}>
+                        {subgrupo.diferencia_competencia > 0 ? '+' : ''}{subgrupo.diferencia_competencia}
+                      </span>
+                    </div>
+                  </td>
+                  
+                  {/* Diferencia Propia - Agrupar también si son iguales */}
+                  <td colSpan="2" style={{ padding: '4px 8px' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        {subgrupo.combustibles.map((comb, i) => (
+                          <span 
+                            key={i}
+                            className={`combustible-badge combustible-${comb.combustible?.toLowerCase()}`}
+                          >
+                            {comb.combustible}
+                          </span>
+                        ))}
+                      </div>
+                      <span className={`td-diferencia ${
+                        subgrupo.diferencia_propia > 0 ? 'precio-sube' : 
+                        subgrupo.diferencia_propia < 0 ? 'precio-baja' : 'precio-igual'
+                      }`} style={{ fontWeight: '700', fontSize: '11px', minWidth: '40px', textAlign: 'right' }}>
+                        {subgrupo.diferencia_propia > 0 ? '+' : ''}{subgrupo.diferencia_propia}
+                      </span>
+                    </div>
+                  </td>
+                  
+                  {/* Cambio - Solo en primera fila */}
+                  {subIdx === 0 ? (
+                    <td 
+                      style={{ fontSize: '8px', textAlign: 'center', maxWidth: '120px' }}
+                      rowSpan={grupo.subgrupos.length}
+                    >
+                      {grupo.combustibles[0]?.cambio_precio || '-'}
+                    </td>
+                  ) : null}
+                </tr>
+              ))
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+};
+
+
 
 export default AlertPanel;

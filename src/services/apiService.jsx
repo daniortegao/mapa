@@ -90,3 +90,13 @@ export const getDataBaseguerra = async () => {
     throw error;
   }
 };
+
+export const getDataBaseajuste = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/Base_Ajuste`);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener datos desde la API (Base_Ajuste):", error);
+    throw error;
+  }
+};

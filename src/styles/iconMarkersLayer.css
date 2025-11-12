@@ -4,8 +4,9 @@
 
 .icon-markers-popup-content {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  width: 420px;
+  width: 380px;
   color: #333;
+  
 }
 
 /* ============================================
@@ -50,8 +51,8 @@
 
 .popup-logo {
   position: absolute;
-  top: 8px;
-  right: 50px;
+  top: 45px;
+  right: 5px;
   width: 110px;
   height: auto;
   max-height: 55px;
@@ -69,7 +70,7 @@
    ============================================ */
 
 .popup-tabs-container {
-  width: 100%;
+  width: 380px;
   border: 1px solid #c0c0c0;
   border-radius: 4px;
   overflow: hidden;
@@ -87,7 +88,7 @@
 
 .popup-tab-button {
   flex: 1;
-  padding: 8px 4px;
+  padding: 4px 4px;
   border: none;
   background: #e8f4f8;
   color: #333;
@@ -176,8 +177,8 @@
    ============================================ */
 
 .popup-table-wrapper {
-  width: 100%;
-  max-height: 200px;
+  width: 360px;
+  height: 200px;
   overflow-y: auto;
   overflow-x: auto;
 }
@@ -272,7 +273,7 @@
 .popup-button-mercado {
   width: 100px;
   padding: 5px 5px;
-  margin: 10px;
+  margin: 2px;
   display: block;
   background: #007bff;
   color: white;
@@ -283,6 +284,10 @@
   font-size: 11px;
   transition: background 0.2s ease;
 }
+
+
+
+
 
 .popup-button-mercado:hover {
   background: #0056b3;
@@ -297,7 +302,7 @@
 }
 
 /* ============================================
-   LEAFLET POPUP CUSTOMIZATION
+  CAMBIAR MEDIDAS Y ESTILOS DE POPUP DE LEAFLET
    ============================================ */
 
 .leaflet-popup {
@@ -311,11 +316,35 @@
   border: 1px solid #dee2e6;
 }
 
-.leaflet-popup-content {
+
+
+.leaflet-popup-content { 
   margin: 0;
-  width: 420px !important;
+  width: 380px !important;
+  height: 370px;
   padding: 0;
+  margin: 5px 5px 5px 5px !important;  /* Cambia el margin según necesites */
+  line-height: 1.4 !important;
+  font-size: 1rem !important;              /* O un tamaño fijo: 14px !important */
+  min-height: 10px !important;             /* El que quieras */
+  color: #222 !important;                  /* Puedes cambiar color si lo requieres */
 }
+
+.leaflet-container a.leaflet-popup-close-button {
+    position: absolute !important;
+    top: 0;
+    right: 0;
+    border: none;
+    text-align: center;
+    width: 24px;
+    height: 24px;
+    font: 16px / 24px Tahoma, Verdana, sans-serif;
+    color: #0a0a0a !important;
+    text-decoration: none;
+    background: transparent;
+}
+
+
 
 .leaflet-popup-tip {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);

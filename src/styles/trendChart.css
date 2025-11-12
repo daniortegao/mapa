@@ -1,0 +1,72 @@
+.trend-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 300px; /* editable */
+  height: 160px;    /* editable */
+}
+
+.trend-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  padding-left: 6px;
+}
+
+.trend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: #34c759; /* color por defecto; el componente lo sobreescribe inline */
+}
+
+.trend-select {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  outline: none;
+}
+
+.trend-tooltip {
+  position: absolute;
+  z-index: 5;
+  display: none;            /* el componente la muestra cuando hay hover */
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  pointer-events: none;
+  max-width: 120px;
+  white-space: nowrap;
+}
+
+.trend-svg {
+  display: block;
+  width: 360px;
+  margin-left: -20px;
+}
+
+.trend-ylabel {
+  font-size: 10px;
+}
+
+.trend-xlabel {
+  font-size: 10px;
+}
+
+/* Parámetros de layout editables desde CSS custom properties */
+.trend-wrap {
+  --trend-width: 350px;     /* ancho máximo del SVG */
+  --trend-height: 160px;    /* alto del SVG */
+  --trend-left: 58px;       /* margen izquierdo para etiquetas Y */
+  --trend-right: 10px;      /* margen derecho */
+  --trend-top: 8px;         /* margen superior */
+  --trend-bottom: 24px;     /* margen inferior */
+  --trend-gap: 10px;        /* separación entre barras */
+  --trend-bar-max: 20px;    /* ancho máximo de cada barra */
+  --trend-bar-min: 10px;    /* ancho mínimo de cada barra */
+  --trend-start-pad: 6px;   /* padding visual antes de la 1ª barra */
+}
