@@ -105,7 +105,7 @@ function App() {
       <nav className="navbar">
         <div className="navbar-container">
           <div className="navbar-left">
-            <h1 className="navbar-title">Sistema de Monitoreo de Estaciones</h1>
+            <h1 className="navbar-title">S.I.M.E</h1>
             <span className="navbar-subtitle">{selectedRegion}</span>
           </div>
           

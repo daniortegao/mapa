@@ -159,7 +159,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
             <div class="popup-tab-pane active" data-tab="precios">${tablaPreciosHtml}</div>
 
             <div class="popup-tab-pane" data-tab="tendencias">
-              <div id="trend-root-${marker.id}" style="min-width:320px;min-height:170px;padding-top:6px;"></div>
+             <div id="trend-root-${marker.id}" style="width:100%;min-height:160px;padding-top:6px;"></div>
             </div>
 
             <div class="popup-tab-pane" data-tab="coordenadas">
@@ -189,11 +189,115 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         </div>
 
         ${marker.pbl && (marker.Marca === 'Aramco' || marker.Marca === 'Petrobras')
-          ? `<button class="popup-button-mercado" onclick="window.showAssociatedIds && window.showAssociatedIds(${marker.pbl}, ${marker.lat}, ${marker.lng}, '${marker.id}')">Mercado</button>`
-          : ''
-        }
+        ? `<button class="popup-button-mercado" onclick="window.showAssociatedIds && window.showAssociatedIds(${marker.pbl}, ${marker.lat}, ${marker.lng}, '${marker.id}')">Mercado</button>`
+        : ''
+      }
       </div>
     `;
+  }, []);
+
+  // Crea el grip en el WRAPPER del popup y elimina cualquier grip en el content
+  const crearGripEnWrapper = useCallback((popupContainer) => {
+    const wrapper = popupContainer.querySelector('.leaflet-popup-content-wrapper');
+    const content = popupContainer.querySelector('.leaflet-popup-content');
+    if (!wrapper || !content) return;
+
+    // borra grips mal ubicados en el content
+    content?.querySelectorAll('.popup-resize-grip').forEach(n => n.remove());
+
+    // Desacelerar el scroll en el contenido del popup
+    const handleWheel = (e) => {
+      e.preventDefault();
+      
+      // AJUSTE: Factor de desaceleración (más bajo = más lento)
+      const scrollSpeed = 0.0; // Cambia este valor: 0.1 (muy lento) a 1.0 (normal)
+      
+      const scrollAmount = e.deltaY * scrollSpeed;
+      content.scrollTop += scrollAmount;
+    };
+    
+    // Aplicar el listener de scroll desacelerado
+    content.addEventListener('wheel', handleWheel, { passive: false });
+
+    // crea si no existe en el wrapper
+    let grip = wrapper.querySelector('.popup-resize-grip');
+    if (!grip) {
+      grip = document.createElement('div');
+      grip.className = 'popup-resize-grip';
+      wrapper.appendChild(grip);
+      
+      // Funcionalidad de resize con tracking del cursor
+      let isResizing = false;
+      
+      const startResize = (e) => {
+        isResizing = true;
+        
+        // Agregar clase para cursor global
+        document.body.classList.add('is-resizing-popup');
+        document.body.style.cursor = 'nwse-resize';
+        document.body.style.userSelect = 'none';
+        
+        e.preventDefault();
+        e.stopPropagation();
+      };
+      
+      const doResize = (e) => {
+        if (!isResizing) return;
+        
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        
+        // Obtener posición actual del grip
+        const gripRect = grip.getBoundingClientRect();
+        const gripCenterX = gripRect.left + gripRect.width / 2;
+        const gripCenterY = gripRect.top + gripRect.height / 2;
+        
+        // Calcular diferencia desde el centro del grip
+        const deltaX = clientX - gripCenterX;
+        const deltaY = clientY - gripCenterY;
+        
+        // Solo ajustar si hay un cambio significativo (más de 5px)
+        if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+          const currentRect = content.getBoundingClientRect();
+          const newWidth = Math.max(240, currentRect.width + deltaX);
+          const newHeight = Math.max(180, currentRect.height + deltaY);
+          
+          content.style.width = newWidth + 'px';
+          content.style.height = newHeight + 'px';
+        }
+        
+        e.preventDefault();
+      };
+      
+      const stopResize = () => {
+        if (!isResizing) return;
+        isResizing = false;
+        document.body.classList.remove('is-resizing-popup');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+      
+      // Event listeners
+      grip.addEventListener('mousedown', startResize);
+      document.addEventListener('mousemove', doResize);
+      document.addEventListener('mouseup', stopResize);
+      
+      grip.addEventListener('touchstart', startResize, { passive: false });
+      document.addEventListener('touchmove', doResize, { passive: false });
+      document.addEventListener('touchend', stopResize);
+      
+      // Cleanup
+      const cleanup = () => {
+        content.removeEventListener('wheel', handleWheel);
+        document.removeEventListener('mousemove', doResize);
+        document.removeEventListener('mouseup', stopResize);
+        document.removeEventListener('touchmove', doResize);
+        document.removeEventListener('touchend', stopResize);
+        document.body.classList.remove('is-resizing-popup');
+      };
+      
+      grip._cleanup = cleanup;
+    }
   }, []);
 
   // Dibuja íconos visibles y arma popups con montaje diferido del gráfico
@@ -218,7 +322,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
 
       map.eachLayer((layer) => {
         if (layer instanceof L.Marker && !map.hasLayer(layer)) {
-          try { map.removeLayer(layer); } catch (e) {}
+          try { map.removeLayer(layer); } catch (e) { }
         }
       });
     }
@@ -303,6 +407,10 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
               makeDraggable(popup);
               setTimeout(() => {
                 const popupContainer = e.popup._container;
+                if (!popupContainer) return;
+                
+                // CREAR GRIP en el wrapper
+                crearGripEnWrapper(popupContainer);
 
                 const tabButtons = popupContainer.querySelectorAll('.popup-tab-button');
                 tabButtons.forEach(btn => {
@@ -339,11 +447,20 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
             leafletMarker.on('popupclose', (e) => {
               const container = e.popup?._container;
               if (!container) return;
+              
+              // Limpiar gráfico
               const el = container.querySelector(`#trend-root-${marker.id}`);
               if (el && el.__root) {
                 el.__root.unmount();
                 el.__mounted = false;
                 el.__root = null;
+              }
+              
+              // Limpiar event listeners del grip
+              const wrapper = container.querySelector('.leaflet-popup-content-wrapper');
+              const grip = wrapper?.querySelector('.popup-resize-grip');
+              if (grip && grip._cleanup) {
+                grip._cleanup();
               }
             });
 
@@ -374,7 +491,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
 
       delayOffset += 60;
     });
-  }, [map, makeDraggable, selectedRegion, generarTablaPrecios, obtenerHistoricoMarker, generarPopupContent, clearGuerraMarkers]);
+  }, [map, makeDraggable, selectedRegion, generarTablaPrecios, obtenerHistoricoMarker, generarPopupContent, clearGuerraMarkers, crearGripEnWrapper]);
 
   // Mostrar IDs asociados (Mercado)
   const showAssociatedIds = useCallback((pbl, lat, lng, originalMarkerId) => {
@@ -503,6 +620,10 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
             makeDraggable(popup);
             setTimeout(() => {
               const popupContainer = e.popup._container;
+              if (!popupContainer) return;
+              
+              // CREAR GRIP en el wrapper
+              crearGripEnWrapper(popupContainer);
 
               const tabButtons = popupContainer.querySelectorAll('.popup-tab-button');
               tabButtons.forEach(btn => {
@@ -536,11 +657,20 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
           leafletMarker.on('popupclose', (e) => {
             const container = e.popup?._container;
             if (!container) return;
+            
+            // Limpiar gráfico
             const el = container.querySelector(`#trend-root-${marker.id}`);
             if (el && el.__root) {
               el.__root.unmount();
               el.__mounted = false;
               el.__root = null;
+            }
+            
+            // Limpiar event listeners del grip
+            const wrapper = container.querySelector('.leaflet-popup-content-wrapper');
+            const grip = wrapper?.querySelector('.popup-resize-grip');
+            if (grip && grip._cleanup) {
+              grip._cleanup();
             }
           });
 
@@ -577,7 +707,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       setShowingAssociated(true);
       setActiveMercadoPbl(pbl);
     }
-  }, [baseCompData, markers, markersForMercado, map, makeDraggable, showingAssociated, activeMercadoPbl, updateIconsInViewport, clearCompetenciaMarkers, clearPolylines, clearGuerraMarkers, generarTablaPrecios, obtenerHistoricoMarker, generarPopupContent]);
+  }, [baseCompData, markers, markersForMercado, map, makeDraggable, showingAssociated, activeMercadoPbl, updateIconsInViewport, clearCompetenciaMarkers, clearPolylines, clearGuerraMarkers, generarTablaPrecios, obtenerHistoricoMarker, generarPopupContent, crearGripEnWrapper]);
 
   useEffect(() => {
     window.showAssociatedIds = showAssociatedIds;

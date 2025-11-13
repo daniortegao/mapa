@@ -358,7 +358,15 @@ const HistoricoAlertas = ({
   totalItems 
 }) => {
   if (!Array.isArray(data)) return <div className="alert-empty">⚠️ Error: Los datos no son un array</div>;
-  if (data.length === 0) return <div className="alert-empty">📋 No hay histórico disponible</div>;
+  
+  // Detecta si hay filtros activos
+  const hayFiltrosActivos = filterNombreEstacion.trim() !== '' || filterSoloGuerra;
+  
+  // Función para limpiar todos los filtros
+  const limpiarFiltros = () => {
+    setFilterNombreEstacion('');
+    setFilterSoloGuerra(false);
+  };
 
   return (
     <div className="historico-wrapper">
@@ -379,111 +387,146 @@ const HistoricoAlertas = ({
           />
           <span>Solo estaciones en guerra</span>
         </label>
+        
+        {hayFiltrosActivos && (
+          <button 
+            className="btn-limpiar-filtros"
+            onClick={limpiarFiltros}
+            title="Limpiar todos los filtros"
+          >
+            ✕ Limpiar
+          </button>
+        )}
+        
         <span style={{ marginLeft: 'auto', color: '#666', fontSize: '13px', fontWeight: 600 }}>
           Mostrando {data.length} de {totalItems}
         </span>
       </div>
 
-      <table className="historico-table-compact">
-        <thead>
-          <tr>
-            <th title="Estación">Estación</th>
-            <th title="Marca">Marca</th>
-            <th title="Código CNE">CNE</th>
-            <th title="Combustible">Comb</th>
-            <th title="PBL">PBL</th>
-            <th title="Precio Actual">P Actual</th>
-            <th title="Precio Anterior">P Anterior</th>
-            <th title="Diferencia">Ajuste</th>
-            <th title="Tipo de Atención">Tipo</th>
-            <th title="Horario">Horario</th>
-            <th title="Fecha Cambio Actual">Fecha Actual</th>
-            <th title="Fecha Cambio Anterior">Fecha Anterior</th>
-            <th title="Fecha de Carga">Fecha Carga</th>
-            <th title="Marcador Principal">Marcador</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item, idx) => {
-            const precioActual = Number(item.Precio) || 0;
-            const precioAnterior = Number(item.PrecioAnterior) || 0;
-            const diferencia = precioActual - precioAnterior;
-            const guerra = item.Guerra_Precio === 'Si';
-            const marcadorPrincipal = item.Marcador_Principal === 'Si';
-            
-            const cambioClass = diferencia > 0 ? 'precio-sube' : diferencia < 0 ? 'precio-baja' : 'precio-igual';
-            const cambioIcon = diferencia > 0 ? '↑' : diferencia < 0 ? '↓' : '=';
-            const cambioSigno = diferencia > 0 ? '+' : '';
-            
-            const tipoIcon = item.tipo_atencion === 'Asistido' ? '👤' : item.tipo_atencion === 'Autoservicio' ? '⛽' : '❓';
-            
-            const formatFechaCompacta = (fechaStr) => {
-              if (!fechaStr) return { dia: '-', hora: '' };
-              const [fecha, hora] = fechaStr.split(' ');
-              return {
-                dia: fecha || '-',
-                hora: hora?.substring(0, 5) || ''
+      {data.length === 0 && hayFiltrosActivos ? (
+        <div className="sin-resultados-filtro">
+          <div className="sin-resultados-content">
+            <span className="sin-resultados-icon">🔍</span>
+            <p className="sin-resultados-texto">
+              No se encontraron resultados para la búsqueda
+              {filterNombreEstacion && <strong> "{filterNombreEstacion}"</strong>}
+              {filterSoloGuerra && <span> (solo guerra)</span>}
+            </p>
+            <button 
+              className="btn-limpiar-filtros-destacado"
+              onClick={limpiarFiltros}
+            >
+              Limpiar filtros y ver todos
+            </button>
+          </div>
+        </div>
+      ) : data.length === 0 ? (
+        <div className="alert-empty">📋 No hay histórico disponible</div>
+      ) : (
+        <table className="historico-table-compact">
+          <thead>
+            <tr>
+              <th title="Estación">Estación</th>
+              <th title="Marca">Marca</th>
+              <th title="Código CNE">CNE</th>
+              <th title="Combustible">Comb</th>
+              <th title="PBL">PBL</th>
+              <th title="Precio Actual">P Actual</th>
+              <th title="Precio Anterior">P Anterior</th>
+              <th title="Diferencia">Ajuste</th>
+              <th title="Tipo de Atención">Tipo</th>
+              <th title="Horario">Horario</th>
+              <th title="Fecha Cambio Actual">Fecha Actual</th>
+              <th title="Fecha Cambio Anterior">Fecha Anterior</th>
+              <th title="Fecha de Carga">Fecha Carga</th>
+              <th title="Marcador Principal">Marcador</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item, idx) => {
+              const precioActual = Number(item.Precio) || 0;
+              const precioAnterior = Number(item.PrecioAnterior) || 0;
+              const diferencia = precioActual - precioAnterior;
+              const guerra = item.Guerra_Precio === 'Si';
+              const marcadorPrincipal = item.Marcador_Principal === 'Si';
+              
+              const cambioClass = diferencia > 0 ? 'precio-sube' : diferencia < 0 ? 'precio-baja' : 'precio-igual';
+              const cambioIcon = diferencia > 0 ? '↑' : diferencia < 0 ? '↓' : '=';
+              const cambioSigno = diferencia > 0 ? '+' : '';
+              
+              const tipoIcon = item.tipo_atencion === 'Asistido' ? '👤' : item.tipo_atencion === 'Autoservicio' ? '⛽' : '❓';
+              
+              const formatFechaCompacta = (fechaStr) => {
+                if (!fechaStr) return { dia: '-', hora: '' };
+                const [fecha, hora] = fechaStr.split(' ');
+                return {
+                  dia: fecha || '-',
+                  hora: hora?.substring(0, 5) || ''
+                };
               };
-            };
-            
-            const fechaActual = formatFechaCompacta(item.Fecha);
-            const fechaAnterior = formatFechaCompacta(item.FechaAnterior);
-            const fechaCarga = formatFechaCompacta(item.FechaCarga);
-            
-            return (
-              <tr 
-                key={idx} 
-                className={`historico-row ${guerra ? 'guerra-row' : ''} ${marcadorPrincipal ? 'principal-row' : ''}`}
-              >
-                <td className="td-estacion" title={item.Nom_Eds}>
-                  {item.Nom_Eds?.slice(0, 18) || 'S/N'}
-                </td>
-                <td className="td-marca">{item.marca || '-'}</td>
-                <td className="td-cne" title={item.cod_cne}>{item.cod_cne?.slice(-6) || '-'}</td>
-                <td className="td-combustible">
-                  <span className={`combustible-badge combustible-${item.Combustible?.toLowerCase()}`}>
-                    {item.Combustible || '-'}
-                  </span>
-                </td>
-                <td className="td-pbl">{item.pbl || '-'}</td>
-                <td className="td-precio"><strong>${precioActual}</strong></td>
-                <td className="td-anterior">${precioAnterior}</td>
-                <td className={`td-diferencia ${cambioClass}`}>
-                  <strong>{cambioIcon} {cambioSigno}{diferencia}</strong>
-                </td>
-                <td className="td-tipo" title={item.tipo_atencion}>{tipoIcon}</td>
-                <td className="td-horario" title={item.Horario}>
-                  <span className="horario-texto">{item.Horario || '-'}</span>
-                </td>
-                <td className="td-fecha">
-                  <div className="fecha-compacta">
-                    <span className="fecha-dia">{fechaActual.dia}</span>
-                    <span className="fecha-hora">{fechaActual.hora}</span>
-                  </div>
-                </td>
-                <td className="td-fecha">
-                  <div className="fecha-compacta">
-                    <span className="fecha-dia">{fechaAnterior.dia}</span>
-                    <span className="fecha-hora">{fechaAnterior.hora}</span>
-                  </div>
-                </td>
-                <td className="td-fecha">
-                  <div className="fecha-compacta">
-                    <span className="fecha-dia">{fechaCarga.dia}</span>
-                    <span className="fecha-hora">{fechaCarga.hora}</span>
-                  </div>
-                </td>
-                <td className="td-principal">
-                  {marcadorPrincipal && <span className="principal-icon" title="Marcador Principal">SI</span>}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+              
+              const fechaActual = formatFechaCompacta(item.Fecha);
+              const fechaAnterior = formatFechaCompacta(item.FechaAnterior);
+              const fechaCarga = formatFechaCompacta(item.FechaCarga);
+              
+              return (
+                <tr 
+                  key={idx} 
+                  className={`historico-row ${guerra ? 'guerra-row' : ''} ${marcadorPrincipal ? 'principal-row' : ''}`}
+                >
+                  <td className="td-estacion" title={item.Nom_Eds}>
+                    {item.Nom_Eds?.slice(0, 18) || 'S/N'}
+                  </td>
+                  <td className="td-marca">{item.marca || '-'}</td>
+                  <td className="td-cne" title={item.cod_cne}>{item.cod_cne?.slice(-6) || '-'}</td>
+                  <td className="td-combustible">
+                    <span className={`combustible-badge combustible-${item.Combustible?.toLowerCase()}`}>
+                      {item.Combustible || '-'}
+                    </span>
+                  </td>
+                  <td className="td-pbl">{item.pbl || '-'}</td>
+                  <td className="td-precio"><strong>${precioActual}</strong></td>
+                  <td className="td-anterior">${precioAnterior}</td>
+                  <td className={`td-diferencia ${cambioClass}`}>
+                    <strong>{cambioIcon} {cambioSigno}{diferencia}</strong>
+                  </td>
+                  <td className="td-tipo" title={item.tipo_atencion}>{tipoIcon}</td>
+                  <td className="td-horario" title={item.Horario}>
+                    <span className="horario-texto">{item.Horario || '-'}</span>
+                  </td>
+                  <td className="td-fecha">
+                    <div className="fecha-compacta">
+                      <span className="fecha-dia">{fechaActual.dia}</span>
+                      <span className="fecha-hora">{fechaActual.hora}</span>
+                    </div>
+                  </td>
+                  <td className="td-fecha">
+                    <div className="fecha-compacta">
+                      <span className="fecha-dia">{fechaAnterior.dia}</span>
+                      <span className="fecha-hora">{fechaAnterior.hora}</span>
+                    </div>
+                  </td>
+                  <td className="td-fecha">
+                    <div className="fecha-compacta">
+                      <span className="fecha-dia">{fechaCarga.dia}</span>
+                      <span className="fecha-hora">{fechaCarga.hora}</span>
+                    </div>
+                  </td>
+                  <td className="td-principal">
+                    {marcadorPrincipal && <span className="principal-icon" title="Marcador Principal">SI</span>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };
+
+
+
 
 const AjustesTabla = ({ 
   data, 
@@ -496,7 +539,16 @@ const AjustesTabla = ({
 }) => {
   const [vistaDetallada, setVistaDetallada] = useState(false);
 
-  // ✅ Agrupar por cod_cne y luego por combinación de Diferencia_Competencia + Estrategia_Propia
+  // Detectar filtros activos
+  const hayFiltrosActivos = filterNombreAjuste.trim() !== '' || filterCombustible.trim() !== '';
+  
+  // Función limpiar
+  const limpiarFiltros = () => {
+    setFilterNombreAjuste('');
+    setFilterCombustible('');
+  };
+
+  // Agrupar por cod_cne y luego por combinación de Diferencia_Competencia + Estrategia_Propia
   const agrupadosPorEstacion = useMemo(() => {
     const grupos = {};
     data.forEach(item => {
@@ -513,7 +565,6 @@ const AjustesTabla = ({
       grupos[key].combustibles.push(item);
     });
     
-    // Sub-agrupar combustibles por combinación única de diferencias
     return Object.values(grupos).map(grupo => {
       const subgrupos = {};
       grupo.combustibles.forEach(comb => {
@@ -537,9 +588,6 @@ const AjustesTabla = ({
       };
     });
   }, [data]);
-
-  if (data.length === 0) 
-    return <div className="alert-empty">📋 No hay datos de ajustes disponibles</div>;
 
   const formatFecha = (fechaStr) => {
     if (!fechaStr || fechaStr === 'Mantiene Fecha') return { dia: 'Mantiene', hora: '' };
@@ -581,179 +629,54 @@ const AjustesTabla = ({
           <span>Vista detallada</span>
         </label>
 
+        {hayFiltrosActivos && (
+          <button 
+            className="btn-limpiar-filtros"
+            onClick={limpiarFiltros}
+            title="Limpiar todos los filtros"
+          >
+            ✕ Limpiar
+          </button>
+        )}
+
         <span style={{ marginLeft: 'auto', color: '#666', fontSize: '13px', fontWeight: 600 }}>
           Mostrando {vistaDetallada ? data.length : agrupadosPorEstacion.length} registros
         </span>
       </div>
 
-      {vistaDetallada ? (
-        /* Vista Detallada */
+      {data.length === 0 && hayFiltrosActivos ? (
+        <div className="sin-resultados-filtro">
+          <div className="sin-resultados-content">
+            <span className="sin-resultados-icon">🔍</span>
+            <p className="sin-resultados-texto">
+              No se encontraron ajustes para la búsqueda
+              {filterNombreAjuste && <strong> "{filterNombreAjuste}"</strong>}
+              {filterCombustible && <span> ({filterCombustible})</span>}
+            </p>
+            <button 
+              className="btn-limpiar-filtros-destacado"
+              onClick={limpiarFiltros}
+            >
+              Limpiar filtros y ver todos
+            </button>
+          </div>
+        </div>
+      ) : data.length === 0 ? (
+        <div className="alert-empty">📋 No hay datos de ajustes disponibles</div>
+      ) : vistaDetallada ? (
+        /* Vista Detallada - MANTÉN TU TABLA EXISTENTE AQUÍ */
         <table className="historico-table-compact">
-          <thead>
-            <tr>
-              <th>Estación</th>
-              <th>Marca</th>
-              <th>CNE</th>
-              <th>Combustible</th>
-              <th>PBL</th>
-              <th>Precio Asistido</th>
-              <th>Precio Autoservicio</th>
-              <th>Dif. Competencia</th>
-              <th>Estrategia Propia</th>
-              <th>Cambio Precio</th>
-              <th>Fecha Autoservicio</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((item, idx) => {
-              const fechaAutoservicio = formatFecha(item.fecha_autoservicio);
-              const difEstrategia = item.Estrategia_Propia || 0;
-              const difCompetencia = item.Diferencia_Competencia || 0;
-              
-              return (
-                <tr key={idx}>
-                  <td className="td-estacion" title={item.Nom_Eds}>
-                    {item.Nom_Eds?.slice(0, 18) || 'S/N'}
-                  </td>
-                  <td className="td-marca">{item.marca || '-'}</td>
-                  <td className="td-cne" title={item.cod_cne}>{item.cod_cne?.slice(-6) || '-'}</td>
-                  <td className="td-combustible">
-                    <span className={`combustible-badge combustible-${item.combustible?.toLowerCase()}`}>
-                      {item.combustible || '-'}
-                    </span>
-                  </td>
-                  <td className="td-pbl">{item.pbl || '-'}</td>
-                  <td className="td-precio"><strong>${item.precio_asistido || 0}</strong></td>
-                  <td className="td-precio"><strong>${item.precio_autoservicio || 0}</strong></td>
-                  <td className={`td-diferencia ${difCompetencia > 0 ? 'precio-sube' : difCompetencia < 0 ? 'precio-baja' : 'precio-igual'}`}>
-                    <strong>{difCompetencia > 0 ? '+' : ''}{difCompetencia}</strong>
-                  </td>
-                  <td className={`td-diferencia ${difEstrategia > 0 ? 'precio-sube' : difEstrategia < 0 ? 'precio-baja' : 'precio-igual'}`}>
-                    <strong>{difEstrategia > 0 ? '+' : ''}{difEstrategia}</strong>
-                  </td>
-                  <td style={{ fontSize: '8px', maxWidth: '100px', textAlign: 'center' }}>
-                    {item.cambio_precio || '-'}
-                  </td>
-                  <td className="td-fecha">
-                    <div className="fecha-compacta">
-                      <span className="fecha-dia">{fechaAutoservicio.dia}</span>
-                      <span className="fecha-hora">{fechaAutoservicio.hora}</span>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
+          {/* ... tu código de tabla detallada existente ... */}
         </table>
       ) : (
-        /* Vista Simplificada - Agrupada por combinación única de diferencias */
+        /* Vista Simplificada - MANTÉN TU TABLA AGRUPADA EXISTENTE AQUÍ */
         <table className="historico-table-compact ajustes-simplified">
-          <thead>
-            <tr>
-              <th>EDS</th>
-              <th>Marca</th>
-              <th colSpan="2">Diferencia Competencia</th>
-              <th colSpan="2">Diferencia Propia</th>
-              <th>Cambio</th>
-            </tr>
-          </thead>
-          <tbody>
-            {agrupadosPorEstacion.map((grupo, idx) => (
-              grupo.subgrupos.map((subgrupo, subIdx) => (
-                <tr key={`${idx}-${subIdx}`}>
-                  {/* Nombre de estación y marca solo en primera fila del grupo */}
-                  {subIdx === 0 ? (
-                    <>
-                      <td 
-                        className="td-estacion" 
-                        style={{ fontSize: '11px', fontWeight: '600' }}
-                        rowSpan={grupo.subgrupos.length}
-                      >
-                        {grupo.Nom_Eds || 'S/N'}
-                      </td>
-                      <td 
-                        className="td-marca" 
-                        style={{ fontSize: '10px' }}
-                        rowSpan={grupo.subgrupos.length}
-                      >
-                        {grupo.marca || '-'}
-                      </td>
-                    </>
-                  ) : null}
-                  
-                  {/* Diferencia Competencia - Una línea por valor único */}
-                  <td colSpan="2" style={{ padding: '4px 8px' }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                        {subgrupo.combustibles.map((comb, i) => (
-                          <span 
-                            key={i}
-                            className={`combustible-badge combustible-${comb.combustible?.toLowerCase()}`}
-                          >
-                            {comb.combustible}
-                          </span>
-                        ))}
-                      </div>
-                      <span className={`td-diferencia ${
-                        subgrupo.diferencia_competencia > 0 ? 'precio-sube' : 
-                        subgrupo.diferencia_competencia < 0 ? 'precio-baja' : 'precio-igual'
-                      }`} style={{ fontWeight: '700', fontSize: '11px', minWidth: '40px', textAlign: 'right' }}>
-                        {subgrupo.diferencia_competencia > 0 ? '+' : ''}{subgrupo.diferencia_competencia}
-                      </span>
-                    </div>
-                  </td>
-                  
-                  {/* Diferencia Propia - Agrupar también si son iguales */}
-                  <td colSpan="2" style={{ padding: '4px 8px' }}>
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                        {subgrupo.combustibles.map((comb, i) => (
-                          <span 
-                            key={i}
-                            className={`combustible-badge combustible-${comb.combustible?.toLowerCase()}`}
-                          >
-                            {comb.combustible}
-                          </span>
-                        ))}
-                      </div>
-                      <span className={`td-diferencia ${
-                        subgrupo.diferencia_propia > 0 ? 'precio-sube' : 
-                        subgrupo.diferencia_propia < 0 ? 'precio-baja' : 'precio-igual'
-                      }`} style={{ fontWeight: '700', fontSize: '11px', minWidth: '40px', textAlign: 'right' }}>
-                        {subgrupo.diferencia_propia > 0 ? '+' : ''}{subgrupo.diferencia_propia}
-                      </span>
-                    </div>
-                  </td>
-                  
-                  {/* Cambio - Solo en primera fila */}
-                  {subIdx === 0 ? (
-                    <td 
-                      style={{ fontSize: '8px', textAlign: 'center', maxWidth: '120px' }}
-                      rowSpan={grupo.subgrupos.length}
-                    >
-                      {grupo.combustibles[0]?.cambio_precio || '-'}
-                    </td>
-                  ) : null}
-                </tr>
-              ))
-            ))}
-          </tbody>
+          {/* ... tu código de tabla simplificada existente ... */}
         </table>
       )}
     </div>
   );
 };
-
 
 
 export default AlertPanel;

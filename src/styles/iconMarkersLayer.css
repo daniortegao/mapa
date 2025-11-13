@@ -1,469 +1,592 @@
-/* ============================================
-   ICON MARKERS LAYER STYLES - OPTIMIZADO
-   ============================================ */
+/* =========================================================
+   POPUP DE ICON MARKERS – ESTILOS RESPONSIVE Y RESIZE
+   
+   PUNTOS DE AJUSTE RÁPIDO:
+   
+   1. DENSIDAD/TIPOGRAFÍA GENERAL:
+      → Cambiar --fz en .icon-markers-popup-content (línea 17)
+      Valores: clamp(10px, 1.4vw, 12px) → primer valor = mínimo, último = máximo
+   
+   2. TAMAÑO MÍNIMO DEL POPUP:
+      → Cambiar min-width/min-height en .leaflet-popup-content (línea 255)
+      Actual: 240px x 180px
+   
+   3. LOGO (tamaño y posición):
+      → Cambiar width/height en .popup-logo (línea 45-47)
+      → Cambiar top/right para mover posición (línea 44)
+   
+   4. GRIP DE RESIZE:
+      → Tamaño: width/height en línea 225-226
+      → Posición: right/bottom en línea 223-224
+      → Color: background en línea 227 y gradiente ::before en línea 236
+      → Opacidad: opacity en línea 231 y :hover en línea 235
+   
+   5. BOTÓN MERCADO:
+      → Ancho mínimo: min-width en línea 180
+      → Color: background en línea 185 y :hover en línea 188
+   
+   6. COLORES DE TABS:
+      → Header normal: background en línea 99 y 108
+      → Tab activa: background en línea 109
+      → Secundaria: background en línea 157 (tabla verde)
+   
+   ========================================================= */
 
+/* =========================================================
+   1. CONTENEDOR BASE DEL POPUP
+   ========================================================= */
 .icon-markers-popup-content {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  width: 380px;
+  width: 100%;
+  max-width: 100%;
   color: #333;
+  padding: 0;
+  box-sizing: border-box;
   
+  /* AJUSTE RÁPIDO: Cambia estos valores para hacer el popup más denso o espaciado */
+  --fz: clamp(10px, 1.4vw, 12px); /* min, escalable, max */
+  font-size: var(--fz);
 }
 
-/* ============================================
-   INFO HEADER - COMPACTO Y CON NEGRITAS
-   ============================================ */
-
+/* =========================================================
+   2. HEADER DE INFORMACIÓN (arriba del popup)
+   ========================================================= */
 .popup-info-header {
   position: relative;
-  padding: 8px 140px 8px 12px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-bottom: 2px solid #17a2b8;
-  margin-bottom: 12px;
+  padding: 8px;
+  border-bottom: 2px solid #17a2b8; /* Color del borde inferior */
+  margin-bottom: 10px;
 }
 
+/* Filas de información (PBL, Estación, etc.) */
 .popup-info-row {
   display: flex;
   justify-content: flex-start;
-  gap: 6px;
+  gap: 6px; /* Espacio entre label y value */
   padding: 2px 0;
-  font-size: 11px;
+  font-size: calc(var(--fz) - 1px); /* Ligeramente más pequeño que el base */
   line-height: 1.3;
 }
-
-.popup-info-row:last-child {
-  padding-bottom: 0;
+.popup-info-row:last-child { 
+  padding-bottom: 0; 
 }
 
-.popup-label {
-  font-weight: 700;
-  color: #333;
-  min-width: auto;
+/* Estilos de label (ej: "PBL:") y value (ej: "108012") */
+.popup-label { 
+  font-weight: 700; 
+  color: #333; 
+}
+.popup-value { 
+  font-weight: 400; 
+  color: #555; 
 }
 
-.popup-value {
-  font-weight: 400;
-  color: #555;
-}
-
-/* ============================================
-   LOGO
-   ============================================ */
-
+/* =========================================================
+   3. LOGO (esquina superior derecha)
+   AJUSTE RÁPIDO: Cambiar width/height y top/right
+   ========================================================= */
 .popup-logo {
   position: absolute;
-  top: 45px;
-  right: 5px;
-  width: 110px;
-  height: auto;
-  max-height: 55px;
+  top: 8px;          /* AJUSTE: distancia desde arriba */
+  right: 8px;        /* AJUSTE: distancia desde la derecha */
+  width: min(22%, 80px);   /* AJUSTE: ancho máximo del logo */
+  height: min(28px, 18%);  /* AJUSTE: alto máximo del logo */
   object-fit: contain;
+  object-position: center;
+  image-rendering: auto;
+  display: block;
   z-index: 10;
-  background: white;
-  padding: 6px;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-/* ============================================
-   POPUP TABS SYSTEM
-   ============================================ */
+/* =========================================================
+   4. SISTEMA DE TABS (Precios, Tendencias, etc.)
+   ========================================================= */
 
+/* Contenedor principal de tabs */
 .popup-tabs-container {
-  width: 380px;
-  border: 1px solid #c0c0c0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #c0c0c0; /* Borde exterior del contenedor */
   border-radius: 4px;
   overflow: hidden;
   margin: 0;
 }
 
+/* Header donde están los botones de tabs */
 .popup-tabs-header {
   display: flex;
   gap: 0;
-  background: #e8f4f8;
-  border-bottom: 2px solid #17a2b8;
+  background: #e8f4f8; /* AJUSTE: color de fondo de la barra de tabs */
+  border-bottom: 2px solid #17a2b8; /* AJUSTE: borde inferior de la barra */
   margin: 0;
   border-radius: 0;
 }
 
+/* Botones individuales de cada tab */
 .popup-tab-button {
-  flex: 1;
-  padding: 4px 4px;
+  flex: 1; /* Todos los tabs ocupan el mismo espacio */
+  padding: 6px 6px;
   border: none;
-  background: #e8f4f8;
-  color: #333;
+  background: #e8f4f8; /* AJUSTE: color de fondo del tab inactivo */
+  color: #333;         /* AJUSTE: color de texto del tab inactivo */
   cursor: pointer;
   font-weight: 500;
-  font-size: 10px;
-  transition: all 0.3s ease;
+  font-size: calc(var(--fz) - 1px);
+  transition: background 0.2s ease;
   border-bottom: 3px solid transparent;
   position: relative;
   bottom: -2px;
-  border-right: 1px solid #17a2b8;
+  border-right: 1px solid #17a2b8; /* Separador vertical entre tabs */
 }
 
-.popup-tab-button:last-child {
-  border-right: none;
+.popup-tab-button:last-child { 
+  border-right: none; /* Último tab no tiene separador */
 }
 
-.popup-tab-button:hover {
-  background: #d4e9f2;
+.popup-tab-button:hover { 
+  background: #d4e9f2; /* AJUSTE: color al pasar el mouse */
 }
 
-.popup-tab-button.active {
-  background: #17a2b8;
-  color: white;
-  border-bottom-color: #138496;
+/* Tab activo (seleccionado) */
+.popup-tab-button.active { 
+  background: #17a2b8;           /* AJUSTE: color de fondo del tab activo */
+  color: #fff;                   /* AJUSTE: color de texto del tab activo */
+  border-bottom-color: #138496;  /* AJUSTE: borde inferior del tab activo */
 }
 
-.popup-tab-button.active:hover {
-  background: #138496;
+.popup-tab-button.active:hover { 
+  background: #138496; /* AJUSTE: color hover del tab activo */
 }
 
-/* ============================================
-   TABS CONTENT - ALTURA FIJA
-   ============================================ */
-
+/* =========================================================
+   5. CONTENIDO DE LAS TABS
+   ========================================================= */
 .popup-tabs-content {
-  padding: 8px 10px;
-  background: white;
-  min-height: 220px;
-  max-height: 220px;
-  overflow-y: auto;
+  padding: 6px;
+  background: #fff;
+  overflow: auto;
+  max-height: 9999px; /* Se ajusta dinámicamente por JavaScript */
 }
 
-.popup-tab-pane {
-  display: none;
+/* Paneles individuales de cada tab */
+.popup-tab-pane { 
+  display: none; /* Ocultos por defecto */
 }
 
-.popup-tab-pane.active {
-  display: block;
-  animation: fadeIn 0.3s ease;
+.popup-tab-pane.active { 
+  display: block; /* Solo el activo se muestra */
+  animation: fadeIn 0.3s ease; 
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+@keyframes fadeIn { 
+  from { opacity: 0; } 
+  to { opacity: 1; } 
 }
 
-/* ============================================
-   INFO BOX (COORDENADAS E INFORMACIÓN)
-   ============================================ */
-
+/* =========================================================
+   6. CAJAS DE INFORMACIÓN (tab Coordenadas e Información)
+   ========================================================= */
 .popup-info-box {
-  background: #f8f9fa;
+  background: #f8f9fa; /* AJUSTE: color de fondo de las cajas */
   padding: 8px;
   border-radius: 4px;
   margin-bottom: 8px;
-  border: 1px solid #e9ecef;
+  border: 1px solid #e9ecef; /* AJUSTE: borde de las cajas */
 }
 
-.popup-info-box p {
-  margin: 4px 0;
-  font-size: 10px;
+.popup-info-box p { 
+  margin: 4px 0; 
+  font-size: calc(var(--fz) - 2px); 
 }
 
-.popup-info-box strong {
-  font-weight: 600;
-  color: #333;
+.popup-info-box strong { 
+  font-weight: 600; 
+  color: #333; 
 }
 
-/* ============================================
-   TABLA PRECIOS (TU ESTILO ORIGINAL)
-   ============================================ */
+/* =========================================================
+   7. TABLA DE PRECIOS (tab Precios)
+   ========================================================= */
 
+/* Wrapper de la tabla (maneja scroll) */
 .popup-table-wrapper {
-  width: 360px;
-  height: 200px;
-  overflow-y: auto;
-  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: none;
+  overflow: auto;
 }
 
-.popup-table-wrapper.secondary {
-  border-color: transparent;
+.popup-table-wrapper.secondary { 
+  border-color: transparent; /* Sin borde para tablas secundarias */
 }
 
+/* Tabla principal */
 .popup-table {
   width: 100%;
   table-layout: auto;
   border-collapse: collapse;
   border-spacing: 0;
-  font-size: 7px;
-  background: white;
+  font-size: calc(var(--fz) - 3px); /* AJUSTE: tamaño de fuente en tabla */
+  background: #fff;
   margin: 0;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums; /* Números alineados */
 }
 
-.popup-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+/* Header de la tabla (sticky al hacer scroll) */
+.popup-table thead { 
+  position: sticky; 
+  top: 0; 
+  z-index: 10; 
 }
 
-.popup-table thead tr {
-  background: #007bff;
-  color: white;
-  border: none;
+/* Fila del header - TABLA PRIMARIA (azul) */
+.popup-table thead tr { 
+  background: #007bff;  /* AJUSTE: color de fondo del header primario */
+  color: #fff; 
+  border: none; 
 }
 
-.popup-table.secondary thead tr {
-  background: #28a745;
+/* Fila del header - TABLA SECUNDARIA (verde, competencia) */
+.popup-table.secondary thead tr { 
+  background: #28a745;  /* AJUSTE: color de fondo del header secundario */
 }
 
+/* Celdas del header */
 .popup-table th {
-  padding: 2px 12px;
+  padding: 3px 4px;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid rgba(255,255,255,0.3);
   font-weight: 600;
   text-align: center;
-  font-size: 10px;
   white-space: nowrap;
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
-.popup-table.secondary th {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+.popup-table.secondary th { 
+  border-bottom: 1px solid rgba(255,255,255,0.3); 
 }
 
+/* Filas del body de la tabla */
 .popup-table tbody tr {
   background: transparent;
   transition: background 0.2s ease;
   border-bottom: 1px solid #e8e8e8;
 }
 
-.popup-table tbody tr:nth-child(even) {
-  background: #f9f9f9;
+/* Filas pares (zebra striping) */
+.popup-table tbody tr:nth-child(even) { 
+  background: #f9f9f9; /* AJUSTE: color de filas alternas */
 }
 
-.popup-table tbody tr:hover {
-  background: #e7f3ff !important;
+/* Hover en filas - TABLA PRIMARIA */
+.popup-table tbody tr:hover { 
+  background: #e7f3ff !important; /* AJUSTE: color hover primario */
 }
 
-.popup-table.secondary tbody tr:hover {
-  background: #e8f5e9 !important;
+/* Hover en filas - TABLA SECUNDARIA */
+.popup-table.secondary tbody tr:hover { 
+  background: #e8f5e9 !important; /* AJUSTE: color hover secundario */
 }
 
-.popup-table tbody tr:last-child {
-  border-bottom: none;
+.popup-table tbody tr:last-child { 
+  border-bottom: none; 
 }
 
+/* Celdas del body */
 .popup-table td {
-  padding: 2px 5px;
+  padding: 3px 4px;
   border: none;
   text-align: center;
-  font-size: 10px;
   color: #555;
   white-space: nowrap;
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
-.popup-table td:not(:first-child) {
-  font-weight: 500;
-  color: #333;
+/* Celdas de precios (no fecha) en negrita */
+.popup-table td:not(:first-child) { 
+  font-weight: 500; 
+  color: #333; 
 }
 
-/* ============================================
-   BOTÓN MERCADO - MINIMALISTA
-   ============================================ */
-
+/* =========================================================
+   8. BOTÓN MERCADO (muestra competencia asociada)
+   ========================================================= */
 .popup-button-mercado {
-  width: 100px;
-  padding: 5px 5px;
-  margin: 2px;
+  width: auto;
+  min-width: 96px;    /* AJUSTE: ancho mínimo del botón */
+  max-width: 50%;     /* AJUSTE: ancho máximo del botón */
+  padding: 6px 8px;
+  margin: 6px auto 0;
   display: block;
-  background: #007bff;
-  color: white;
+  background: #007bff; /* AJUSTE: color de fondo del botón primario */
+  color: #fff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 11px;
+  font-size: var(--fz);
   transition: background 0.2s ease;
 }
 
-
-
-
-
-.popup-button-mercado:hover {
-  background: #0056b3;
+.popup-button-mercado:hover { 
+  background: #0056b3; /* AJUSTE: color hover del botón primario */
 }
 
-.popup-button-mercado.secondary {
-  background: #28a745;
+/* Botón mercado para competencia (verde) */
+.popup-button-mercado.secondary { 
+  background: #28a745; /* AJUSTE: color de fondo del botón secundario */
 }
 
-.popup-button-mercado.secondary:hover {
-  background: #1e7e34;
+.popup-button-mercado.secondary:hover { 
+  background: #1e7e34; /* AJUSTE: color hover del botón secundario */
 }
 
-/* ============================================
-  CAMBIAR MEDIDAS Y ESTILOS DE POPUP DE LEAFLET
-   ============================================ */
-
-.leaflet-popup {
-  margin-bottom: 0;
+/* =========================================================
+   9. ESTRUCTURA LEAFLET DEL POPUP
+   ========================================================= */
+.leaflet-popup { 
+  margin-bottom: 0; 
 }
 
+/* Wrapper principal del popup (contiene todo) */
 .leaflet-popup-content-wrapper {
+  position: relative;  /* IMPORTANTE: Ancla el grip de resize */
+  overflow: visible !important; /* Permite que el grip sobresalga */
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* AJUSTE: sombra del popup */
   padding: 0;
-  border: 1px solid #dee2e6;
+  border: 1px solid #dee2e6; /* AJUSTE: borde del popup */
+  max-width: none;
 }
 
-
-
-.leaflet-popup-content { 
-  margin: 0;
-  width: 380px !important;
-  height: 370px;
-  padding: 0;
-  margin: 5px 5px 5px 5px !important;  /* Cambia el margin según necesites */
-  line-height: 1.4 !important;
-  font-size: 1rem !important;              /* O un tamaño fijo: 14px !important */
-  min-height: 10px !important;             /* El que quieras */
-  color: #222 !important;                  /* Puedes cambiar color si lo requieres */
-}
-
+/* Botón de cerrar (X) */
 .leaflet-container a.leaflet-popup-close-button {
-    position: absolute !important;
-    top: 0;
-    right: 0;
-    border: none;
-    text-align: center;
-    width: 24px;
-    height: 24px;
-    font: 16px / 24px Tahoma, Verdana, sans-serif;
-    color: #0a0a0a !important;
-    text-decoration: none;
-    background: transparent;
+  position: absolute !important;
+  top: 0; 
+  right: 0;
+  border: none;
+  text-align: center;
+  width: 24px; 
+  height: 24px;
+  font: 16px / 24px Tahoma, Verdana, sans-serif;
+  color: #0a0a0a !important; /* AJUSTE: color de la X */
+  text-decoration: none;
+  background: transparent;
 }
 
-
-
-.leaflet-popup-tip {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+/* Punta triangular del popup */
+.leaflet-popup-tip { 
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* AJUSTE: sombra de la punta */
 }
 
-/* ============================================
-   SCROLLBAR PERSONALIZADO
-   ============================================ */
+/* =========================================================
+   10. GRIP DE RESIZE (esquina inferior derecha)
+   AJUSTE RÁPIDO: Aquí puedes cambiar tamaño, color y posición
+   ========================================================= */
 
+/* Ocultar grips mal ubicados dentro del content */
+.leaflet-popup-content .popup-resize-grip { 
+  display: none !important; 
+}
+
+/* GRIP CORRECTO: Hijo directo del wrapper (fuera del content scrolleable) */
+.leaflet-popup-content-wrapper > .popup-resize-grip,
+.popup-resize-grip {
+  display: block !important;
+  position: absolute !important;
+  
+  /* AJUSTE: Posición del grip desde la esquina */
+  right: 0px !important;   /* distancia desde el borde derecho */
+  bottom: 0px !important;  /* distancia desde el borde inferior */
+  
+  /* AJUSTE: Tamaño del área clickeable del grip */
+  width: 16px !important;   /* ancho del grip */
+  height: 16px !important;  /* alto del grip */
+  
+  /* AJUSTE: Color del grip - Gradiente triangular sutil */
+  background: linear-gradient(
+    135deg, 
+    transparent 0%, 
+    transparent 50%, 
+    rgba(23, 162, 184, 0.3) 50%,   /* Color con transparencia */
+    rgba(23, 162, 184, 0.5) 100%
+  ) !important;
+  
+  cursor: nwse-resize !important; /* Cursor de redimensionar */
+  z-index: 99999 !important;      /* Z-index altísimo */
+  pointer-events: auto !important; /* IMPORTANTE: Asegura que sea clickeable */
+  
+  /* AJUSTE: Opacidad y transición suave */
+  opacity: 0.6 !important;
+  transition: opacity 0.2s ease !important;
+  
+  /* Borde sutil para definir el área */
+  border-bottom-right-radius: 6px !important;
+}
+
+/* Grip más visible al hacer hover */
+.leaflet-popup-content-wrapper > .popup-resize-grip:hover,
+.popup-resize-grip:hover {
+  opacity: 1 !important;
+  background: linear-gradient(
+    135deg, 
+    transparent 0%, 
+    transparent 50%, 
+    rgba(23, 162, 184, 0.5) 50%,
+    rgba(23, 162, 184, 0.8) 100%
+  ) !important;
+}
+
+/* DECORACIÓN: Líneas diagonales dentro del grip (estilo clásico) */
+.leaflet-popup-content-wrapper > .popup-resize-grip::before,
+.popup-resize-grip::before {
+  content: '';
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 8px;
+  height: 8px;
+  
+  /* AJUSTE: Color de las líneas diagonales */
+  background-image: 
+    linear-gradient(135deg, transparent 0%, transparent 40%, #17a2b8 40%, #17a2b8 45%, transparent 45%),
+    linear-gradient(135deg, transparent 0%, transparent 60%, #17a2b8 60%, #17a2b8 65%, transparent 65%),
+    linear-gradient(135deg, transparent 0%, transparent 80%, #17a2b8 80%, #17a2b8 85%, transparent 85%);
+  background-size: 100% 100%;
+  opacity: 0.7;
+}
+
+/* =========================================================
+   11. CONTENIDO DEL POPUP (área scrolleable y resizable)
+   ========================================================= */
+.leaflet-popup-content {
+  resize: none !important;      /* DESACTIVAR resize nativo de Leaflet */
+  overflow: auto;    /* Scroll cuando el contenido excede el tamaño */
+  
+  /* AJUSTE: Tamaño mínimo del popup */
+  min-width: 240px;   /* ancho mínimo */
+  min-height: 180px;  /* alto mínimo */
+   max-height: 600px;
+  transition: none !important; /* Sin animación al redimensionar */
+}
+
+/* Cursor durante el gesto de resize (clase agregada por JS) */
+.popup-is-resizing .leaflet-popup-content { 
+  cursor: nwse-resize; 
+}
+
+/* =========================================================
+   12. SCROLLBARS PERSONALIZADAS (Chrome/Safari)
+   ========================================================= */
 .icon-markers-popup-content::-webkit-scrollbar,
-.popup-tabs-content::-webkit-scrollbar {
-  width: 6px;
+.popup-tabs-content::-webkit-scrollbar { 
+  width: 6px; /* AJUSTE: ancho de la scrollbar */
 }
 
 .icon-markers-popup-content::-webkit-scrollbar-track,
-.popup-tabs-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
+.popup-tabs-content::-webkit-scrollbar-track { 
+  background: #f1f1f1;    /* AJUSTE: color del fondo de la scrollbar */
+  border-radius: 3px; 
 }
 
 .icon-markers-popup-content::-webkit-scrollbar-thumb,
-.popup-tabs-content::-webkit-scrollbar-thumb {
-  background: #17a2b8;
-  border-radius: 3px;
+.popup-tabs-content::-webkit-scrollbar-thumb { 
+  background: #17a2b8;    /* AJUSTE: color del thumb (parte que se arrastra) */
+  border-radius: 3px; 
 }
 
 .icon-markers-popup-content::-webkit-scrollbar-thumb:hover,
-.popup-tabs-content::-webkit-scrollbar-thumb:hover {
-  background: #138496;
+.popup-tabs-content::-webkit-scrollbar-thumb:hover { 
+  background: #138496;    /* AJUSTE: color del thumb al hover */
 }
 
-/* ============================================
-   DEBUG TABLE STYLES
-   ============================================ */
-
+/* =========================================================
+   13. DEBUG TABLE (ventana flotante de depuración)
+   No afecta al popup principal, solo para debugging
+   ========================================================= */
 .debug-table-container {
   position: fixed;
-  bottom: 20px;
+  bottom: 20px; 
   right: 20px;
-  width: 600px;
+  width: 600px; 
   max-height: 500px;
-  background: white;
+  background: #fff; 
   border-radius: 8px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-  border: 2px solid #007bff;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  border: 2px solid #007bff; 
   z-index: 1000;
-  padding: 0;
-  display: flex;
+  padding: 0; 
+  display: flex; 
   flex-direction: column;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .debug-table-header {
   background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-  color: white;
+  color: #fff; 
   padding: 12px 15px;
   border-radius: 6px 6px 0 0;
-  font-weight: 600;
+  font-weight: 600; 
   font-size: 13px;
-  display: flex;
-  justify-content: space-between;
+  display: flex; 
+  justify-content: space-between; 
   align-items: center;
-  flex-shrink: 0;
+  flex-shrink: 0; 
   border-bottom: 2px solid #0056b3;
 }
 
 .debug-table-close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 0 5px;
+  background: rgba(255,255,255,0.2); 
+  border: none; 
+  color: #fff;
+  cursor: pointer; 
+  font-size: 16px; 
+  padding: 0 5px; 
   border-radius: 3px;
   transition: background 0.2s;
 }
 
-.debug-table-close-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+.debug-table-close-btn:hover { 
+  background: rgba(255,255,255,0.3); 
 }
 
-.debug-table-content {
-  padding: 12px;
-  overflow-y: auto;
-  flex: 1;
+.debug-table-content { 
+  padding: 12px; 
+  overflow-y: auto; 
+  flex: 1; 
 }
 
 .debug-table-footer {
-  padding: 8px 12px;
+  padding: 8px 12px; 
   border-top: 1px solid #e0e0e0;
-  font-size: 11px;
-  color: #666;
-  flex-shrink: 0;
+  font-size: 11px; 
+  color: #666; 
+  flex-shrink: 0; 
   background: #f8f9fa;
 }
 
-.debug-table-footer input[type="range"] {
-  width: 100%;
-  cursor: pointer;
-  height: 4px;
-  margin-bottom: 4px;
+.debug-table-footer input[type="range"] { 
+  width: 100%; 
+  cursor: pointer; 
+  height: 4px; 
+  margin-bottom: 4px; 
 }
 
-.debug-table-footer small {
-  display: block;
-  text-align: center;
-  margin-top: 4px;
+.debug-table-footer small { 
+  display: block; 
+  text-align: center; 
+  margin-top: 4px; 
 }
 
-/* ============================================
-   ICONO DE GUERRA (MARCADOR SEPARADO)
-   ============================================ */
-
+/* =========================================================
+   14. ICONO DE GUERRA (overlay de calavera)
+   ========================================================= */
 .icono-guerra {
   z-index: 1000 !important;
-  pointer-events: none;
-  
-  border-radius: 50%;
-  border: 2px solid #ff0000 !important;
-  box-shadow: 0 0 8px rgba(255, 0, 0, 0.6) !important;
- 
+  pointer-events: none;           /* No interfiere con clicks */
+  border-radius: 50%;             /* Forma circular */
+  border: 2px solid #ff0000 !important;       /* AJUSTE: color del borde */
+  box-shadow: 0 0 8px rgba(255,0,0,0.6) !important; /* AJUSTE: sombra roja */
 }
