@@ -22,10 +22,24 @@ function getStationCount(alerts) {
 
 // Función para parsear fechas en formato "DD-MM-YYYY HH:mm"
 function parseFecha(fechaStr) {
-  const [datePart, timePart] = fechaStr.split(' ');
-  const [day, month, year] = datePart.split('-').map(Number);
+  if (!fechaStr || typeof fechaStr !== 'string') {
+    return new Date();
+  }
+  const parts = fechaStr.trim().split(' ');
+  const datePart = parts[0];
+  const timePart = parts[1];
+  
+  if (!datePart) return new Date();
+  
+  const dateParts = datePart.split('-');
+  if (dateParts.length !== 3) return new Date();
+  
+  const [day, month, year] = dateParts.map(Number);
   const [hours, minutes] = timePart ? timePart.split(':').map(Number) : [0, 0];
-  return new Date(year, month - 1, day, hours, minutes);
+  
+  if (isNaN(day) || isNaN(month) || isNaN(year)) return new Date();
+  
+  return new Date(year, month - 1, day, hours || 0, minutes || 0);
 }
 
 const ITEMS_PER_PAGE = 50;
@@ -38,6 +52,7 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
   const [ajustesData, setAjustesData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [modalExpanded, setModalExpanded] = useState(false); // ← NUEVO
 
   // Estados para filtros histórico
   const [filterNombreEstacion, setFilterNombreEstacion] = useState('');
@@ -174,81 +189,119 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
   }, [ajustesData]);
 
   return (
-    <aside className={`alert-panel${!isVisible ? ' hidden' : ''}`}>
-      <div className="alert-panel-header">
-        <h3 className="alert-panel-title">📊 Alertas de Mercado</h3>
-        <button className="alert-panel-close" onClick={onClose}>✕</button>
-      </div>
-      <div className="alert-tabs">
-        <button
-          className={`alert-tab ${activeTab === 'alertas' ? 'active' : ''}`}
-          onClick={() => setActiveTab('alertas')}
-        >
-          Alertas Activas ({cantidadEstaciones})
-        </button>
-        
-        <button
-          className={`alert-tab ${activeTab === 'historico' ? 'active' : ''}`}
-          onClick={() => setActiveTab('historico')}
-        >
-          Histórico Movimiento ({historicoSorted.length})
-        </button>
-        <button
-          className={`alert-tab ${activeTab === 'ajustes' ? 'active' : ''}`}
-          onClick={() => setActiveTab('ajustes')}
-        >
-          Ajustes PES ({ajustesSorted.length})
-        </button>
-        <button
-          className={`alert-tab ${activeTab === 'guerra' ? 'active' : ''}`}
-          onClick={() => setActiveTab('guerra')}
-        >
-          En Seguimiento ({estacionesGuerra.length})
-        </button>
-      </div>
-      <div className="alert-panel-content">
-        {loading ? (
-          <div className="alert-loading">Cargando...</div>
-        ) : activeTab === 'alertas' ? (
-          <AlertasActivas agrupadas={agrupadas} />
-        ) : activeTab === 'guerra' ? (
-          <GuerraPreciosPanel data={estacionesGuerra} />
-        ) : activeTab === 'historico' ? (
-          <>
-            <HistoricoAlertas 
-              data={historicoPageSlice}
-              filterNombreEstacion={filterNombreEstacion}
-              setFilterNombreEstacion={setFilterNombreEstacion}
-              filterSoloGuerra={filterSoloGuerra}
-              setFilterSoloGuerra={setFilterSoloGuerra}
-              totalItems={historicoSorted.length}
-            />
-            <div style={{ marginTop: 10, textAlign: 'center', padding: '10px', background: 'white' }}>
-              <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
-              <span style={{ margin: '0 10px' }}>Página {page} de {totalPages}</span>
-              <button onClick={handleNextPage} disabled={page === totalPages}>Siguiente</button>
+    <>
+      <aside className={`alert-panel${!isVisible ? ' hidden' : ''}`}>
+        <div className="alert-panel-header">
+          <h3 className="alert-panel-title">📊 Alertas de Mercado</h3>
+          <button className="alert-panel-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="alert-tabs">
+          <button
+            className={`alert-tab ${activeTab === 'alertas' ? 'active' : ''}`}
+            onClick={() => setActiveTab('alertas')}
+          >
+            Alertas Activas ({cantidadEstaciones})
+          </button>
+          
+          <button
+            className={`alert-tab ${activeTab === 'historico' ? 'active' : ''}`}
+            onClick={() => setActiveTab('historico')}
+          >
+            Histórico Movimiento ({historicoSorted.length})
+          </button>
+          <button
+            className={`alert-tab ${activeTab === 'ajustes' ? 'active' : ''}`}
+            onClick={() => setActiveTab('ajustes')}
+          >
+            Ajustes PES ({ajustesSorted.length})
+          </button>
+          <button
+            className={`alert-tab ${activeTab === 'guerra' ? 'active' : ''}`}
+            onClick={() => setActiveTab('guerra')}
+          >
+            En Seguimiento ({estacionesGuerra.length})
+          </button>
+        </div>
+        <div className="alert-panel-content">
+          {loading ? (
+            <div className="alert-loading">Cargando...</div>
+          ) : activeTab === 'alertas' ? (
+            <AlertasActivas agrupadas={agrupadas} />
+          ) : activeTab === 'guerra' ? (
+            <GuerraPreciosPanel data={estacionesGuerra} />
+          ) : activeTab === 'historico' ? (
+            <>
+              <HistoricoAlertas 
+                data={historicoPageSlice}
+                filterNombreEstacion={filterNombreEstacion}
+                setFilterNombreEstacion={setFilterNombreEstacion}
+                filterSoloGuerra={filterSoloGuerra}
+                setFilterSoloGuerra={setFilterSoloGuerra}
+                totalItems={historicoSorted.length}
+                onExpand={() => setModalExpanded(true)}
+              />
+              <div style={{ marginTop: 10, textAlign: 'center', padding: '10px', background: 'white' }}>
+                <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
+                <span style={{ margin: '0 10px' }}>Página {page} de {totalPages}</span>
+                <button onClick={handleNextPage} disabled={page === totalPages}>Siguiente</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <AjustesTabla
+                data={ajustesPageSlice}
+                filterNombreAjuste={filterNombreAjuste}
+                setFilterNombreAjuste={setFilterNombreAjuste}
+                filterCombustible={filterCombustible}
+                setFilterCombustible={setFilterCombustible}
+                combustiblesUnicos={combustiblesUnicos}
+                totalItems={ajustesSorted.length}
+              />
+              <div style={{ marginTop: 10, textAlign: 'center', padding: '10px', background: 'white' }}>
+                <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
+                <span style={{ margin: '0 10px' }}>Página {page} de {totalPagesAjustes}</span>
+                <button onClick={handleNextPage} disabled={page === totalPagesAjustes}>Siguiente</button>
+              </div>
+            </>
+          )}
+        </div>
+      </aside>
+
+      {/* MODAL EXPANDIDO */}
+      {modalExpanded && (
+        <div className="modal-expandido-overlay" onClick={() => setModalExpanded(false)}>
+          <div className="modal-expandido-contenido" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-expandido-header">
+              <h2>📊 Histórico de Movimiento - Vista Completa</h2>
+              <button 
+                className="modal-close-btn"
+                onClick={() => setModalExpanded(false)}
+              >
+                ✕
+              </button>
             </div>
-          </>
-        ) : (
-          <>
-            <AjustesTabla
-              data={ajustesPageSlice}
-              filterNombreAjuste={filterNombreAjuste}
-              setFilterNombreAjuste={setFilterNombreAjuste}
-              filterCombustible={filterCombustible}
-              setFilterCombustible={setFilterCombustible}
-              combustiblesUnicos={combustiblesUnicos}
-              totalItems={ajustesSorted.length}
-            />
-            <div style={{ marginTop: 10, textAlign: 'center', padding: '10px', background: 'white' }}>
-              <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
-              <span style={{ margin: '0 10px' }}>Página {page} de {totalPagesAjustes}</span>
-              <button onClick={handleNextPage} disabled={page === totalPagesAjustes}>Siguiente</button>
+            
+            <div className="modal-expandido-body">
+              <HistoricoAlertas 
+                data={historicoPageSlice}
+                filterNombreEstacion={filterNombreEstacion}
+                setFilterNombreEstacion={setFilterNombreEstacion}
+                filterSoloGuerra={filterSoloGuerra}
+                setFilterSoloGuerra={setFilterSoloGuerra}
+                totalItems={historicoSorted.length}
+                onExpand={() => {}}
+              />
+              
+              <div style={{ marginTop: 10, textAlign: 'center', padding: '10px', background: 'white' }}>
+                <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
+                <span style={{ margin: '0 10px' }}>Página {page} de {totalPages}</span>
+                <button onClick={handleNextPage} disabled={page === totalPages}>Siguiente</button>
+              </div>
             </div>
-          </>
-        )}
-      </div>
-    </aside>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
@@ -355,20 +408,28 @@ const HistoricoAlertas = ({
   setFilterNombreEstacion, 
   filterSoloGuerra, 
   setFilterSoloGuerra,
-  totalItems 
+  totalItems,
+  onExpand
 }) => {
   if (!Array.isArray(data)) return <div className="alert-empty">⚠️ Error: Los datos no son un array</div>;
   
-  // Detecta si hay filtros activos
   const hayFiltrosActivos = filterNombreEstacion.trim() !== '' || filterSoloGuerra;
   
-  // Función para limpiar todos los filtros
   const limpiarFiltros = () => {
     setFilterNombreEstacion('');
     setFilterSoloGuerra(false);
   };
 
-  return (
+  const formatFechaCompacta = (fechaStr) => {
+    if (!fechaStr) return { dia: '-', hora: '' };
+    const [fecha, hora] = fechaStr.split(' ');
+    return {
+      dia: fecha || '-',
+      hora: hora?.substring(0, 5) || ''
+    };
+  };
+
+    return (
     <div className="historico-wrapper">
       <div className="historico-filtros">
         <input
@@ -395,6 +456,17 @@ const HistoricoAlertas = ({
             title="Limpiar todos los filtros"
           >
             ✕ Limpiar
+          </button>
+        )}
+        
+        {/* BOTÓN EXPANDIR */}
+        {onExpand && (
+          <button 
+            className="btn-expandir-vista"
+            onClick={onExpand}
+            title="Expandir vista"
+          >
+            ⛶ Expandir
           </button>
         )}
         
@@ -456,15 +528,6 @@ const HistoricoAlertas = ({
               
               const tipoIcon = item.tipo_atencion === 'Asistido' ? '👤' : item.tipo_atencion === 'Autoservicio' ? '⛽' : '❓';
               
-              const formatFechaCompacta = (fechaStr) => {
-                if (!fechaStr) return { dia: '-', hora: '' };
-                const [fecha, hora] = fechaStr.split(' ');
-                return {
-                  dia: fecha || '-',
-                  hora: hora?.substring(0, 5) || ''
-                };
-              };
-              
               const fechaActual = formatFechaCompacta(item.Fecha);
               const fechaAnterior = formatFechaCompacta(item.FechaAnterior);
               const fechaCarga = formatFechaCompacta(item.FechaCarga);
@@ -525,9 +588,6 @@ const HistoricoAlertas = ({
   );
 };
 
-
-
-
 const AjustesTabla = ({ 
   data, 
   filterNombreAjuste,
@@ -539,16 +599,13 @@ const AjustesTabla = ({
 }) => {
   const [vistaDetallada, setVistaDetallada] = useState(false);
 
-  // Detectar filtros activos
   const hayFiltrosActivos = filterNombreAjuste.trim() !== '' || filterCombustible.trim() !== '';
   
-  // Función limpiar
   const limpiarFiltros = () => {
     setFilterNombreAjuste('');
     setFilterCombustible('');
   };
 
-  // Agrupar por cod_cne y luego por combinación de Diferencia_Competencia + Estrategia_Propia
   const agrupadosPorEstacion = useMemo(() => {
     const grupos = {};
     data.forEach(item => {
@@ -664,19 +721,135 @@ const AjustesTabla = ({
       ) : data.length === 0 ? (
         <div className="alert-empty">📋 No hay datos de ajustes disponibles</div>
       ) : vistaDetallada ? (
-        /* Vista Detallada - MANTÉN TU TABLA EXISTENTE AQUÍ */
         <table className="historico-table-compact">
-          {/* ... tu código de tabla detallada existente ... */}
+          <thead>
+            <tr>
+              <th>Estación</th>
+              <th>Marca</th>
+              <th>CNE</th>
+              <th>Combustible</th>
+              <th>PBL</th>
+              <th>Precio Asistido</th>
+              <th>Precio Autoservicio</th>
+              <th>Dif. Competencia</th>
+              <th>Estrategia Propia</th>
+              <th>Cambio Precio</th>
+              <th>Fecha Autoservicio</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item, idx) => {
+              const difComp = item.Diferencia_Competencia || 0;
+              const difPropia = item.Estrategia_Propia || 0;
+              const fechaAuto = formatFecha(item.fecha_autoservicio);
+              const precioAsistido = item.precio_asistido || 0;
+              const precioAutoservicio = item.precio_autoservicio || 0;
+              const cambioPrecio = item.cambio_precio || 'Mantiene Diferencia';
+              
+              return (
+                <tr key={idx}>
+                  <td className="td-estacion" title={item.Nom_Eds}>
+                    {item.Nom_Eds || 'S/N'}
+                  </td>
+                  <td className="td-marca">{item.marca || '-'}</td>
+                  <td className="td-cne" title={item.cod_cne}>
+                    {item.cod_cne || '-'}
+                  </td>
+                  <td className="td-combustible">
+                    <span className={`combustible-badge combustible-${item.combustible?.toLowerCase()}`}>
+                      {item.combustible || '-'}
+                    </span>
+                  </td>
+                  <td className="td-pbl">{item.pbl || '-'}</td>
+                  <td className="td-precio"><strong>${precioAsistido}</strong></td>
+                  <td className="td-precio"><strong>${precioAutoservicio}</strong></td>
+                  <td className={`td-diferencia ${difComp > 0 ? 'precio-sube' : difComp < 0 ? 'precio-baja' : 'precio-igual'}`}>
+                    <strong>
+                      {difComp > 0 ? '↑ +' : difComp < 0 ? '↓ ' : ''}{difComp}
+                    </strong>
+                  </td>
+                  <td className={`td-diferencia ${difPropia > 0 ? 'precio-sube' : difPropia < 0 ? 'precio-baja' : 'precio-igual'}`}>
+                    <strong>
+                      {difPropia > 0 ? '↑ +' : difPropia < 0 ? '↓ ' : ''}{difPropia}
+                    </strong>
+                  </td>
+                  <td className="td-cambio-precio" style={{ fontSize: '11px' }}>
+                    {cambioPrecio}
+                  </td>
+                  <td className="td-fecha">
+                    <div className="fecha-compacta">
+                      <span className="fecha-dia">{fechaAuto.dia}</span>
+                      {fechaAuto.hora && <span className="fecha-hora">{fechaAuto.hora}</span>}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
         </table>
       ) : (
-        /* Vista Simplificada - MANTÉN TU TABLA AGRUPADA EXISTENTE AQUÍ */
         <table className="historico-table-compact ajustes-simplified">
-          {/* ... tu código de tabla simplificada existente ... */}
+          <thead>
+            <tr>
+              <th>Estación</th>
+              <th>Marca</th>
+              <th>CNE</th>
+              <th>PBL</th>
+              <th>Combustibles</th>
+              <th>Dif. Competencia</th>
+              <th>Dif. Estrategia</th>
+              <th>Fecha Vigencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            {agrupadosPorEstacion.map((grupo, idx) => {
+              return grupo.subgrupos.map((subgrupo, subIdx) => {
+                const fechaVig = formatFecha(subgrupo.combustibles[0]?.FechaVigenciaSugerida);
+                const difComp = subgrupo.diferencia_competencia;
+                const difPropia = subgrupo.diferencia_propia;
+                
+                return (
+                  <tr key={`${idx}-${subIdx}`}>
+                    {subIdx === 0 && (
+                      <>
+                        <td className="td-estacion" rowSpan={grupo.subgrupos.length} title={grupo.Nom_Eds}>
+                          {grupo.Nom_Eds?.slice(0, 18) || 'S/N'}
+                        </td>
+                        <td className="td-marca" rowSpan={grupo.subgrupos.length}>{grupo.marca || '-'}</td>
+                        <td className="td-cne" rowSpan={grupo.subgrupos.length} title={grupo.cod_cne}>
+                          {grupo.cod_cne?.slice(-6) || '-'}
+                        </td>
+                        <td className="td-pbl" rowSpan={grupo.subgrupos.length}>{grupo.pbl || '-'}</td>
+                      </>
+                    )}
+                    <td className="td-combustibles">
+                      {subgrupo.combustibles.map((c, i) => (
+                        <span key={i} className={`combustible-badge combustible-${c.combustible?.toLowerCase()}`} style={{ marginRight: '4px' }}>
+                          {c.combustible}
+                        </span>
+                      ))}
+                    </td>
+                    <td className={`td-diferencia ${difComp > 0 ? 'precio-sube' : difComp < 0 ? 'precio-baja' : 'precio-igual'}`}>
+                      <strong>{difComp > 0 ? '↑' : difComp < 0 ? '↓' : '='} {difComp > 0 ? '+' : ''}{difComp}</strong>
+                    </td>
+                    <td className={`td-diferencia ${difPropia > 0 ? 'precio-sube' : difPropia < 0 ? 'precio-baja' : 'precio-igual'}`}>
+                      <strong>{difPropia > 0 ? '↑' : difPropia < 0 ? '↓' : '='} {difPropia > 0 ? '+' : ''}{difPropia}</strong>
+                    </td>
+                    <td className="td-fecha">
+                      <div className="fecha-compacta">
+                        <span className="fecha-dia">{fechaVig.dia}</span>
+                        {fechaVig.hora && <span className="fecha-hora">{fechaVig.hora}</span>}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              });
+            })}
+          </tbody>
         </table>
       )}
     </div>
   );
 };
-
 
 export default AlertPanel;

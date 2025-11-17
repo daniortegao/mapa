@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import IconMarkersLayer from './IconMarkersLayer';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 const TILE_LAYERS = {
@@ -62,6 +63,7 @@ function MapComponent({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const [searchMarker, setSearchMarker] = useState(null); // ← AGREGADO
   const [panelsMenuOpen, setPanelsMenuOpen] = useState(false);
   const [layersMenuOpen, setLayersMenuOpen] = useState(false);
   const searchTimeoutRef = useRef(null);
@@ -82,7 +84,7 @@ function MapComponent({
     searchTimeoutRef.current = setTimeout(async () => {
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=cl&limit=5&addressdetails=1`,
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=cl&limit=8&addressdetails=1`,
           {
             headers: {
               'User-Agent': 'MapaEstaciones/1.0',
@@ -106,77 +108,65 @@ function MapComponent({
       const lat = parseFloat(result.lat);
       const lon = parseFloat(result.lon);
       map.setView([lat, lon], 17);
+      
+      // ← AGREGADO: Guardar marcador
+      setSearchMarker({
+        position: [lat, lon],
+        address: result.display_name
+      });
     }
     
-    setSearchQuery(result.display_name);
+    setSearchQuery(result.display_name.split(',')[0]); // Primera parte
     setShowResults(false);
   };
 
   return (
     <div className="map-wrapper">
-      {/* MENÚ PANELES (IZQUIERDA) */}
+      {/* BUSCADOR DE DIRECCIONES - COMPACTO AL LADO DE LOS BOTONES */}
       <div className="map-control-left">
-        <button 
-          className="control-toggle-btn"
-          onClick={() => setPanelsMenuOpen(!panelsMenuOpen)}
-          title="Paneles y Búsqueda"
-        >
-          ☰
-        </button>
-
-        {panelsMenuOpen && (
-          <div className="control-dropdown">
-            {/* BUSCADOR */}
-            <div className="control-section">
-              <div className="control-section-title">Buscar Dirección</div>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  className="search-input-compact"
-                  placeholder="🔍 Ej: Bernardo O'Higgins 292..."
-                  value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                
-                {showResults && searchResults.length > 0 && (
-                  <div className="search-results-dropdown">
-                    {searchResults.map((result, index) => (
-                      <div
-                        key={index}
-                        className="search-result-item"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          selectLocation(result);
-                        }}
-                      >
-                        📍 {result.display_name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+        <div className="search-bar-inline">
+          <input
+            type="text"
+            className="search-input-inline"
+            placeholder="🔍 Buscar dirección..."
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+          />
+          
+          {searchQuery && (
+            <button
+              className="search-clear-btn"
+              onClick={() => {
+                setSearchQuery('');
+                setSearchResults([]);
+                setShowResults(false);
+                setSearchMarker(null); // ← AGREGADO: Limpiar marcador
+              }}
+              title="Limpiar búsqueda"
+            >
+              ✕
+            </button>
+          )}
+          
+          {showResults && searchResults.length > 0 && (
+            <div className="search-results-dropdown-inline">
+              {searchResults.map((result, index) => (
+                <div
+                  key={index}
+                  className="search-result-item"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    selectLocation(result);
+                  }}
+                >
+                  📍 {result.display_name}
+                </div>
+              ))}
             </div>
-
-            {/* TOGGLE PANELES */}
-            <div className="control-section">
-              <div className="control-section-title">Paneles</div>
-              <button 
-                className={`panel-toggle-btn ${sidebarVisible ? 'active' : ''}`}
-                onClick={onToggleSidebar}
-              >
-                🔽 {sidebarVisible ? 'Ocultar' : 'Mostrar'} Filtros
-              </button>
-              <button 
-                className={`panel-toggle-btn ${rightPanelVisible ? 'active' : ''}`}
-                onClick={onToggleRightPanel}
-              >
-                📊 {rightPanelVisible ? 'Ocultar' : 'Mostrar'} Datos
-              </button>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* MENÚ CAPAS (DERECHA) */}
@@ -237,6 +227,32 @@ function MapComponent({
           selectedRegion={selectedRegion}
           baseCompData={baseCompData}
         />
+
+        {/* ← AGREGADO: MARCADOR DE BÚSQUEDA */}
+       {searchMarker && (
+  <Marker 
+    position={searchMarker.position}
+    icon={L.divIcon({
+      className: 'custom-search-marker',
+      html: '<span class="search-marker-icon">📍</span>',
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
+      popupAnchor: [0, -40]
+    })}
+  >
+    <Popup>
+      <div style={{ padding: '8px', minWidth: '200px' }}>
+        <strong style={{ color: '#02d6a8', fontSize: '13px', display: 'block', marginBottom: '8px' }}>
+          📍 Ubicación buscada
+        </strong>
+        <p style={{ margin: 0, fontSize: '12px', color: '#495057' }}>
+          {searchMarker.address}
+        </p>
+      </div>
+    </Popup>
+  </Marker>
+)}
+
       </MapContainer>
     </div>
   );

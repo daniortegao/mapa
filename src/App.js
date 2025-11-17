@@ -4,16 +4,16 @@ import './styles/layout.css';
 import './styles/markers.css';
 import MapComponent from './components/MapComponent';
 import FilterPanel from './components/FilterPanel';
-import AlertPanel from './components/AlertPanel'; // ✅ NUEVO
+import AlertPanel from './components/AlertPanel';
 import { REGION_COORDINATES, REGIONES_ORDENADAS } from './utils/constants';
 import { useMapData } from './hooks/useMapData';
-import { getDataBaseComp, getMercadoAlerta } from './services/apiService'; // ✅ NUEVO
+import { getDataBaseComp, getMercadoAlerta } from './services/apiService';
 
 function App() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [rightPanelVisible, setRightPanelVisible] = useState(false);
-  const [alertPanelVisible, setAlertPanelVisible] = useState(false); // ✅ NUEVO
-  const [alertCount, setAlertCount] = useState(0); // ✅ NUEVO
+  const [alertPanelVisible, setAlertPanelVisible] = useState(false);
+  const [alertCount, setAlertCount] = useState(0);
   const [selectedRegion, setSelectedRegion] = useState('Metropolitana de Santiago');
   const [filteredMarkers, setFilteredMarkers] = useState([]);
   const [filteredMarkersForMercado, setFilteredMarkersForMercado] = useState([]);
@@ -39,38 +39,31 @@ function App() {
         console.error('Error:', err);
       }
     };
-    
     loadIt();
   }, []);
 
-  // ✅ NUEVO: Cargar contador de alertas
- useEffect(() => {
-  const loadAlertCount = async () => {
-    try {
-      const alertas = await getMercadoAlerta();
-
-      // Función para contar estaciones únicas
-      const getStationCount = (alerts) => {
-        const estaciones = {};
-        alerts.forEach(a => {
-          estaciones[a.Nom_Eds || 'Sin nombre'] = true;
-        });
-        return Object.keys(estaciones).length;
-      };
-
-      const count = getStationCount(alertas);
-      setAlertCount(count);
-    } catch (err) {
-      console.error('Error al cargar alertas:', err);
-      setAlertCount(0);
-    }
-  };
-
-  loadAlertCount();
-  const interval = setInterval(loadAlertCount, 60000); // Actualiza cada minuto
-  return () => clearInterval(interval);
-}, []);
-
+  useEffect(() => {
+    const loadAlertCount = async () => {
+      try {
+        const alertas = await getMercadoAlerta();
+        const getStationCount = (alerts) => {
+          const estaciones = {};
+          alerts.forEach(a => {
+            estaciones[a.Nom_Eds || 'Sin nombre'] = true;
+          });
+          return Object.keys(estaciones).length;
+        };
+        const count = getStationCount(alertas);
+        setAlertCount(count);
+      } catch (err) {
+        console.error('Error al cargar alertas:', err);
+        setAlertCount(0);
+      }
+    };
+    loadAlertCount();
+    const interval = setInterval(loadAlertCount, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleFiltersChange = (filtered, filteredForMercado) => {
     setFilteredMarkers(filtered);
@@ -95,22 +88,21 @@ function App() {
     }, 300);
   };
 
-  // ✅ NUEVO: Toggle panel de alertas
   const toggleAlertPanel = () => {
     setAlertPanelVisible(!alertPanelVisible);
   };
 
   return (
     <div className="app-container">
+      {/* ========== NAVBAR ========== */}
       <nav className="navbar">
         <div className="navbar-container">
           <div className="navbar-left">
             <h1 className="navbar-title">S.I.M.E</h1>
-            <span className="navbar-subtitle">{selectedRegion}</span>
+            <span className="navbar-subtitle">Region {selectedRegion}</span>
           </div>
           
           <div className="navbar-right">
-            {/* ✅ NUEVO: Botón de alertas con badge animado */}
             <button 
               className="navbar-alert-btn"
               onClick={toggleAlertPanel}
@@ -133,6 +125,29 @@ function App() {
         </div>
       </nav>
 
+      {/* ========== PESTAÑAS HORIZONTALES (FUERA DEL NAV) ========== */}
+    <div className="panel-tabs-horizontal">
+  <button 
+    className={`vertical-tab-btn ${sidebarVisible ? 'active' : ''}`}
+    onClick={toggleSidebar}
+  >
+    <div className="vertical-tab-label">
+      {sidebarVisible ? 'OCULTAR FILTROS' : 'MOSTRAR FILTROS'}
+    </div>
+  </button>
+  
+  <button 
+    className={`vertical-tab-btn ${rightPanelVisible ? 'active' : ''}`}
+    onClick={toggleRightPanel}
+  >
+    <div className="vertical-tab-label">
+      {rightPanelVisible ? 'OCULTAR DATOS' : 'MOSTRAR DATOS'}
+    </div>
+  </button>
+</div>
+
+
+      {/* ========== MAIN CONTAINER ========== */}
       <div className="main-container">
         <aside className={`sidebar ${!sidebarVisible ? 'hidden' : ''}`}>
           <h3 className="sidebar-title">Filtros</h3>
@@ -212,7 +227,6 @@ function App() {
           </div>
         </aside>
 
-        {/* ✅ NUEVO: Panel de alertas lateral */}
         <AlertPanel 
           isVisible={alertPanelVisible}
           onClose={toggleAlertPanel}

@@ -797,3 +797,129 @@
 .btn-limpiar-filtros-destacado:hover {
   background: #138496;
 }
+
+/* ============================================
+   BOTÓN EXPANDIR
+   ============================================ */
+
+.btn-expandir-vista {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-expandir-vista:hover {
+  background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+}
+
+/* ============================================
+   MODAL EXPANDIDO
+   ============================================ */
+
+.modal-expandido-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-expandido-contenido {
+  background: white;
+  border-radius: 12px;
+  width: 95%;
+  max-width: 1600px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(30px); 
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0); 
+  }
+}
+
+.modal-expandido-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #02d6a8 0%, #01a179 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 3px solid #01a179;
+}
+
+.modal-expandido-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.modal-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.modal-expandido-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Ajustar tabla dentro del modal */
+.modal-expandido-body .historico-table-compact {
+  font-size: 13px;
+}
+
+.modal-expandido-body .historico-table-compact th,
+.modal-expandido-body .historico-table-compact td {
+  padding: 12px 10px;
+}

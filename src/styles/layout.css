@@ -81,13 +81,234 @@
   font-weight: 700;
   color: #ffffff;
   z-index: 1001;
- 
 }
 
 .navbar-logo {
   height: 30px;
   width: auto;
   border-radius: 4px;
+}
+
+/* ============================================
+   PESTAÑAS FLOTANTES - BOTONES DE PANELES
+   ============================================ */
+
+.panel-tabs-horizontal {
+  position: fixed;
+  top: 90px;
+  left: 85px;
+  right: auto;
+  height: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  z-index: 900;
+  padding: 0;
+  pointer-events: none; 
+}
+
+.vertical-tab-btn {
+  width: auto;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 6px;
+  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(2, 214, 168, 0.35);
+  pointer-events: all;
+  position: relative;
+  overflow: hidden;
+}
+
+.vertical-tab-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.vertical-tab-btn:hover::before {
+  left: 100%;
+}
+
+.vertical-tab-btn:hover {
+  background: linear-gradient(135deg, #01b894 0%, #0568b0 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(2, 214, 168, 0.45);
+}
+
+.vertical-tab-btn.active {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  box-shadow: 0 6px 16px rgba(40, 167, 69, 0.5);
+  transform: scale(1.05);
+}
+
+.vertical-tab-icon {
+  font-size: 16px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+}
+
+.vertical-tab-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-align: center;
+  line-height: 1.2;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+/* ============================================
+   BUSCADOR INLINE (AL LADO DE BOTONES)
+   ============================================ */
+
+.search-bar-inline {
+  position: relative;
+  display: inline-block;
+  margin-left: 12px;
+}
+
+.search-input-inline {
+  margin-left: 500px;
+  width: 350px;
+  padding: 8px 8px 8px 8px; /* padding-right para el botón X */
+  font-size: 13px;
+  border: 2px solid #dee2e6;
+  border-radius: 5px;
+  background: white;
+  color: #495057;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-input-inline:focus {
+  outline: none;
+  border-color: #02d6a8;
+  background: white;
+  box-shadow: 0 4px 12px rgba(2, 214, 168, 0.25);
+  transform: translateY(-1px);
+}
+
+.search-input-inline::placeholder {
+  color: #adb5bd;
+  font-weight: 500;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: rgba(108, 117, 125, 0.15);
+  color: #6c757d;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  line-height: 1;
+  padding: 0;
+  z-index: 10;
+}
+
+.search-clear-btn:hover {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  transform: translateY(-50%) scale(1.15);
+}
+
+.search-clear-btn:active {
+  transform: translateY(-50%) scale(0.9);
+}
+
+.search-results-dropdown-inline {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #02d6a8;
+  border-radius: 12px;
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideDownFade 0.2s ease;
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-results-dropdown-inline .search-result-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #495057;
+  border-bottom: 1px solid #f1f3f5;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-results-dropdown-inline .search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-results-dropdown-inline .search-result-item:hover {
+  background: linear-gradient(135deg, #e6f9f5 0%, #d9f2f7 100%);
+  color: #02d6a8;
+  padding-left: 20px;
+  font-weight: 600;
+}
+
+.search-results-dropdown-inline::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-results-dropdown-inline::-webkit-scrollbar-track {
+  background: #f1f3f5;
+  border-radius: 3px;
+}
+
+.search-results-dropdown-inline::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
+  border-radius: 3px;
+}
+
+.search-results-dropdown-inline::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #01b894 0%, #0568b0 100%);
 }
 
 /* ============================================
@@ -119,6 +340,7 @@
   transition: all 0.3s ease;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
+  z-index: 500;
 }
 
 .sidebar.hidden {
@@ -135,6 +357,24 @@
   letter-spacing: -0.3px;
 }
 
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: #f1f3f5;
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #01b894 0%, #0568b0 100%);
+}
+
 /* ============================================
    FILTER GROUP
    ============================================ */
@@ -145,7 +385,6 @@
 }
 
 .filter-group label {
-  
   margin-bottom: 4px;
   font-size: 12px;
   font-weight: 700;
@@ -186,10 +425,6 @@
   font-weight: 500;
 }
 
-/* ============================================
-   CHECKBOXES DE FILTROS
-   ============================================ */
-
 .filter-checkbox {
   margin-top: 12px;
   padding: 5px;
@@ -228,10 +463,6 @@
 .filter-checkbox-pes .checkbox-text {
   color: #045a9e;
 }
-
-/* ============================================
-   REGIÓN Y BOTONES
-   ============================================ */
 
 .region-name {
   display: block;
@@ -280,28 +511,6 @@
 }
 
 /* ============================================
-   SCROLLBAR SIDEBAR
-   ============================================ */
-
-.sidebar::-webkit-scrollbar {
-  width: 8px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-  background: #f1f3f5;
-  border-radius: 4px;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
-  border-radius: 4px;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #01b894 0%, #0568b0 100%);
-}
-
-/* ============================================
    MAPA
    ============================================ */
 
@@ -331,10 +540,6 @@
   z-index: 1;
 }
 
-/* ============================================
-   CONTROLES DEL MAPA
-   ============================================ */
-
 .map-control-left {
   position: absolute;
   top: 15px;
@@ -347,227 +552,6 @@
   top: 15px;
   right: 15px;
   z-index: 600;
-}
-
-.control-toggle-btn {
-  margin-left: 50px;
-  width: 48px;
-  height: 48px;
-  background: white;
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 20px;
-  font-weight: 700;
-  color: #495057;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.control-toggle-btn:hover {
-  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
-  color: white;
-  border-color: #02d6a8;
-  transform: scale(1.05);
-}
-
-.control-dropdown {
-  position: absolute;
-  top: 56px;
-  width: 300px;
-  background: white;
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  animation: slideDown 0.2s ease;
-}
-
-.map-control-left .control-dropdown {
-  left: 0;
-}
-
-.map-control-right .control-dropdown {
-  right: 0;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.control-section {
-  padding: 12px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.control-section:last-child {
-  border-bottom: none;
-}
-
-.control-section-title {
-  font-size: 11px;
-  font-weight: 700;
-  color: #6c757d;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-}
-
-/* ============================================
-   BUSCADOR COMPACTO
-   ============================================ */
-
-.search-input-compact {
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 13px;
-  border: 2px solid #dee2e6;
-  border-radius: 6px;
-  background: #f8f9fa;
-  transition: all 0.2s ease;
-}
-
-.search-input-compact:focus {
-  outline: none;
-  border-color: #02d6a8;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(2, 214, 168, 0.1);
-}
-
-.search-results-dropdown {
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 0;
-  right: 0;
-  background: white;
-  border: 2px solid #02d6a8;
-  border-radius: 6px;
-  max-height: 250px;
-  overflow-y: auto;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-}
-
-.search-result-item {
-  padding: 10px 12px;
-  cursor: pointer;
-  font-size: 12px;
-  color: #495057;
-  border-bottom: 1px solid #f1f3f5;
-  transition: all 0.2s;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.search-result-item:last-child {
-  border-bottom: none;
-}
-
-.search-result-item:hover {
-  background: #e6f9f5;
-  color: #02d6a8;
-  padding-left: 16px;
-  font-weight: 600;
-}
-
-.search-results-dropdown::-webkit-scrollbar {
-  width: 6px;
-}
-
-.search-results-dropdown::-webkit-scrollbar-track {
-  background: #f1f3f5;
-}
-
-.search-results-dropdown::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
-  border-radius: 3px;
-}
-
-/* ============================================
-   BOTONES DE PANEL
-   ============================================ */
-
-.panel-toggle-btn {
-  width: 100%;
-  padding: 10px 12px;
-  background: #f8f9fa;
-  border: 2px solid #dee2e6;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  color: #495057;
-  transition: all 0.2s ease;
-  text-align: left;
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.panel-toggle-btn:last-child {
-  margin-bottom: 0;
-}
-
-.panel-toggle-btn:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
-}
-
-.panel-toggle-btn.active {
-  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
-  color: white;
-  border-color: #02d6a8;
-  box-shadow: 0 2px 6px rgba(2, 214, 168, 0.3);
-}
-
-/* ============================================
-   CAPAS
-   ============================================ */
-
-.layer-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.layer-btn-compact {
-  padding: 10px 12px;
-  background: #f8f9fa;
-  border: 2px solid #dee2e6;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  color: #495057;
-  transition: all 0.2s ease;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.layer-btn-compact:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
-}
-
-.layer-btn-compact.active {
-  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
-  color: white;
-  border-color: #02d6a8;
-  box-shadow: 0 2px 6px rgba(2, 214, 168, 0.3);
 }
 
 /* ============================================
@@ -641,43 +625,6 @@
 }
 
 /* ============================================
-   BOTONES DE TOGGLE
-   ============================================ */
-
-.toggle-btn {
-  position: fixed;
-  background: linear-gradient(135deg, #02d6a8 0%, #067fcf 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 12px 18px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-  z-index: 999;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(2, 214, 168, 0.3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.toggle-btn:hover {
-  background: linear-gradient(135deg, #01b894 0%, #0568b0 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(2, 214, 168, 0.4);
-}
-
-.toggle-sidebar {
-  left: 10px;
-  bottom: 20px;
-}
-
-.toggle-right {
-  right: 10px;
-  bottom: 20px;
-}
-
-/* ============================================
    PANTALLA COMPLETA
    ============================================ */
 
@@ -728,14 +675,13 @@
   }
 
   .navbar-version {
-    bottom: 15px;
+    top: 15px;
     right: 15px;
     font-size: 11px;
-    padding: 6px 12px;
   }
 
   .navbar-logo {
-    height: 38px;
+    height: 25px;
   }
 
   .main-container {
@@ -743,19 +689,56 @@
     height: calc(100vh - 60px);
   }
 
+  .panel-tabs-horizontal {
+    top: 68px;
+    left: 10px;
+    gap: 8px;
+  }
+
+  .vertical-tab-btn {
+    padding: 6px 10px;
+    height: 28px;
+  }
+
+  .vertical-tab-icon {
+    font-size: 14px;
+  }
+
+  .vertical-tab-label {
+    font-size: 9px;
+    letter-spacing: 0.3px;
+  }
+
+  .search-bar-inline {
+    margin-left: 8px;
+  }
+
+  .search-input-inline {
+    width: 240px;
+    font-size: 12px;
+    padding: 7px 35px 7px 12px;
+  }
+
+  .search-clear-btn {
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
+    right: 10px;
+  }
+
   .sidebar {
     position: absolute;
     left: 0;
-    top: 60px;
-    height: calc(100vh - 60px);
+    top: 0;
+    height: 100%;
     z-index: 500;
   }
   
   .right-panel {
     position: absolute;
     right: 0;
-    top: 60px;
-    height: calc(100vh - 60px);
+    top: 0;
+    height: 100%;
     z-index: 500;
   }
 }
@@ -779,9 +762,49 @@
   }
 
   .navbar-version {
-    bottom: 10px;
+    top: 10px;
     right: 10px;
     font-size: 10px;
-    padding: 5px 10px;
   }
+
+  .vertical-tab-btn {
+    padding: 5px 8px;
+    height: 26px;
+  }
+
+  .vertical-tab-label {
+    font-size: 8px;
+  }
+
+  .search-bar-inline {
+    display: none;
+  }
+}
+
+/* ============================================
+   MARCADOR DE BÚSQUEDA
+   ============================================ */
+
+.custom-search-marker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+.search-marker-icon {
+  display: block;
+  font-size: 40px;
+  line-height: 1;
+  text-align: center;
+  background: transparent;
+  border: none;
+}
+
+/* Remover todos los estilos por defecto de Leaflet */
+.leaflet-marker-icon.custom-search-marker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
