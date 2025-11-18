@@ -5,15 +5,12 @@ export const useMapData = () => {
   const [markers, setMarkers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Función auxiliar para formatear con coordenadas corregidas
   const formatMarkerData = (data, coordenadasCorregidas = []) => {
     return data.map(item => {
-      // ✅ Buscar coordenada corregida por PBL o ID
       const coordCorregida = coordenadasCorregidas.find(
         c => c.pbl === item.pbl || c.id === item.id
       );
 
-      // ✅ Usar corregida si existe, sino usar original
       const lat = parseFloat(coordCorregida?.lat_corregida || item.latitud);
       const lng = parseFloat(coordCorregida?.lon_corregida || item.longitud);
 
@@ -40,20 +37,17 @@ export const useMapData = () => {
         Actualizacion: item.Actualizacion || '',
         fecha_aplicacion: item.fecha_aplicacion || '',
         Surtidores_Autoservicio: item.Surtidores_Autoservicio || null,
-    Posicion_Surtidor: item.Posicion_Surtidor || null,
-    Tipo_Isla: item.Tipo_Isla || null
-
+        Posicion_Surtidor: item.Posicion_Surtidor || null,
+        Tipo_Isla: item.Tipo_Isla || null
       };
     }).filter(m => !isNaN(m.lat) && !isNaN(m.lng));
   };
 
-  // Carga inicial desde API
   useEffect(() => {
     const fetchData = async () => {
       try {
         console.log('📡 Obteniendo datos desde API...');
         
-        // ✅ Cargar coordenadas corregidas
         let coordCorregidas = [];
         try {
           coordCorregidas = await getCoordenadasCorregidas();
@@ -67,7 +61,7 @@ export const useMapData = () => {
         
         const formattedData = formatMarkerData(data, coordCorregidas);
         
-        console.log(`✅ ${formattedData.length} marcadores cargados`);
+        console.log(`✅ ${formattedData.length} registros cargados (histórico completo)`);
         
         setMarkers(formattedData);
         setLoading(false);
@@ -80,7 +74,6 @@ export const useMapData = () => {
     fetchData();
   }, []);
 
-  // Polling cada 30 minutos
   useEffect(() => {
     const interval = setInterval(async () => {
       try {

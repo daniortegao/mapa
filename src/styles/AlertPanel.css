@@ -12,7 +12,7 @@
   background: #f2f5fa; /* Antes: #ffffff, ahora un gris azulado y opaco */
   border-left: 2px solid #dee2e6;
   box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
-  z-index: 950;
+  z-index: 1900;
   display: flex;
   flex-direction: column;
   transition: transform 0.3s ease;

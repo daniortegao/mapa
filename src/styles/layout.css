@@ -105,7 +105,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  z-index: 900;
+  z-index: 1900;
   padding: 0;
   pointer-events: none; 
 }

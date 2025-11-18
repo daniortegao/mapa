@@ -1,0 +1,76 @@
+/* Estilos para clusters */
+.marker-cluster {
+  background: linear-gradient(135deg, #02d6a8 0%, #01a179 100%);
+  border: 4px solid white;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+}
+
+.marker-cluster:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+}
+
+.marker-cluster div {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.marker-cluster-small {
+  width: 35px;
+  height: 35px;
+  font-size: 12px;
+}
+
+.marker-cluster-medium {
+  width: 45px;
+  height: 45px;
+  font-size: 14px;
+}
+
+.marker-cluster-large {
+  width: 55px;
+  height: 55px;
+  font-size: 16px;
+}
+
+/* Cluster con guerra de precios */
+.marker-cluster-guerra {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  animation: pulseGuerra 2s infinite;
+}
+
+@keyframes pulseGuerra {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.6);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(231, 76, 60, 0.9);
+  }
+}
+
+/* Animación al expandir cluster */
+.marker-cluster-animate {
+  animation: expandCluster 0.3s ease;
+}
+
+@keyframes expandCluster {
+  from {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

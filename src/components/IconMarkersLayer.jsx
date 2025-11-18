@@ -402,46 +402,211 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
 
             leafletMarker.bindPopup(popup);
 
-            // Manejo de tabs + montaje del TrendChart al abrir
-            leafletMarker.on('popupopen', (e) => {
-              makeDraggable(popup);
-              setTimeout(() => {
-                const popupContainer = e.popup._container;
-                if (!popupContainer) return;
-                
-                // CREAR GRIP en el wrapper
-                crearGripEnWrapper(popupContainer);
+        // Manejo de tabs + montaje del TrendChart al abrir
+leafletMarker.on('popupopen', (e) => {
+  console.log('🔵 Popup ORIGINAL abierto'); // ← Cambiar según el lugar
+  makeDraggable(popup);
+  setTimeout(() => {
+    const popupContainer = e.popup._container;
+    if (!popupContainer) return;
+    
+    console.log('✅ popupContainer encontrado (ORIGINAL)'); // ← Cambiar según el lugar
+    crearGripEnWrapper(popupContainer);
 
-                const tabButtons = popupContainer.querySelectorAll('.popup-tab-button');
-                tabButtons.forEach(btn => {
-                  btn.addEventListener('click', function () {
-                    const tabName = this.getAttribute('data-tab');
+    // Listener GLOBAL
+    const handleGlobalClick = (event) => {
+      if (!popupContainer.contains(event.target)) return;
+      
+      const btn = event.target.closest('.popup-tab-button');
+      if (!btn) return;
 
-                    // Toggle visual
-                    popupContainer.querySelectorAll('.popup-tab-button').forEach(b => b.classList.remove('active'));
-                    popupContainer.querySelectorAll('.popup-tab-pane').forEach(pane => pane.classList.remove('active'));
-                    this.classList.add('active');
-                    popupContainer.querySelector(`.popup-tab-pane[data-tab="${tabName}"]`).classList.add('active');
+      console.log('🎯 Click GLOBAL (ORIGINAL)', event.target); // ← Cambiar según el lugar
+      event.stopPropagation();
+      event.preventDefault();
+      
+      const tabName = btn.getAttribute('data-tab');
+      console.log('📋 Tab (ORIGINAL):', tabName); // ← Cambiar según el lugar
+      if (!tabName) return;
 
-                    // Montar gráfico cuando se elige "tendencias"
-                    if (tabName === 'tendencias') {
-                      const el = popupContainer.querySelector(`#trend-root-${marker.id}`);
-                      if (el && !el.__mounted) {
-                        const root = ReactDOM.createRoot(el);
-                        root.render(React.createElement(TrendChart, {
-                          dataRows: datosTabla,
-                          maxPoints: 7,
-                          height: 170,
-                          compact: true
-                        }));
-                        el.__mounted = true;
-                        el.__root = root;
-                      }
-                    }
-                  });
-                });
-              }, 0);
-            });
+      popupContainer.querySelectorAll('.popup-tab-button').forEach(b => b.classList.remove('active'));
+      popupContainer.querySelectorAll('.popup-tab-pane').forEach(pane => pane.classList.remove('active'));
+      
+      btn.classList.add('active');
+      const targetPane = popupContainer.querySelector(`.popup-tab-pane[data-tab="${tabName}"]`);
+      if (targetPane) {
+        targetPane.classList.add('active');
+        console.log('✅ Panel activado (ORIGINAL)'); // ← Cambiar según el lugar
+      }
+
+      if (tabName === 'tendencias') {
+        const el = popupContainer.querySelector(`#trend-root-${marker.id}`);
+        if (el && !el.__mounted) {
+          const root = ReactDOM.createRoot(el);
+          root.render(React.createElement(TrendChart, {
+            dataRows: datosTabla,
+            maxPoints: 7,
+            height: 170,
+            compact: true
+          }));
+          el.__mounted = true;
+          el.__root = root;
+        }
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick, true);
+    popupContainer.__globalClickHandler = handleGlobalClick;
+    console.log('✅ Listener GLOBAL agregado (ORIGINAL)'); // ← Cambiar según el lugar
+  }, 50);
+});
+
+// Y también actualiza el popupclose en los 3 lugares:
+leafletMarker.on('popupclose', (e) => {
+  const container = e.popup?._container;
+  if (!container) return;
+  
+  // Limpiar gráfico
+  const el = container.querySelector(`#trend-root-${marker.id}`);
+  if (el && el.__root) {
+    el.__root.unmount();
+    el.__mounted = false;
+    el.__root = null;
+  }
+  
+  // Remover listener global
+  if (container.__globalClickHandler) {
+    document.removeEventListener('click', container.__globalClickHandler, true);
+    container.__globalClickHandler = null;
+  }
+  
+  // Limpiar grip
+  const wrapper = container.querySelector('.leaflet-popup-content-wrapper');
+  const grip = wrapper?.querySelector('.popup-resize-grip');
+  if (grip && grip._cleanup) {
+    grip._cleanup();
+  }
+});
+
+
+// Limpieza: desmontar gráfico y remover listeners al cerrar
+leafletMarker.on('popupclose', (e) => {
+  const container = e.popup?._container;
+  if (!container) return;
+  
+  // Limpiar gráfico
+  const el = container.querySelector(`#trend-root-${marker.id}`);
+  if (el && el.__root) {
+    el.__root.unmount();
+    el.__mounted = false;
+    el.__root = null;
+  }
+  
+  // Limpiar event listener de tabs
+  if (container.__tabHandlerAttached && container.__tabHandler) {
+    const tabsContainer = container.querySelector('.popup-tabs-header');
+    if (tabsContainer) {
+      tabsContainer.removeEventListener('click', container.__tabHandler);
+    }
+    container.__tabHandlerAttached = false;
+    container.__tabHandler = null;
+  }
+  
+  // Limpiar event listeners del grip
+  const wrapper = container.querySelector('.leaflet-popup-content-wrapper');
+  const grip = wrapper?.querySelector('.popup-resize-grip');
+  if (grip && grip._cleanup) {
+    grip._cleanup();
+  }
+});
+
+
+// Manejo de tabs + montaje del TrendChart al abrir
+leafletMarker.on('popupopen', (e) => {
+  console.log('🔵 Popup ORIGINAL abierto'); // ← Cambiar según el lugar
+  makeDraggable(popup);
+  setTimeout(() => {
+    const popupContainer = e.popup._container;
+    if (!popupContainer) return;
+    
+    console.log('✅ popupContainer encontrado (ORIGINAL)'); // ← Cambiar según el lugar
+    crearGripEnWrapper(popupContainer);
+
+    // Listener GLOBAL
+    const handleGlobalClick = (event) => {
+      if (!popupContainer.contains(event.target)) return;
+      
+      const btn = event.target.closest('.popup-tab-button');
+      if (!btn) return;
+
+      console.log('🎯 Click GLOBAL (ORIGINAL)', event.target); // ← Cambiar según el lugar
+      event.stopPropagation();
+      event.preventDefault();
+      
+      const tabName = btn.getAttribute('data-tab');
+      console.log('📋 Tab (ORIGINAL):', tabName); // ← Cambiar según el lugar
+      if (!tabName) return;
+
+      popupContainer.querySelectorAll('.popup-tab-button').forEach(b => b.classList.remove('active'));
+      popupContainer.querySelectorAll('.popup-tab-pane').forEach(pane => pane.classList.remove('active'));
+      
+      btn.classList.add('active');
+      const targetPane = popupContainer.querySelector(`.popup-tab-pane[data-tab="${tabName}"]`);
+      if (targetPane) {
+        targetPane.classList.add('active');
+        console.log('✅ Panel activado (ORIGINAL)'); // ← Cambiar según el lugar
+      }
+
+      if (tabName === 'tendencias') {
+        const el = popupContainer.querySelector(`#trend-root-${marker.id}`);
+        if (el && !el.__mounted) {
+          const root = ReactDOM.createRoot(el);
+          root.render(React.createElement(TrendChart, {
+            dataRows: datosTabla,
+            maxPoints: 7,
+            height: 170,
+            compact: true
+          }));
+          el.__mounted = true;
+          el.__root = root;
+        }
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick, true);
+    popupContainer.__globalClickHandler = handleGlobalClick;
+    console.log('✅ Listener GLOBAL agregado (ORIGINAL)'); // ← Cambiar según el lugar
+  }, 50);
+});
+
+// Y también actualiza el popupclose en los 3 lugares:
+leafletMarker.on('popupclose', (e) => {
+  const container = e.popup?._container;
+  if (!container) return;
+  
+  // Limpiar gráfico
+  const el = container.querySelector(`#trend-root-${marker.id}`);
+  if (el && el.__root) {
+    el.__root.unmount();
+    el.__mounted = false;
+    el.__root = null;
+  }
+  
+  // Remover listener global
+  if (container.__globalClickHandler) {
+    document.removeEventListener('click', container.__globalClickHandler, true);
+    container.__globalClickHandler = null;
+  }
+  
+  // Limpiar grip
+  const wrapper = container.querySelector('.leaflet-popup-content-wrapper');
+  const grip = wrapper?.querySelector('.popup-resize-grip');
+  if (grip && grip._cleanup) {
+    grip._cleanup();
+  }
+});
+
+
+
 
             // Limpieza: desmontar gráfico al cerrar
             leafletMarker.on('popupclose', (e) => {
@@ -616,43 +781,92 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
 
           leafletMarker.bindPopup(popup);
 
-          leafletMarker.on('popupopen', (e) => {
-            makeDraggable(popup);
-            setTimeout(() => {
-              const popupContainer = e.popup._container;
-              if (!popupContainer) return;
-              
-              // CREAR GRIP en el wrapper
-              crearGripEnWrapper(popupContainer);
+leafletMarker.on('popupopen', (e) => {
+  console.log('🔵 Popup ORIGINAL abierto'); // ← Cambiar según el lugar
+  makeDraggable(popup);
+  setTimeout(() => {
+    const popupContainer = e.popup._container;
+    if (!popupContainer) return;
+    
+    console.log('✅ popupContainer encontrado (ORIGINAL)'); // ← Cambiar según el lugar
+    crearGripEnWrapper(popupContainer);
 
-              const tabButtons = popupContainer.querySelectorAll('.popup-tab-button');
-              tabButtons.forEach(btn => {
-                btn.addEventListener('click', function () {
-                  const tabName = this.getAttribute('data-tab');
+    // Listener GLOBAL
+    const handleGlobalClick = (event) => {
+      if (!popupContainer.contains(event.target)) return;
+      
+      const btn = event.target.closest('.popup-tab-button');
+      if (!btn) return;
 
-                  popupContainer.querySelectorAll('.popup-tab-button').forEach(b => b.classList.remove('active'));
-                  popupContainer.querySelectorAll('.popup-tab-pane').forEach(pane => pane.classList.remove('active'));
-                  this.classList.add('active');
-                  popupContainer.querySelector(`.popup-tab-pane[data-tab="${tabName}"]`).classList.add('active');
+      console.log('🎯 Click GLOBAL (ORIGINAL)', event.target); // ← Cambiar según el lugar
+      event.stopPropagation();
+      event.preventDefault();
+      
+      const tabName = btn.getAttribute('data-tab');
+      console.log('📋 Tab (ORIGINAL):', tabName); // ← Cambiar según el lugar
+      if (!tabName) return;
 
-                  if (tabName === 'tendencias') {
-                    const el = popupContainer.querySelector(`#trend-root-${marker.id}`);
-                    if (el && !el.__mounted) {
-                      const root = ReactDOM.createRoot(el);
-                      root.render(React.createElement(TrendChart, {
-                        dataRows: datosTabla,
-                        maxPoints: 7,
-                        height: 170,
-                        compact: true
-                      }));
-                      el.__mounted = true;
-                      el.__root = root;
-                    }
-                  }
-                });
-              });
-            }, 0);
-          });
+      popupContainer.querySelectorAll('.popup-tab-button').forEach(b => b.classList.remove('active'));
+      popupContainer.querySelectorAll('.popup-tab-pane').forEach(pane => pane.classList.remove('active'));
+      
+      btn.classList.add('active');
+      const targetPane = popupContainer.querySelector(`.popup-tab-pane[data-tab="${tabName}"]`);
+      if (targetPane) {
+        targetPane.classList.add('active');
+        console.log('✅ Panel activado (ORIGINAL)'); // ← Cambiar según el lugar
+      }
+
+      if (tabName === 'tendencias') {
+        const el = popupContainer.querySelector(`#trend-root-${marker.id}`);
+        if (el && !el.__mounted) {
+          const root = ReactDOM.createRoot(el);
+          root.render(React.createElement(TrendChart, {
+            dataRows: datosTabla,
+            maxPoints: 7,
+            height: 170,
+            compact: true
+          }));
+          el.__mounted = true;
+          el.__root = root;
+        }
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick, true);
+    popupContainer.__globalClickHandler = handleGlobalClick;
+    console.log('✅ Listener GLOBAL agregado (ORIGINAL)'); // ← Cambiar según el lugar
+  }, 50);
+});
+
+// Y también actualiza el popupclose en los 3 lugares:
+leafletMarker.on('popupclose', (e) => {
+  const container = e.popup?._container;
+  if (!container) return;
+  
+  // Limpiar gráfico
+  const el = container.querySelector(`#trend-root-${marker.id}`);
+  if (el && el.__root) {
+    el.__root.unmount();
+    el.__mounted = false;
+    el.__root = null;
+  }
+  
+  // Remover listener global
+  if (container.__globalClickHandler) {
+    document.removeEventListener('click', container.__globalClickHandler, true);
+    container.__globalClickHandler = null;
+  }
+  
+  // Limpiar grip
+  const wrapper = container.querySelector('.leaflet-popup-content-wrapper');
+  const grip = wrapper?.querySelector('.popup-resize-grip');
+  if (grip && grip._cleanup) {
+    grip._cleanup();
+  }
+});
+
+
+
 
           leafletMarker.on('popupclose', (e) => {
             const container = e.popup?._container;

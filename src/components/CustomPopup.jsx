@@ -8,53 +8,60 @@ const CustomPopup = ({ marker, onClose, isOpen }) => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const popupRef = useRef(null);
 
-  useEffect(() => {
-    if (!isOpen) return;
+ useEffect(() => {
+  if (!isOpen) return;
 
-    const handleMouseDown = (e) => {
-      if (e.target.closest('.popup-close')) return;
-      
-      setIsDragging(true);
-      const rect = popupRef.current?.getBoundingClientRect();
-      if (rect) {
-        setDragOffset({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
-        });
-      }
-    };
-
-    const handleMouseMove = (e) => {
-      if (!isDragging) return;
-      
-      setPosition({
-        x: e.clientX - dragOffset.x,
-        y: e.clientY - dragOffset.y
+  const handleMouseDown = (e) => {
+    // Ignorar clicks en elementos interactivos
+    if (e.target.closest('.popup-close')) return;
+    if (e.target.closest('.popup-tabs')) return;
+    if (e.target.closest('.popup-tab')) return;
+    if (e.target.closest('button')) return; // Ignorar todos los botones
+    
+    // Solo iniciar drag si se hace click en el header
+    if (!e.target.closest('.popup-header')) return;
+    
+    setIsDragging(true);
+    const rect = popupRef.current?.getBoundingClientRect();
+    if (rect) {
+      setDragOffset({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
       });
-    };
+    }
+  };
 
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    setPosition({
+      x: e.clientX - dragOffset.x,
+      y: e.clientY - dragOffset.y
+    });
+  };
 
-    const header = popupRef.current?.querySelector('.popup-header');
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const header = popupRef.current?.querySelector('.popup-header');
+  if (header) {
+    header.addEventListener('mousedown', handleMouseDown);
+  }
+
+  if (isDragging) {
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }
+
+  return () => {
     if (header) {
-      header.addEventListener('mousedown', handleMouseDown);
+      header.removeEventListener('mousedown', handleMouseDown);
     }
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
+}, [isDragging, dragOffset, isOpen]);
 
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      if (header) {
-        header.removeEventListener('mousedown', handleMouseDown);
-      }
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragOffset, isOpen]);
 
   if (!isOpen || !marker) return null;
 
