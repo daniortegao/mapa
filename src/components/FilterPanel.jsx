@@ -7,7 +7,7 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
   const [selectedEds, setSelectedEds] = useState('');
   const [edsSearchTerm, setEdsSearchTerm] = useState('');
   const [soloGuerraPrecios, setSoloGuerraPrecios] = useState(false);
-  const [soloEstacionesPES, setSoloEstacionesPES] = useState(false); // ✅ NUEVO
+  const [soloEstacionesPES, setSoloEstacionesPES] = useState(false);
 
   const tuasMarcas = ['Aramco', 'Petrobras'];
 
@@ -54,13 +54,13 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
     );
   }, [allEds, edsSearchTerm]);
 
-  // ✅ Array CON filtro EDS para mostrar en mapa
+  // Array CON filtro EDS para mostrar en mapa
   const filteredMarkers = useMemo(() => {
     return markers.filter(m => {
       const regionMatch = m.Region === selectedRegion;
       const edsMatch = !selectedEds || m.eds === selectedEds;
       const guerraMatch = !soloGuerraPrecios || m.Guerra_Precio === 'Si';
-      const pesMatch = !soloEstacionesPES || (m.Surtidores_Autoservicio && m.Surtidores_Autoservicio !== null && m.Surtidores_Autoservicio !== ''); // ✅ NUEVO
+      const pesMatch = !soloEstacionesPES || (m.Surtidores_Autoservicio && m.Surtidores_Autoservicio !== null && m.Surtidores_Autoservicio !== '');
 
       if (selectedJefeZona) {
         const esDelJefe = m.nombre === selectedJefeZona;
@@ -80,12 +80,12 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
     });
   }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, selectedEds, comunasDelJefe, soloGuerraPrecios, soloEstacionesPES]);
 
-  // ✅ Array SIN filtro EDS para botón Mercado
+  // Array SIN filtro EDS para botón Mercado
   const filteredMarkersForMercado = useMemo(() => {
     return markers.filter(m => {
       const regionMatch = m.Region === selectedRegion;
       const guerraMatch = !soloGuerraPrecios || m.Guerra_Precio === 'Si';
-      const pesMatch = !soloEstacionesPES || (m.Surtidores_Autoservicio && m.Surtidores_Autoservicio !== null && m.Surtidores_Autoservicio !== ''); // ✅ NUEVO
+      const pesMatch = !soloEstacionesPES || (m.Surtidores_Autoservicio && m.Surtidores_Autoservicio !== null && m.Surtidores_Autoservicio !== '');
 
       if (selectedJefeZona) {
         const esDelJefe = m.nombre === selectedJefeZona;
@@ -105,17 +105,59 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
     });
   }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, comunasDelJefe, soloGuerraPrecios, soloEstacionesPES]);
 
-  React.useEffect(() => {
-    onFiltersChange(filteredMarkers, filteredMarkersForMercado);
-  }, [filteredMarkers, filteredMarkersForMercado, onFiltersChange]);
+  // ✅ DEDUPLICAR filteredMarkers para el mapa
+  const uniqueFilteredMarkers = useMemo(() => {
+    const uniqueMap = new Map();
+    
+    filteredMarkers.forEach(marker => {
+      const key = marker.pbl || marker.id || `${marker.lat}_${marker.lng}`;
+      const existing = uniqueMap.get(key);
+      
+      if (!existing) {
+        uniqueMap.set(key, marker);
+      } else {
+        const existingDate = existing.fecha_aplicacion ? new Date(existing.fecha_aplicacion) : new Date(0);
+        const currentDate = marker.fecha_aplicacion ? new Date(marker.fecha_aplicacion) : new Date(0);
+        
+        if (currentDate > existingDate) {
+          uniqueMap.set(key, marker);
+        }
+      }
+    });
+    
+    return Array.from(uniqueMap.values());
+  }, [filteredMarkers]);
 
+  // ✅ Enviar únicos al mapa, histórico completo para Mercado
+  React.useEffect(() => {
+    onFiltersChange(uniqueFilteredMarkers, filteredMarkersForMercado);
+  }, [uniqueFilteredMarkers, filteredMarkersForMercado, onFiltersChange]);
+
+  // Contador de marcas (solo estaciones únicas)
   const markersByBrand = useMemo(() => {
     const result = {};
-    filteredMarkers.forEach(m => {
+    uniqueFilteredMarkers.forEach(m => {
       result[m.Marca] = (result[m.Marca] || 0) + 1;
     });
     return result;
-  }, [filteredMarkers]);
+  }, [uniqueFilteredMarkers]);
+
+  // Contador total por marca en la región
+  const brandCounts = useMemo(() => {
+    const filtered = markers.filter(m => m.Region === selectedRegion);
+    const brandMap = new Map();
+    filtered.forEach(m => {
+      const brand = m.Marca || 'Sin marca';
+      const id = m.pbl || m.id || `${m.lat}_${m.lng}`;
+      if (!brandMap.has(brand)) {
+        brandMap.set(brand, new Set());
+      }
+      brandMap.get(brand).add(id);
+    });
+    return Object.fromEntries(
+      Array.from(brandMap.entries()).map(([name, set]) => [name, set.size])
+    );
+  }, [markers, selectedRegion]);
 
   const handleClearFilters = () => {
     setSelectedComuna('');
@@ -124,13 +166,11 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
     setSelectedEds('');
     setEdsSearchTerm('');
     setSoloGuerraPrecios(false);
-    setSoloEstacionesPES(false); // ✅ NUEVO
+    setSoloEstacionesPES(false);
   };
 
   return (
     <div className="filter-panel">
-      
-
       <div className="filter-group">
         <label htmlFor="comuna-select">Comuna</label>
         <select
@@ -155,7 +195,7 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
           <option value="">Todas las marcas</option>
           {marcas.map(marca => (
             <option key={marca} value={marca}>
-              {marca} {markersByBrand[marca] ? `(${markersByBrand[marca]})` : ''}
+              {marca} {brandCounts[marca] ? `(${brandCounts[marca]})` : ''}
             </option>
           ))}
         </select>
@@ -175,7 +215,6 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
         </select>
       </div>
 
-      
       <div className="filter-group">
         <label htmlFor="eds-select">EDS</label>
         <select
@@ -190,7 +229,6 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
         </select>
       </div>
 
-      {/* ✅ FILTRO DE GUERRA DE PRECIOS */}
       <div className="filter-group filter-checkbox">
         <label htmlFor="guerra-precios-checkbox" className="checkbox-label">
           <input
@@ -203,7 +241,6 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
         </label>
       </div>
 
-      {/* ✅ NUEVO FILTRO DE ESTACIONES PES */}
       <div className="filter-group filter-checkbox filter-checkbox-pes">
         <label htmlFor="estaciones-pes-checkbox" className="checkbox-label">
           <input
@@ -215,8 +252,6 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
           <span className="checkbox-text">Estaciones PES</span>
         </label>
       </div>
-
-      
     </div>
   );
 };

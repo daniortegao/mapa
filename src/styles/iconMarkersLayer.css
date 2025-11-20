@@ -512,3 +512,31 @@
   cursor: nwse-resize !important;
   user-select: none !important;
 }
+
+.nivel-toggle-container {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.nivel-toggle-btn {
+  border: none;
+  background: none;
+  font-weight: bold;
+  color: #222;
+  font-size: 1.19em;
+  letter-spacing: 0.5px;
+  padding: 2px 9px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+  outline: none;
+}
+
+.nivel-toggle-btn.active,
+.nivel-toggle-btn:focus,
+.nivel-toggle-btn:hover {
+  background: #1973e7;
+  color: #fff;
+}

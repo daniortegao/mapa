@@ -25,9 +25,40 @@ function App() {
     return REGIONES_ORDENADAS.filter(region => regionesConDatos.has(region));
   }, [markers]);
 
-  const regionMarkers = useMemo(() => {
-    return markers.filter(m => m.Region === selectedRegion);
-  }, [markers, selectedRegion]);
+// DESPUÉS de esta línea:
+const regionMarkers = useMemo(() => {
+  return markers.filter(m => m.Region === selectedRegion);
+}, [markers, selectedRegion]);
+
+// ✅ AGREGA ESTO (marcadores únicos SOLO para el mapa):
+const uniqueRegionMarkers = useMemo(() => {
+  const filtered = markers.filter(m => m.Region === selectedRegion);
+  
+  // Deduplicar: mantener solo el más reciente por estación
+  const uniqueMap = new Map();
+  
+  filtered.forEach(marker => {
+    const key = marker.pbl || marker.id || `${marker.lat}_${marker.lng}`;
+    const existing = uniqueMap.get(key);
+    
+    if (!existing) {
+      uniqueMap.set(key, marker);
+    } else {
+      const existingDate = existing.fecha_aplicacion ? new Date(existing.fecha_aplicacion) : new Date(0);
+      const currentDate = marker.fecha_aplicacion ? new Date(marker.fecha_aplicacion) : new Date(0);
+      
+      if (currentDate > existingDate) {
+        uniqueMap.set(key, marker);
+      }
+    }
+  });
+  
+  const unique = Array.from(uniqueMap.values());
+  console.log(`📍 ${selectedRegion}: ${unique.length} estaciones únicas de ${filtered.length} registros`);
+  
+  return unique;
+}, [markers, selectedRegion]);
+
 
   useEffect(() => {
     const loadIt = async () => {
@@ -65,10 +96,10 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleFiltersChange = (filtered, filteredForMercado) => {
-    setFilteredMarkers(filtered);
-    setFilteredMarkersForMercado(regionMarkers);
-  };
+ const handleFiltersChange = (filtered, filteredForMercado) => {
+  setFilteredMarkers(filtered); // ← Únicos para visualizar
+  setFilteredMarkersForMercado(filteredForMercado); // ← Histórico completo filtrado
+};
 
   const toggleSidebar = () => {
     setSidebarVisible(!sidebarVisible);
@@ -173,17 +204,19 @@ function App() {
           />
         </aside>
 
-        <MapComponent 
-          selectedRegion={selectedRegion}
-          regionCenter={REGION_COORDINATES[selectedRegion]}
-          markers={filteredMarkers.length > 0 ? filteredMarkers : regionMarkers}
-          markersForMercado={regionMarkers}
-          baseCompData={baseCompData}
-          onToggleSidebar={toggleSidebar}
-          onToggleRightPanel={toggleRightPanel}
-          sidebarVisible={sidebarVisible}
-          rightPanelVisible={rightPanelVisible}
-        />
+  <MapComponent 
+  selectedRegion={selectedRegion}
+  regionCenter={REGION_COORDINATES[selectedRegion]}
+  markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
+  markersForMercado={filteredMarkers.length > 0 ? filteredMarkersForMercado : regionMarkers}
+  baseCompData={baseCompData}
+  onToggleSidebar={toggleSidebar}
+  onToggleRightPanel={toggleRightPanel}
+  sidebarVisible={sidebarVisible}
+  rightPanelVisible={rightPanelVisible}
+/>
+
+
 
         <aside className={`right-panel ${!rightPanelVisible ? 'hidden' : ''}`}>
           <div className="floating-table">

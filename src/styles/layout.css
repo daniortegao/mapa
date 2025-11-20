@@ -929,3 +929,31 @@
   border-color: #02d6a8;
   font-weight: 600;
 }
+/* Clústeres normales */
+.marker-cluster-small {
+  background-color: rgba(181, 226, 140, 0.6);
+}
+.marker-cluster-medium {
+  background-color: rgba(241, 211, 87, 0.6);
+}
+.marker-cluster-large {
+  background-color: rgba(253, 156, 115, 0.6);
+}
+
+/* Círculo y borde */
+.marker-cluster {
+  border-radius: 50%;
+  border: 3px solid #fff;
+  color: #000;
+  font-size: 14px;
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Etiqueta con cantidad de marcadores */
+.marker-cluster div {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+}
