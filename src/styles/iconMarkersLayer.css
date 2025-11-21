@@ -5,27 +5,37 @@
 /* BASE DEL POPUP */
 .icon-markers-popup-content {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  width: 100%;
-  max-width: 100%;
-  color: #333;
+  width: 300px;
+    color: #333;
   padding: 0;
   box-sizing: border-box;
   --fz: clamp(10px, 1.4vw, 12px);
   font-size: var(--fz);
+display: flex;
+  flex-direction: column; /* layout vertical */
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%; /* permite resize completo */
+  min-width: 0;  /* evita desbordes horizontales */
+  min-height: 0; /* evita desbordes verticales */
+  
 }
 
 /* HEADER DE INFORMACIÓN */
 .popup-info-header {
+  width: 100%;
+  min-width: 300px;
   position: relative;
-  padding: 8px;
+  padding: 2px;
+  background-color: #e7e8ea;
   border-bottom: 2px solid #17a2b8;
   margin-bottom: 10px;
 }
 
 .popup-info-row {
-  display: flex;
+  display: inline-table;
   justify-content: flex-start;
-  gap: 6px;
+  gap: 3px;
   padding: 2px 0;
   font-size: calc(var(--fz) - 1px);
   line-height: 1.3;
@@ -44,22 +54,26 @@
   font-weight: 400; 
   color: #555; 
 }
+.popup-value-alerta {
+  color: red;
+  font-weight: 700;
+}
 
 /* LOGO */
 .popup-logo {
-  background: #fff;
+
   border: 1px solid #00000014;
   border-radius: 6px;
   box-shadow: 0 2px 6px #0000001f;
-  width: 80px;
-  height: 40px;
+  width: 40px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 7px;
+  padding: 2px;
   position: absolute;
   right: 0px;
-  top: 40px;
+  top: 20px;
   z-index: 10;
   overflow: hidden;
 }
@@ -67,21 +81,27 @@
 .popup-logo img {
   max-width: 100%;
   max-height: 100%;
-  width: auto;
-  height: auto;
+  width: 20px;
+  height: 20px;
   object-fit: contain;
   display: block;
 }
 
 /* SISTEMA DE TABS */
 .popup-tabs-container {
-  width: 100%;
+  width: 300px;
   max-width: 100%;
   box-sizing: border-box;
   border: 1px solid #c0c0c0;
   border-radius: 4px;
   overflow: hidden;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto; /* crece en vertical */
+  width: 100%;     /* crece en horizontal */
+  min-width: 0;
+  min-height: 0;
 }
 
 .popup-tabs-header {
@@ -143,14 +163,14 @@
   overflow: auto;
   max-height: 9999px;
   position: relative;
-  width: 100%;
+  width: auto;
   min-height: 200px;
 }
 
 .popup-tab-pane { 
   display: none;
   width: 100%;
-  padding: 12px;
+  padding: 0px;
   animation: fadeIn 0.2s ease;
 }
 
@@ -192,7 +212,7 @@
 .popup-table-wrapper {
   width: 100%;
   max-width: 100%;
-  height: auto;
+  height: 150px;
   max-height: none;
   overflow: auto;
 }
@@ -385,13 +405,14 @@
   opacity: 0.7;
 }
 
-/* CONTENIDO DEL POPUP */
+/* CONTENIDO DEL POPUP ACA SE DiMENCIONA*/ 
 .leaflet-popup-content {
+  margin: 5px 5px 5px 5px !important;
   resize: none !important;
   overflow: auto;
-  min-width: 240px;
-  min-height: 180px;
-  max-height: 600px;
+  min-width: 300px;
+  min-height: 340px;
+  max-height: 340px;
   transition: none !important;
 }
 
@@ -516,26 +537,54 @@
 .nivel-toggle-container {
   display: flex;
   gap: 6px;
-  justify-content: center;
+  justify-content: left;
   margin-bottom: 8px;
 }
 
 .nivel-toggle-btn {
+  margin-left: 0px;
+  height: auto;
+  width: auto;
   border: none;
   background: none;
   font-weight: bold;
   color: #222;
-  font-size: 1.19em;
+  font-size: 9px;
   letter-spacing: 0.5px;
-  padding: 2px 9px;
+  padding: 2px 2px;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 4px;
   transition: background 0.15s, color 0.15s;
   outline: none;
+     
 }
+
+
 
 .nivel-toggle-btn.active,
 .nivel-toggle-btn:focus,
+.nivel-toggle-btn:hover {
+  background: #1973e7;
+  color: #fff;
+}
+.diferencia-niveles-container {
+  margin-bottom: 8px;
+}
+
+.diferencia-niveles {
+  background: #e7f6e7;
+  color: #185517;
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.95em;
+  text-align: left;
+  border-left: 3px solid #4caf50;
+}
+
+
+
+.nivel-toggle-btn.active,
 .nivel-toggle-btn:hover {
   background: #1973e7;
   color: #fff;

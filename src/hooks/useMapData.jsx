@@ -39,7 +39,8 @@ export const useMapData = () => {
         Surtidores_Autoservicio: item.Surtidores_Autoservicio || null,
         Posicion_Surtidor: item.Posicion_Surtidor || null,
         Tipo_Isla: item.Tipo_Isla || null,
-        nivel: item.nivel || null
+        nivel: item.nivel || null,
+        operacion: item.operacion || null
       };
     }).filter(m => !isNaN(m.lat) && !isNaN(m.lng));
   };

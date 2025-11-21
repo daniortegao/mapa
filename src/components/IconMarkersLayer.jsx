@@ -7,6 +7,17 @@ import { guardarCoordenadaCorregida } from '../services/apiService';
 import TrendChart from '../components/TrendChart';
 import '../styles/iconMarkersLayer.css';
 
+// --- Utilidad para obtener la última fila por nivel ---
+function obtenerUltimaFilaPorNivel(nivel, data) {
+  const filas = data
+    .filter(f => f.nivel && f.nivel.toString().toLowerCase() === nivel.toLowerCase())
+    .sort((a, b) => new Date(b.fecha_aplicacion || b.Fecha) - new Date(a.fecha_aplicacion || a.Fecha));
+  return filas[0] || null;
+}
+
+
+
+
 const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, baseCompData = [] }) => {
   const map = useMap();
   const markersRef = useRef({});
@@ -26,6 +37,28 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
   const [maxHeight, setMaxHeight] = useState(500);
   const [activeTab, setActiveTab] = useState('precios');
   const [modoCorreccion, setModoCorreccion] = useState(null);
+
+// --- Esto se pone DENTRO de IconMarkersLayer pero FUERA de cualquier función ---
+/*
+ * baseHistorico: tu arreglo de datos históricos filtrado (usas markersForMercado || markers, por ejemplo)
+ * marker: el marcador que se está usando para el popup actual
+ */
+function obtenerDiferenciasNiveles(marker, baseHistorico) {
+  const filaNivel1 = obtenerUltimaFilaPorNivel('Nivel 1', baseHistorico.filter(m => m.id === marker.id));
+  const filaNivel2 = obtenerUltimaFilaPorNivel('Nivel 2', baseHistorico.filter(m => m.id === marker.id));
+  if (!filaNivel1 || !filaNivel2) return null;
+  return {
+    g93: filaNivel2.g93 - filaNivel1.g93,
+    g95: filaNivel2.g95 - filaNivel1.g95,
+    g97: filaNivel2.g97 - filaNivel1.g97,
+    diesel: filaNivel2.diesel - filaNivel1.diesel,
+    kero: filaNivel2.kero - filaNivel1.kero
+  };
+}
+
+
+
+
 
   // Hacer popup draggable
   const makeDraggable = useCallback((popup) => {
@@ -145,10 +178,10 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       <div class="icon-markers-popup-content">
         <div class="popup-info-header">
           ${logoUrl ? `<img src="${logoUrl}" alt="Logo ${marker.Marca}" class="popup-logo" onerror="this.style.display='none';"/>` : ''}
-          <div class="popup-info-row"><span class="popup-label">PBL:</span><span class="popup-value">${marker.pbl || '-'}</span></div>
-          <div class="popup-info-row"><span class="popup-label">Estación:</span><span class="popup-value">${marker.eds || '-'}</span></div>
-          <div class="popup-info-row"><span class="popup-label">Jefe Zona:</span><span class="popup-value">${marker.nombre || '-'}</span></div>
-          <div class="popup-info-row"><span class="popup-label">Operación:</span><span class="popup-value">${marker.operacion || 'Comisionista'}</span></div>
+          <div class="popup-info-row"><span class="popup-label">PBL: </span><span class="popup-value-alerta">${marker.pbl || '-'}</span></div>
+          <div class="popup-info-row"><span class="popup-label">EESS: </span><span class="popup-value">${marker.eds || '-'}</span></div><br>
+          <div class="popup-info-row"><span class="popup-label">JZ: </span><span class="popup-value">${marker.nombre || '-'}</span></div>
+          <div class="popup-info-row"><span class="popup-label">OP: </span><span class="popup-value">${marker.operacion || '-'}</span></div>
         </div>
 
         <div class="popup-tabs-container">
@@ -161,7 +194,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
 
           <div class="popup-tabs-content">
             <div class="popup-tab-pane active" data-tab="precios">
-              <div class="nivel-toggle-container" style="display: flex; gap: 8px; margin-bottom: 8px; justify-content: center;">
+              <div class="nivel-toggle-container" >
                 <button class="nivel-toggle-btn active" data-nivel="Nivel 1" data-marker-id="${marker.id}">
                   Nivel 1
                 </button>
