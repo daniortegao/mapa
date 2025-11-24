@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 
-const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
+const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onStationSelect }) => {
   const [selectedComuna, setSelectedComuna] = useState('');
   const [selectedMarca, setSelectedMarca] = useState('');
   const [selectedJefeZona, setSelectedJefeZona] = useState('');
   const [selectedEds, setSelectedEds] = useState('');
   const [edsSearchTerm, setEdsSearchTerm] = useState('');
+  const [globalEdsSearch, setGlobalEdsSearch] = useState('');
   const [soloGuerraPrecios, setSoloGuerraPrecios] = useState(false);
   const [soloEstacionesPES, setSoloEstacionesPES] = useState(false);
 
@@ -49,14 +50,43 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
   }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, comunasDelJefe]);
 
   const filteredEds = useMemo(() => {
-    return allEds.filter(eds => 
+    return allEds.filter(eds =>
       eds.toLowerCase().includes(edsSearchTerm.toLowerCase())
     );
   }, [allEds, edsSearchTerm]);
 
+  // All stations from all regions for global search
+  const allStations = useMemo(() => {
+    const stationMap = new Map();
+    const markersToUse = allMarkers || markers; // Use allMarkers if available, fallback to markers
+    markersToUse.forEach(m => {
+      if (m.eds && m.pbl) {
+        const key = m.pbl;
+        if (!stationMap.has(key)) {
+          stationMap.set(key, {
+            pbl: m.pbl,
+            eds: m.eds,
+            region: m.Region,
+            comuna: m.Comuna,
+            marca: m.Marca,
+            lat: m.lat,
+            lng: m.lng
+          });
+        }
+      }
+    });
+    return Array.from(stationMap.values()).sort((a, b) => a.eds.localeCompare(b.eds));
+  }, [allMarkers, markers]);
+
   // Array CON filtro EDS para mostrar en mapa
   const filteredMarkers = useMemo(() => {
     return markers.filter(m => {
+      // Global EDS search (searches across all regions)
+      if (globalEdsSearch.trim()) {
+        const searchMatch = m.eds && m.eds.toLowerCase().includes(globalEdsSearch.toLowerCase());
+        if (!searchMatch) return false;
+      }
+
       const regionMatch = m.Region === selectedRegion;
       const edsMatch = !selectedEds || m.eds === selectedEds;
       const guerraMatch = !soloGuerraPrecios || m.Guerra_Precio === 'Si';
@@ -78,7 +108,7 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
       const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
       return regionMatch && marcaMatch && edsMatch && guerraMatch && pesMatch;
     });
-  }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, selectedEds, comunasDelJefe, soloGuerraPrecios, soloEstacionesPES]);
+  }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, selectedEds, comunasDelJefe, soloGuerraPrecios, soloEstacionesPES, globalEdsSearch]);
 
   // Array SIN filtro EDS para botón Mercado
   const filteredMarkersForMercado = useMemo(() => {
@@ -108,23 +138,23 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
   // ✅ DEDUPLICAR filteredMarkers para el mapa
   const uniqueFilteredMarkers = useMemo(() => {
     const uniqueMap = new Map();
-    
+
     filteredMarkers.forEach(marker => {
       const key = marker.pbl || marker.id || `${marker.lat}_${marker.lng}`;
       const existing = uniqueMap.get(key);
-      
+
       if (!existing) {
         uniqueMap.set(key, marker);
       } else {
         const existingDate = existing.fecha_aplicacion ? new Date(existing.fecha_aplicacion) : new Date(0);
         const currentDate = marker.fecha_aplicacion ? new Date(marker.fecha_aplicacion) : new Date(0);
-        
+
         if (currentDate > existingDate) {
           uniqueMap.set(key, marker);
         }
       }
     });
-    
+
     return Array.from(uniqueMap.values());
   }, [filteredMarkers]);
 
@@ -165,6 +195,7 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
     setSelectedJefeZona('');
     setSelectedEds('');
     setEdsSearchTerm('');
+    setGlobalEdsSearch('');
     setSoloGuerraPrecios(false);
     setSoloEstacionesPES(false);
   };
@@ -184,6 +215,8 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
           ))}
         </select>
       </div>
+
+
 
       <div className="filter-group">
         <label htmlFor="marca-select">Marca</label>
@@ -228,6 +261,33 @@ const FilterPanel = ({ markers, selectedRegion, onFiltersChange }) => {
           ))}
         </select>
       </div>
+
+      <div className="filter-group">
+        <label htmlFor="global-eds-search">EDS todas</label>
+        <select
+          id="global-eds-search"
+          value={globalEdsSearch}
+          onChange={(e) => {
+            const selectedPbl = e.target.value;
+            setGlobalEdsSearch(selectedPbl);
+            if (selectedPbl && onStationSelect) {
+              const station = allStations.find(s => s.pbl === selectedPbl);
+              if (station) {
+                onStationSelect(station);
+              }
+            }
+          }}
+        >
+          <option value="">Selecciona una estación...</option>
+          {allStations.map(station => (
+            <option key={station.pbl} value={station.pbl}>
+              {station.eds} - {station.comuna} ({station.region})
+            </option>
+          ))}
+        </select>
+      </div>
+
+
 
       <div className="filter-group filter-checkbox">
         <label htmlFor="guerra-precios-checkbox" className="checkbox-label">

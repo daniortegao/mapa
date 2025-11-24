@@ -269,3 +269,188 @@ input:checked+.slider:before {
     font-style: italic;
     font-size: 13px;
 }
+
+/* Volatility Stats */
+.volatility-container {
+    width: 100%;
+}
+
+.volatility-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.volatility-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 12px;
+    transition: all 0.2s ease;
+}
+
+.volatility-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.volatility-brand {
+    font-weight: 700;
+    font-size: 13px;
+    color: #212529;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #02d6a8;
+}
+
+.volatility-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.volatility-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+}
+
+.metric-label {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.metric-value {
+    color: #212529;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+/* Comuna Ranking */
+.comuna-ranking-container {
+    width: 100%;
+}
+
+.ranking-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.fuel-selector {
+    padding: 6px 12px;
+    font-size: 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    font-weight: 600;
+    color: #495057;
+}
+
+.fuel-selector:hover {
+    border-color: #02d6a8;
+}
+
+.ranking-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.ranking-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.ranking-section.expensive {
+    border-left: 4px solid #dc3545;
+}
+
+.ranking-section.cheap {
+    border-left: 4px solid #28a745;
+}
+
+.ranking-section-title {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #212529;
+}
+
+.ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ranking-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.ranking-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ranking-position {
+    background: #e9ecef;
+    color: #495057;
+    font-weight: 700;
+    font-size: 12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ranking-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ranking-comuna {
+    font-size: 12px;
+    font-weight: 600;
+    color: #212529;
+}
+
+.ranking-stations {
+    font-size: 10px;
+    color: #6c757d;
+}
+
+.ranking-price {
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.expensive-price {
+    color: #dc3545;
+}
+
+.cheap-price {
+    color: #28a745;
+}
+
+@media (max-width: 768px) {
+    .ranking-grid {
+        grid-template-columns: 1fr;
+    }
+}

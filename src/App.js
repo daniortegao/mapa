@@ -101,6 +101,19 @@ function App() {
     setFilteredMarkersForMercado(filteredForMercado); // ← Histórico completo filtrado
   };
 
+  const handleStationSelect = (station) => {
+    if (station && window.leafletMap) {
+      // Change region if needed
+      if (station.region !== selectedRegion) {
+        setSelectedRegion(station.region);
+      }
+      // Center map on station with zoom
+      setTimeout(() => {
+        window.leafletMap.setView([station.lat, station.lng], 15);
+      }, 100);
+    }
+  };
+
   const toggleSidebar = () => {
     setSidebarVisible(!sidebarVisible);
     setTimeout(() => {
@@ -207,8 +220,10 @@ function App() {
 
           <FilterPanel
             markers={regionMarkers}
+            allMarkers={markers}
             selectedRegion={selectedRegion}
             onFiltersChange={handleFiltersChange}
+            onStationSelect={handleStationSelect}
           />
         </aside>
 
@@ -229,6 +244,7 @@ function App() {
         <aside className={`right-panel ${!rightPanelVisible ? 'hidden' : ''}`}>
           <StatisticsPanel
             markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
+            historicalMarkers={filteredMarkersForMercado.length > 0 ? filteredMarkersForMercado : regionMarkers}
           />
         </aside>
 

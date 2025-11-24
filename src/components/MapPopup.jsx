@@ -18,6 +18,36 @@ const MapPopup = ({
         return obtenerHistoricoMarker(marker.id, allMarkers, selectedNivel);
     }, [marker.id, allMarkers, selectedNivel]);
 
+    // Calculate price differences between Nivel 1 and Nivel 2
+    const priceDifferences = useMemo(() => {
+        const nivel1Data = obtenerHistoricoMarker(marker.id, allMarkers, 'Nivel 1');
+        const nivel2Data = obtenerHistoricoMarker(marker.id, allMarkers, 'Nivel 2');
+
+        // Only calculate if both levels exist and have data
+        if (nivel1Data.length === 0 || nivel2Data.length === 0) {
+            return null;
+        }
+
+        // Get most recent entry from each level
+        const nivel1Latest = nivel1Data[0];
+        const nivel2Latest = nivel2Data[0];
+
+        // Calculate differences for each fuel type
+        const calculateDiff = (n1, n2) => {
+            if (n1 === '-' || n2 === '-') return null;
+            const diff = parseFloat(n2) - parseFloat(n1);
+            return isNaN(diff) ? null : diff;
+        };
+
+        return {
+            g93: calculateDiff(nivel1Latest.g93, nivel2Latest.g93),
+            g95: calculateDiff(nivel1Latest.g95, nivel2Latest.g95),
+            g97: calculateDiff(nivel1Latest.g97, nivel2Latest.g97),
+            diesel: calculateDiff(nivel1Latest.diesel, nivel2Latest.diesel),
+            kero: calculateDiff(nivel1Latest.kero, nivel2Latest.kero)
+        };
+    }, [marker.id, allMarkers]);
+
     const variantClass = variant === 'primary' ? '' : 'secondary';
 
     const logoUrl = marker.logo
@@ -84,6 +114,53 @@ const MapPopup = ({
                                         {nivel}
                                     </button>
                                 ))}
+
+                                {priceDifferences && (
+                                    <div className="price-differences-container">
+                                        <div className="price-diff-values">
+                                            {priceDifferences.g93 !== null && (
+                                                <div className="price-diff-item">
+                                                    <span className="diff-fuel-name">G93:</span>
+                                                    <span className={`diff-value ${priceDifferences.g93 >= 0 ? 'positive' : 'negative'}`}>
+                                                        {priceDifferences.g93 >= 0 ? '+' : ''}{priceDifferences.g93.toFixed(0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {priceDifferences.g95 !== null && (
+                                                <div className="price-diff-item">
+                                                    <span className="diff-fuel-name">G95:</span>
+                                                    <span className={`diff-value ${priceDifferences.g95 >= 0 ? 'positive' : 'negative'}`}>
+                                                        {priceDifferences.g95 >= 0 ? '+' : ''}{priceDifferences.g95.toFixed(0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {priceDifferences.g97 !== null && (
+                                                <div className="price-diff-item">
+                                                    <span className="diff-fuel-name">G97:</span>
+                                                    <span className={`diff-value ${priceDifferences.g97 >= 0 ? 'positive' : 'negative'}`}>
+                                                        {priceDifferences.g97 >= 0 ? '+' : ''}{priceDifferences.g97.toFixed(0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {priceDifferences.diesel !== null && (
+                                                <div className="price-diff-item">
+                                                    <span className="diff-fuel-name">Diesel:</span>
+                                                    <span className={`diff-value ${priceDifferences.diesel >= 0 ? 'positive' : 'negative'}`}>
+                                                        {priceDifferences.diesel >= 0 ? '+' : ''}{priceDifferences.diesel.toFixed(0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {priceDifferences.kero !== null && (
+                                                <div className="price-diff-item">
+                                                    <span className="diff-fuel-name">Kero:</span>
+                                                    <span className={`diff-value ${priceDifferences.kero >= 0 ? 'positive' : 'negative'}`}>
+                                                        {priceDifferences.kero >= 0 ? '+' : ''}{priceDifferences.kero.toFixed(0)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className={`popup-table-wrapper ${variantClass}`}>
                                 {datosTabla.length === 0 ? (

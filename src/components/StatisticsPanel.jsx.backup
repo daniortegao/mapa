@@ -1,13 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import '../styles/statisticsPanel.css';
-import ComunaRanking from './ComunaRanking';
 
-const StatisticsPanel = ({ markers, historicalMarkers }) => {
+const StatisticsPanel = ({ markers }) => {
     const [calculationMode, setCalculationMode] = useState('average'); // 'average' or 'median'
     const [expandedSections, setExpandedSections] = useState({
-        brands: false,
-        prices: false,
-        comunas: false
+        brands: true,
+        prices: true
     });
 
     const toggleSection = (section) => {
@@ -202,22 +200,6 @@ const StatisticsPanel = ({ markers, historicalMarkers }) => {
                                 </div>
                             );
                         })}
-                    </div>
-                )}
-            </div>
-
-            {/* Comuna Ranking Section */}
-            <div className="stats-section">
-                <div className="stats-header-row" onClick={() => toggleSection('comunas')} style={{ cursor: 'pointer', borderBottom: expandedSections.comunas ? '2px solid #02d6a8' : 'none' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className={`accordion-icon ${expandedSections.comunas ? 'open' : ''}`}>▼</span>
-                        <h4 className="stats-title">Ranking de Comunas</h4>
-                    </div>
-                </div>
-
-                {expandedSections.comunas && (
-                    <div className="slide-down">
-                        <ComunaRanking markers={markers} />
                     </div>
                 )}
             </div>
