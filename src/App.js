@@ -5,6 +5,7 @@ import './styles/markers.css';
 import MapComponent from './components/MapComponent';
 import FilterPanel from './components/FilterPanel';
 import AlertPanel from './components/AlertPanel';
+import StatisticsPanel from './components/StatisticsPanel';
 import { REGION_COORDINATES, REGIONES_ORDENADAS } from './utils/constants';
 import { useMapData } from './hooks/useMapData';
 import { getDataBaseComp, getMercadoAlerta } from './services/apiService';
@@ -25,39 +26,38 @@ function App() {
     return REGIONES_ORDENADAS.filter(region => regionesConDatos.has(region));
   }, [markers]);
 
-// DESPUÉS de esta línea:
-const regionMarkers = useMemo(() => {
-  return markers.filter(m => m.Region === selectedRegion);
-}, [markers, selectedRegion]);
+  const regionMarkers = useMemo(() => {
+    return markers.filter(m => m.Region === selectedRegion);
+  }, [markers, selectedRegion]);
 
-// ✅ AGREGA ESTO (marcadores únicos SOLO para el mapa):
-const uniqueRegionMarkers = useMemo(() => {
-  const filtered = markers.filter(m => m.Region === selectedRegion);
-  
-  // Deduplicar: mantener solo el más reciente por estación
-  const uniqueMap = new Map();
-  
-  filtered.forEach(marker => {
-    const key = marker.pbl || marker.id || `${marker.lat}_${marker.lng}`;
-    const existing = uniqueMap.get(key);
-    
-    if (!existing) {
-      uniqueMap.set(key, marker);
-    } else {
-      const existingDate = existing.fecha_aplicacion ? new Date(existing.fecha_aplicacion) : new Date(0);
-      const currentDate = marker.fecha_aplicacion ? new Date(marker.fecha_aplicacion) : new Date(0);
-      
-      if (currentDate > existingDate) {
+  // ✅ AGREGA ESTO (marcadores únicos SOLO para el mapa):
+  const uniqueRegionMarkers = useMemo(() => {
+    const filtered = markers.filter(m => m.Region === selectedRegion);
+
+    // Deduplicar: mantener solo el más reciente por estación
+    const uniqueMap = new Map();
+
+    filtered.forEach(marker => {
+      const key = marker.pbl || marker.id || `${marker.lat}_${marker.lng}`;
+      const existing = uniqueMap.get(key);
+
+      if (!existing) {
         uniqueMap.set(key, marker);
+      } else {
+        const existingDate = existing.fecha_aplicacion ? new Date(existing.fecha_aplicacion) : new Date(0);
+        const currentDate = marker.fecha_aplicacion ? new Date(marker.fecha_aplicacion) : new Date(0);
+
+        if (currentDate > existingDate) {
+          uniqueMap.set(key, marker);
+        }
       }
-    }
-  });
-  
-  const unique = Array.from(uniqueMap.values());
-  console.log(`📍 ${selectedRegion}: ${unique.length} estaciones únicas de ${filtered.length} registros`);
-  
-  return unique;
-}, [markers, selectedRegion]);
+    });
+
+    const unique = Array.from(uniqueMap.values());
+    console.log(`📍 ${selectedRegion}: ${unique.length} estaciones únicas de ${filtered.length} registros`);
+
+    return unique;
+  }, [markers, selectedRegion]);
 
 
   useEffect(() => {
@@ -96,10 +96,10 @@ const uniqueRegionMarkers = useMemo(() => {
     return () => clearInterval(interval);
   }, []);
 
- const handleFiltersChange = (filtered, filteredForMercado) => {
-  setFilteredMarkers(filtered); // ← Únicos para visualizar
-  setFilteredMarkersForMercado(filteredForMercado); // ← Histórico completo filtrado
-};
+  const handleFiltersChange = (filtered, filteredForMercado) => {
+    setFilteredMarkers(filtered); // ← Únicos para visualizar
+    setFilteredMarkersForMercado(filteredForMercado); // ← Histórico completo filtrado
+  };
 
   const toggleSidebar = () => {
     setSidebarVisible(!sidebarVisible);
@@ -132,9 +132,9 @@ const uniqueRegionMarkers = useMemo(() => {
             <h1 className="navbar-title">S.I.M.E</h1>
             <span className="navbar-subtitle">Region {selectedRegion}</span>
           </div>
-          
+
           <div className="navbar-right">
-            <button 
+            <button
               className="navbar-alert-btn"
               onClick={toggleAlertPanel}
               aria-label="Ver alertas de mercado"
@@ -146,9 +146,9 @@ const uniqueRegionMarkers = useMemo(() => {
               )}
             </button>
 
-            <img 
-              src={`${process.env.PUBLIC_URL}/iconos/aramco.jpg`} 
-              alt="Aramco Logo" 
+            <img
+              src={`${process.env.PUBLIC_URL}/iconos/aramco.jpg`}
+              alt="Aramco Logo"
               className="navbar-logo"
               onError={(e) => e.target.style.display = 'none'}
             />
@@ -157,35 +157,35 @@ const uniqueRegionMarkers = useMemo(() => {
       </nav>
 
       {/* ========== PESTAÑAS HORIZONTALES (FUERA DEL NAV) ========== */}
-    <div className="panel-tabs-horizontal">
-  <button 
-    className={`vertical-tab-btn ${sidebarVisible ? 'active' : ''}`}
-    onClick={toggleSidebar}
-  >
-    <div className="vertical-tab-label">
-      {sidebarVisible ? 'OCULTAR FILTROS' : 'MOSTRAR FILTROS'}
-    </div>
-  </button>
-  
-  <button 
-    className={`vertical-tab-btn ${rightPanelVisible ? 'active' : ''}`}
-    onClick={toggleRightPanel}
-  >
-    <div className="vertical-tab-label">
-      {rightPanelVisible ? 'OCULTAR DATOS' : 'MOSTRAR DATOS'}
-    </div>
-  </button>
-</div>
+      <div className="panel-tabs-horizontal">
+        <button
+          className={`vertical-tab-btn ${sidebarVisible ? 'active' : ''}`}
+          onClick={toggleSidebar}
+        >
+          <div className="vertical-tab-label">
+            {sidebarVisible ? 'OCULTAR FILTROS' : 'MOSTRAR FILTROS'}
+          </div>
+        </button>
+
+        <button
+          className={`vertical-tab-btn ${rightPanelVisible ? 'active' : ''}`}
+          onClick={toggleRightPanel}
+        >
+          <div className="vertical-tab-label">
+            {rightPanelVisible ? 'OCULTAR DATOS' : 'MOSTRAR DATOS'}
+          </div>
+        </button>
+      </div>
 
 
       {/* ========== MAIN CONTAINER ========== */}
       <div className="main-container">
         <aside className={`sidebar ${!sidebarVisible ? 'hidden' : ''}`}>
           <h3 className="sidebar-title">Filtros</h3>
-          
+
           <div className="filter-group">
             <label>Región</label>
-            <select 
+            <select
               value={selectedRegion}
               onChange={(e) => setSelectedRegion(e.target.value)}
             >
@@ -197,70 +197,34 @@ const uniqueRegionMarkers = useMemo(() => {
             </select>
           </div>
 
-          <FilterPanel 
+          <FilterPanel
             markers={regionMarkers}
             selectedRegion={selectedRegion}
             onFiltersChange={handleFiltersChange}
           />
         </aside>
 
-  <MapComponent 
-  selectedRegion={selectedRegion}
-  regionCenter={REGION_COORDINATES[selectedRegion]}
-  markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
-  markersForMercado={filteredMarkers.length > 0 ? filteredMarkersForMercado : regionMarkers}
-  baseCompData={baseCompData}
-  onToggleSidebar={toggleSidebar}
-  onToggleRightPanel={toggleRightPanel}
-  sidebarVisible={sidebarVisible}
-  rightPanelVisible={rightPanelVisible}
-/>
+        <MapComponent
+          selectedRegion={selectedRegion}
+          regionCenter={REGION_COORDINATES[selectedRegion]}
+          markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
+          markersForMercado={filteredMarkers.length > 0 ? filteredMarkersForMercado : regionMarkers}
+          baseCompData={baseCompData}
+          onToggleSidebar={toggleSidebar}
+          onToggleRightPanel={toggleRightPanel}
+          sidebarVisible={sidebarVisible}
+          rightPanelVisible={rightPanelVisible}
+        />
 
 
 
         <aside className={`right-panel ${!rightPanelVisible ? 'hidden' : ''}`}>
-          <div className="floating-table">
-            <div className="floating-table-title">Estación Seleccionada</div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Dato</th>
-                  <th>Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Región</td>
-                  <td>{selectedRegion}</td>
-                </tr>
-                <tr>
-                  <td>Estaciones</td>
-                  <td>{filteredMarkers.length > 0 ? filteredMarkers.length : regionMarkers.length}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div className="floating-table">
-            <div className="floating-table-title">Resumen de Precios</div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Combustible</th>
-                  <th>Promedio</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Diesel</td>
-                  <td>$-</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <StatisticsPanel
+            markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
+          />
         </aside>
 
-        <AlertPanel 
+        <AlertPanel
           isVisible={alertPanelVisible}
           onClose={toggleAlertPanel}
         />

@@ -107,7 +107,7 @@
   gap: 8px;
   z-index: 1900;
   padding: 0;
-  pointer-events: none; 
+  pointer-events: none;
 }
 
 .vertical-tab-btn {
@@ -137,7 +137,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
   transition: left 0.5s ease;
 }
 
@@ -187,7 +187,8 @@
 .search-input-inline {
   margin-left: 500px;
   width: 350px;
-  padding: 8px 8px 8px 8px; /* padding-right para el botón X */
+  padding: 8px 8px 8px 8px;
+  /* padding-right para el botón X */
   font-size: 13px;
   border: 2px solid #dee2e6;
   border-radius: 5px;
@@ -264,6 +265,7 @@
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -559,7 +561,7 @@
    ============================================ */
 
 .right-panel {
-  width: 350px;
+  width: 420px;
   background: #ffffff;
   border-left: 1px solid #dee2e6;
   overflow-y: auto;
@@ -573,7 +575,7 @@
 }
 
 .right-panel.hidden {
-  margin-right: -350px;
+  margin-right: -420px;
 }
 
 .floating-table {
@@ -650,7 +652,7 @@
   .sidebar {
     width: 280px;
   }
-  
+
   .right-panel {
     width: 320px;
   }
@@ -733,7 +735,7 @@
     height: 100%;
     z-index: 500;
   }
-  
+
   .right-panel {
     position: absolute;
     right: 0;
@@ -808,6 +810,7 @@
   border: none !important;
   box-shadow: none !important;
 }
+
 /* ============================================
    CONTROLES DEL MAPA
    ============================================ */
@@ -875,6 +878,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -929,13 +933,16 @@
   border-color: #02d6a8;
   font-weight: 600;
 }
+
 /* Clústeres normales */
 .marker-cluster-small {
   background-color: rgba(181, 226, 140, 0.6);
 }
+
 .marker-cluster-medium {
   background-color: rgba(241, 211, 87, 0.6);
 }
+
 .marker-cluster-large {
   background-color: rgba(253, 156, 115, 0.6);
 }

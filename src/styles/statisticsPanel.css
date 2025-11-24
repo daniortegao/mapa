@@ -1,0 +1,271 @@
+.statistics-panel {
+    padding: 0;
+    color: #2c3e50;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.stats-section {
+    margin-bottom: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    border: 1px solid #dee2e6;
+}
+
+.stats-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    border-bottom: 2px solid #02d6a8;
+    padding-bottom: 8px;
+}
+
+.stats-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #212529;
+}
+
+/* Toggle Switch */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.toggle-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #adb5bd;
+    transition: color 0.3s;
+}
+
+.toggle-label.active {
+    color: #02d6a8;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 18px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked+.slider {
+    background-color: #02d6a8;
+}
+
+input:focus+.slider {
+    box-shadow: 0 0 1px #02d6a8;
+}
+
+input:checked+.slider:before {
+    transform: translateX(14px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Table */
+.stats-table-container {
+    overflow-x: auto;
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.stats-table th {
+    text-align: left;
+    padding: 6px 4px;
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 700;
+    border-bottom: 2px solid #dee2e6;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+}
+
+.stats-table td {
+    padding: 6px 4px;
+    border-bottom: 1px solid #f1f3f5;
+    color: #6c757d;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 6px 4px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+}
+
+.stats-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.brand-cell-inline {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.brand-name {
+    font-weight: 600;
+    color: #212529;
+}
+
+.brand-count {
+    font-size: 11px;
+    color: #adb5bd;
+    font-weight: 400;
+}
+
+/* Accordion */
+.accordion-icon {
+    font-size: 10px;
+    color: #adb5bd;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.accordion-icon.open {
+    transform: rotate(180deg);
+}
+
+.slide-down {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Price Range Cards */
+.price-range-card {
+    background: #ffffff;
+    border: 1px solid #f1f3f5;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+}
+
+.price-range-card:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.price-range-header {
+    margin-bottom: 8px;
+}
+
+.fuel-badge {
+    background: #e9ecef;
+    color: #495057;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.price-range-values {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.price-min,
+.price-max {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.price-label {
+    font-size: 10px;
+    color: #adb5bd;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.price-value {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.price-min .price-value {
+    color: #28a745;
+}
+
+.price-max .price-value {
+    color: #dc3545;
+}
+
+.station-info {
+    font-size: 10px;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+    margin-top: 2px;
+}
+
+.stats-empty {
+    padding: 20px;
+    text-align: center;
+    color: #adb5bd;
+    font-style: italic;
+    font-size: 13px;
+}
