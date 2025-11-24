@@ -516,6 +516,41 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     });
   }, [modoCorreccion, map, markers, markersForMercado]);
 
+  // Re-render open popups when markers data updates (auto-refresh)
+  useEffect(() => {
+    if (!map) return;
+
+    map.eachLayer((layer) => {
+      if (layer instanceof L.Marker && layer.getPopup && layer.getPopup()) {
+        const popup = layer.getPopup();
+        if (popup.isOpen()) {
+          const markerData = layer.options.markerData;
+          if (markerData && markerData.pbl) {
+            // Find updated marker data
+            const updatedMarker = markers.find(m => m.pbl === markerData.pbl);
+            if (updatedMarker) {
+              const rootDiv = popup.getElement()?.querySelector('.popup-root');
+              if (rootDiv && rootDiv._reactRoot) {
+                // Re-render with updated data
+                rootDiv._reactRoot.render(
+                  <MapPopup
+                    marker={updatedMarker}
+                    allMarkers={markersForMercado || markers}
+                    onShowAssociated={(...args) => showAssociatedIdsRef.current && showAssociatedIdsRef.current(...args)}
+                    onActivateCoords={(...args) => handleActivateCoordsRef.current && handleActivateCoordsRef.current(...args)}
+                    onSaveCoords={(...args) => handleSaveCoordsRef.current && handleSaveCoordsRef.current(...args)}
+                    modoCorreccion={modoCorreccion}
+                    variant={markersForMercado && markersForMercado.includes(updatedMarker) ? 'secondary' : 'primary'}
+                  />
+                );
+              }
+            }
+          }
+        }
+      }
+    });
+  }, [markers, map, markersForMercado, modoCorreccion]);
+
 
   return null;
 };

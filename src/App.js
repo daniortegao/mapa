@@ -19,7 +19,7 @@ function App() {
   const [filteredMarkers, setFilteredMarkers] = useState([]);
   const [filteredMarkersForMercado, setFilteredMarkersForMercado] = useState([]);
   const [baseCompData, setBaseCompData] = useState([]);
-  const { markers } = useMapData();
+  const { markers, lastUpdateTime } = useMapData();
 
   const regions = useMemo(() => {
     const regionesConDatos = new Set(markers.map(m => m.Region));
@@ -131,9 +131,17 @@ function App() {
           <div className="navbar-left">
             <h1 className="navbar-title">S.I.M.E</h1>
             <span className="navbar-subtitle">Region {selectedRegion}</span>
+            <div className="last-update-time">
+              <span className="update-label">Última actualización:</span>
+              <span className="update-time">
+                {lastUpdateTime ? lastUpdateTime.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false }) : 'Cargando...'}
+              </span>
+            </div>
           </div>
 
           <div className="navbar-right">
+
+
             <button
               className="navbar-alert-btn"
               onClick={toggleAlertPanel}

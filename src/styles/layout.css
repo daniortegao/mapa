@@ -964,3 +964,12 @@
   height: 40px;
   line-height: 40px;
 }
+
+.last-update-time {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(46, 45, 45, 0.85);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  line-height: 2;
+}

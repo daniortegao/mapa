@@ -4,6 +4,7 @@ import { getDataFromAPI, getCoordenadasCorregidas } from '../services/apiService
 export const useMapData = () => {
   const [markers, setMarkers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdateTime, setLastUpdateTime] = useState(null);
 
   const formatMarkerData = (data, coordenadasCorregidas = []) => {
     return data.map(item => {
@@ -49,7 +50,7 @@ export const useMapData = () => {
     const fetchData = async () => {
       try {
         console.log('📡 Obteniendo datos desde API...');
-        
+
         let coordCorregidas = [];
         try {
           coordCorregidas = await getCoordenadasCorregidas();
@@ -60,12 +61,23 @@ export const useMapData = () => {
 
         const response = await getDataFromAPI();
         const data = Array.isArray(response) ? response : (response.data || []);
-        
+
         const formattedData = formatMarkerData(data, coordCorregidas);
-        
+
         console.log(`✅ ${formattedData.length} registros cargados (histórico completo)`);
-        
+
+
         setMarkers(formattedData);
+
+        // Use Actualizacion from API data
+        const apiUpdateTime = formattedData[0]?.Actualizacion;
+        if (apiUpdateTime) {
+          const [datePart, timePart] = apiUpdateTime.split(' ');
+          const [day, month, year] = datePart.split('/');
+          const [hour, minute] = timePart.split(':');
+          setLastUpdateTime(new Date(year, month - 1, day, hour, minute));
+        }
+
         setLoading(false);
       } catch (error) {
         console.error("Error loading data:", error);
@@ -80,7 +92,7 @@ export const useMapData = () => {
     const interval = setInterval(async () => {
       try {
         console.log('🔄 Actualizando datos...', new Date().toLocaleTimeString());
-        
+
         let coordCorregidas = [];
         try {
           coordCorregidas = await getCoordenadasCorregidas();
@@ -90,10 +102,21 @@ export const useMapData = () => {
 
         const response = await getDataFromAPI();
         const data = Array.isArray(response) ? response : (response.data || []);
-        
+
         const formattedData = formatMarkerData(data, coordCorregidas);
-        
+
+
         setMarkers(formattedData);
+
+        // Use Actualizacion from API data
+        const apiUpdateTime = formattedData[0]?.Actualizacion;
+        if (apiUpdateTime) {
+          const [datePart, timePart] = apiUpdateTime.split(' ');
+          const [day, month, year] = datePart.split('/');
+          const [hour, minute] = timePart.split(':');
+          setLastUpdateTime(new Date(year, month - 1, day, hour, minute));
+        }
+
         console.log('✅ Datos actualizados:', formattedData.length);
       } catch (error) {
         console.error("Error updating data:", error);
@@ -103,5 +126,5 @@ export const useMapData = () => {
     return () => clearInterval(interval);
   }, []);
 
-  return { markers, loading };
+  return { markers, loading, lastUpdateTime };
 };
