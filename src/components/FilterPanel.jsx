@@ -10,12 +10,29 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
   const [soloGuerraPrecios, setSoloGuerraPrecios] = useState(false);
   const [soloEstacionesPES, setSoloEstacionesPES] = useState(false);
 
+  console.log('🎨 FilterPanel RENDER:', { selectedRegion, selectedComuna, selectedMarca });
+
   const tuasMarcas = ['Aramco', 'Petrobras'];
+
+  // Normalize string for comparison (trim and lowercase)
+  const normalizeString = (str) => {
+    return str ? str.trim().toLowerCase() : '';
+  };
 
   const comunas = useMemo(() => {
     const filtered = markers.filter(m => m.Region === selectedRegion);
-    return [...new Set(filtered.map(m => m.Comuna))].sort();
+    const comunaSet = new Set(filtered.map(m => m.Comuna).filter(c => c));
+    return Array.from(comunaSet).sort();
   }, [markers, selectedRegion]);
+
+  // Clear comuna filter when region changes
+  React.useEffect(() => {
+    console.log('🌍 REGION CHANGED:', selectedRegion, '- Clearing filters');
+    setSelectedComuna('');
+    setSelectedMarca('');
+    setSelectedJefeZona('');
+    setSelectedEds('');
+  }, [selectedRegion]);
 
   const marcas = useMemo(() => {
     const filtered = markers.filter(m => m.Region === selectedRegion);
@@ -80,7 +97,16 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
 
   // Array CON filtro EDS para mostrar en mapa
   const filteredMarkers = useMemo(() => {
-    return markers.filter(m => {
+    console.log('🔍 FILTERING MARKERS:', {
+      selectedRegion,
+      selectedComuna,
+      selectedMarca,
+      selectedJefeZona,
+      selectedEds,
+      totalMarkers: markers.length
+    });
+
+    const result = markers.filter(m => {
       // Global EDS search (searches across all regions)
       if (globalEdsSearch.trim()) {
         const searchMatch = m.eds && m.eds.toLowerCase().includes(globalEdsSearch.toLowerCase());
@@ -100,14 +126,41 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
       }
 
       if (selectedComuna) {
-        const todasLasEstacionesEnComuna = m.Comuna === selectedComuna;
+        const comunaMatch = normalizeString(m.Comuna) === normalizeString(selectedComuna);
         const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
-        return regionMatch && todasLasEstacionesEnComuna && marcaMatch && edsMatch && guerraMatch && pesMatch;
+
+        if (comunaMatch) {
+          console.log('✅ MATCH:', {
+            comuna: m.Comuna,
+            selectedComuna,
+            normalized: normalizeString(m.Comuna),
+            selectedNormalized: normalizeString(selectedComuna),
+            marca: m.Marca,
+            eds: m.eds
+          });
+        }
+
+        return regionMatch && comunaMatch && marcaMatch && edsMatch && guerraMatch && pesMatch;
       }
 
       const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
       return regionMatch && marcaMatch && edsMatch && guerraMatch && pesMatch;
     });
+
+    console.log('📊 FILTERED RESULT:', {
+      count: result.length,
+      comunas: [...new Set(result.map(m => m.Comuna))],
+      regions: [...new Set(result.map(m => m.Region))],
+      samples: result.slice(0, 5).map(m => ({
+        comuna: m.Comuna,
+        region: m.Region,
+        eds: m.eds,
+        lat: m.lat,
+        lng: m.lng
+      }))
+    });
+
+    return result;
   }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, selectedEds, comunasDelJefe, soloGuerraPrecios, soloEstacionesPES, globalEdsSearch]);
 
   // Array SIN filtro EDS para botón Mercado
@@ -125,7 +178,7 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
       }
 
       if (selectedComuna) {
-        const todasLasEstacionesEnComuna = m.Comuna === selectedComuna;
+        const todasLasEstacionesEnComuna = normalizeString(m.Comuna) === normalizeString(selectedComuna);
         const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
         return regionMatch && todasLasEstacionesEnComuna && marcaMatch && guerraMatch && pesMatch;
       }
@@ -161,7 +214,8 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
   // ✅ Enviar únicos al mapa, histórico completo para Mercado
   React.useEffect(() => {
     onFiltersChange(uniqueFilteredMarkers, filteredMarkersForMercado);
-  }, [uniqueFilteredMarkers, filteredMarkersForMercado, onFiltersChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uniqueFilteredMarkers, filteredMarkersForMercado]);
 
   // Contador de marcas (solo estaciones únicas)
   const markersByBrand = useMemo(() => {
@@ -188,6 +242,25 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
       Array.from(brandMap.entries()).map(([name, set]) => [name, set.size])
     );
   }, [markers, selectedRegion]);
+
+  // Center map when comuna is selected
+  React.useEffect(() => {
+    if (selectedComuna && window.leafletMap) {
+      // Find a marker from the selected comuna to get coordinates
+      const comunaMarker = markers.find(m =>
+        normalizeString(m.Comuna) === normalizeString(selectedComuna)
+      );
+
+      if (comunaMarker && comunaMarker.Latitud_comuna && comunaMarker.Longitud_comuna) {
+        const lat = parseFloat(comunaMarker.Latitud_comuna);
+        const lng = parseFloat(comunaMarker.Longitud_comuna);
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+          window.leafletMap.setView([lat, lng], 12); // Zoom level 12 for comuna view
+        }
+      }
+    }
+  }, [selectedComuna, markers]);
 
   const handleClearFilters = () => {
     setSelectedComuna('');

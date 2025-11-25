@@ -96,10 +96,10 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleFiltersChange = (filtered, filteredForMercado) => {
+  const handleFiltersChange = React.useCallback((filtered, filteredForMercado) => {
     setFilteredMarkers(filtered); // ← Únicos para visualizar
     setFilteredMarkersForMercado(filteredForMercado); // ← Histórico completo filtrado
-  };
+  }, []);
 
   const handleStationSelect = (station) => {
     if (station && window.leafletMap) {
@@ -227,6 +227,18 @@ function App() {
           />
         </aside>
 
+        {(() => {
+          const markersToMap = filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers;
+          console.log('🗺️ MARKERS TO MAP:', {
+            filteredMarkersCount: filteredMarkers.length,
+            uniqueRegionMarkersCount: uniqueRegionMarkers.length,
+            markersToMapCount: markersToMap.length,
+            comunasInMap: [...new Set(markersToMap.map(m => m.Comuna))],
+            regionsInMap: [...new Set(markersToMap.map(m => m.Region))]
+          });
+          return null;
+        })()}
+
         <MapComponent
           selectedRegion={selectedRegion}
           regionCenter={REGION_COORDINATES[selectedRegion]}
@@ -245,6 +257,7 @@ function App() {
           <StatisticsPanel
             markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
             historicalMarkers={filteredMarkersForMercado.length > 0 ? filteredMarkersForMercado : regionMarkers}
+            allMarkers={markers}
           />
         </aside>
 

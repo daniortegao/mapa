@@ -14,6 +14,14 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
   const competenciaMarkersRef = useRef([]);
   const polylineRef = useRef([]);
 
+  console.log('🎯 IconMarkersLayer RENDER:', {
+    markersCount: markers?.length,
+    markersRefCount: Object.keys(markersRef.current).length,
+    selectedRegion,
+    firstMarkerComuna: markers?.[0]?.Comuna,
+    uniqueComunas: [...new Set((markers || []).map(m => m.Comuna))]
+  });
+
   const [showingAssociated, setShowingAssociated] = useState(false);
   const [activeMercadoPbl, setActiveMercadoPbl] = useState(null);
   const [modoCorreccion, setModoCorreccion] = useState(null);
@@ -232,6 +240,10 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
   const showAssociatedIds = useCallback((pbl, lat, lng, originalMarkerId) => {
     const searchArray = markersForMercado && markersForMercado.length > 0 ? markersForMercado : markers;
 
+    // Toggle ON (o cambio de PBL)
+    // Definir associatedData aquí
+    const associatedData = baseCompData.filter(item => String(item.pbl).trim() === String(pbl).trim());
+
     if (showingAssociated && activeMercadoPbl === pbl) {
       // Toggle OFF
       clearCompetenciaMarkers();
@@ -257,32 +269,14 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       return;
     }
 
-    // Toggle ON (o cambio de PBL)
+    // Si no hay datos asociados, no hacemos nada
+    if (associatedData.length === 0) return;
+
+    // Toggle ON
     clearCompetenciaMarkers();
     clearPolylines();
 
-    const associatedData = baseCompData.filter(item => String(item.pbl).trim() === String(pbl).trim());
-    if (associatedData.length === 0) return;
-
     const ids = associatedData.map(item => item.id);
-
-    // Limpiar actuales
-    Object.values(markersRef.current).forEach(marker => {
-      try { if (map && map.hasLayer(marker)) map.removeLayer(marker); } catch (e) { }
-    });
-    markersRef.current = {};
-    clearGuerraMarkers();
-
-    // Mostrar original
-    const originalMarker = markers.find(m => m.id === originalMarkerId);
-    if (originalMarker) {
-      const leafletMarker = createMarkerWithPopup(originalMarker, markersForMercado || markers, 'primary');
-      if (leafletMarker) {
-        map.addLayer(leafletMarker);
-        markersRef.current[originalMarker.id] = leafletMarker;
-        addGuerraMarker(originalMarker);
-      }
-    }
 
     // Mostrar competencia
     const associatedMarkers = searchArray.filter(item => ids.includes(item.id));
@@ -353,7 +347,11 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         iconAnchor: [7.5, 7.5],
         className: 'icono-guerra'
       });
-      const guerraMarker = L.marker([marker.lat, marker.lng], { icon: guerraIcon, interactive: false });
+      const guerraMarker = L.marker([marker.lat, marker.lng], {
+        icon: guerraIcon,
+        interactive: false,
+        isAppMarker: true // Tag for cleanup
+      });
       map.addLayer(guerraMarker);
       guerraMarkersRef.current[marker.id] = guerraMarker;
     }
@@ -366,7 +364,10 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     if (isNaN(lat) || isNaN(lng)) return null;
 
     const iconUrl = createCustomIcon(marker.Marca);
-    const leafletMarker = L.marker([lat, lng], { icon: iconUrl });
+    const leafletMarker = L.marker([lat, lng], {
+      icon: iconUrl,
+      isAppMarker: true // Tag for cleanup
+    });
 
     // Popup vacío inicial
     const popup = L.popup({
@@ -437,20 +438,27 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
   useEffect(() => {
     if (!map || !markers || markers.length === 0) return;
 
-    // Si estamos mostrando asociados, no refrescamos todo (a menos que cambien los filtros drásticamente, 
-    // pero aquí asumimos que si 'markers' cambia, reseteamos vista).
-    // Para simplificar: si markers cambia, reseteamos todo.
+    // Robust Cleanup: Remove ALL markers tagged as isAppMarker
+    // This ensures we don't leave zombie markers if refs are lost
+    map.eachLayer(layer => {
+      if (layer.options && layer.options.isAppMarker) {
+        map.removeLayer(layer);
+      }
+    });
+
+    // Reset refs
+    markersRef.current = {};
+    guerraMarkersRef.current = {};
+    competenciaMarkersRef.current = [];
+    polylineRef.current = []; // Polylines might need tagging too if they persist, but let's clear them via ref for now or tag them
+
+    // Also clear polylines via map iteration if possible, or just trust refs for polylines (less critical)
+    // Let's tag polylines too in showAssociatedIds just in case, but for now this fixes the main issue.
 
     clearCompetenciaMarkers();
     clearPolylines();
     setShowingAssociated(false);
     setActiveMercadoPbl(null);
-
-    Object.values(markersRef.current).forEach(marker => {
-      try { if (map && map.hasLayer(marker)) map.removeLayer(marker); } catch (e) { }
-    });
-    markersRef.current = {};
-    clearGuerraMarkers();
 
     markers.forEach(marker => {
       const leafletMarker = createMarkerWithPopup(

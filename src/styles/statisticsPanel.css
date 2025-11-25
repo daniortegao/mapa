@@ -245,11 +245,11 @@ input:checked+.slider:before {
 }
 
 .price-min .price-value {
-    color: #28a745;
+    color: #dc3545;
 }
 
 .price-max .price-value {
-    color: #dc3545;
+    color: #28a745;
 }
 
 .station-info {
@@ -368,11 +368,11 @@ input:checked+.slider:before {
 }
 
 .ranking-section.expensive {
-    border-left: 4px solid #dc3545;
+    border-left: 4px solid #28a745;
 }
 
 .ranking-section.cheap {
-    border-left: 4px solid #28a745;
+    border-left: 4px solid #dc3545;
 }
 
 .ranking-section-title {
@@ -442,11 +442,11 @@ input:checked+.slider:before {
 }
 
 .expensive-price {
-    color: #dc3545;
+    color: #28a745;
 }
 
 .cheap-price {
-    color: #28a745;
+    color: #dc3545;
 }
 
 @media (max-width: 768px) {

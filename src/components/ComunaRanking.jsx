@@ -112,9 +112,35 @@ const ComunaRanking = ({ markers }) => {
             </div>
 
             <div className="ranking-grid">
+                {/* Cheapest */}
+                <div className="ranking-section cheap">
+                    <h5 className="ranking-section-title">🔴 Más Baratas</h5>
+                    <div className="ranking-list">
+                        {topCheap.map((comuna, index) => (
+                            <div key={comuna.comuna} className="ranking-item">
+                                <div className="ranking-info">
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                        <span className="ranking-comuna">{comuna.comuna}</span>
+                                        <span className="ranking-position">{index + 1}</span>
+                                    </div>
+                                    <span className="ranking-price cheap-price">
+                                        ${Math.round(comuna[selectedFuel])}
+                                    </span>
+                                    <span className="ranking-stations">
+                                        ({comuna.fuelCounts[selectedFuel]} de {comuna.totalStations} EDS)
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+
+
+
                 {/* Most Expensive */}
                 <div className="ranking-section expensive">
-                    <h5 className="ranking-section-title">🔴 Más Caras</h5>
+                    <h5 className="ranking-section-title">🟢 Más Caras</h5>
                     <div className="ranking-list">
                         {topExpensive.map((comuna, index) => (
                             <div key={comuna.comuna} className="ranking-item">
@@ -135,28 +161,6 @@ const ComunaRanking = ({ markers }) => {
                     </div>
                 </div>
 
-                {/* Cheapest */}
-                <div className="ranking-section cheap">
-                    <h5 className="ranking-section-title">🟢 Más Baratas</h5>
-                    <div className="ranking-list">
-                        {topCheap.map((comuna, index) => (
-                            <div key={comuna.comuna} className="ranking-item">
-                                <div className="ranking-info">
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                        <span className="ranking-comuna">{comuna.comuna}</span>
-                                        <span className="ranking-position">{index + 1}</span>
-                                    </div>
-                                    <span className="ranking-price cheap-price">
-                                        ${Math.round(comuna[selectedFuel])}
-                                    </span>
-                                    <span className="ranking-stations">
-                                        ({comuna.fuelCounts[selectedFuel]} de {comuna.totalStations} EDS)
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
             </div>
         </div>
     );

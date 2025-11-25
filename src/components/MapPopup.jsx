@@ -75,7 +75,7 @@ const MapPopup = ({
                 </div>
                 <div className="popup-info-row">
                     <span className="popup-label">EESS: </span>
-                    <span className="popup-value">{marker.eds || '-'}</span>
+                    <span className="popup-value"> {marker.eds || '-'}</span>
                 </div>
                 <br />
                 <div className="popup-info-row">

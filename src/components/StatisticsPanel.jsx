@@ -2,8 +2,9 @@ import React, { useMemo, useState } from 'react';
 import '../styles/statisticsPanel.css';
 import ComunaRanking from './ComunaRanking';
 
-const StatisticsPanel = ({ markers, historicalMarkers }) => {
+const StatisticsPanel = ({ markers, historicalMarkers, allMarkers }) => {
     const [calculationMode, setCalculationMode] = useState('average'); // 'average' or 'median'
+    const [scopeMode, setScopeMode] = useState('regional'); // 'regional' or 'national'
     const [expandedSections, setExpandedSections] = useState({
         brands: false,
         prices: false,
@@ -18,7 +19,9 @@ const StatisticsPanel = ({ markers, historicalMarkers }) => {
     };
 
     const stats = useMemo(() => {
-        if (!markers || markers.length === 0) return null;
+        // Use allMarkers for national scope, markers for regional scope
+        const dataSource = scopeMode === 'national' ? allMarkers : markers;
+        if (!dataSource || dataSource.length === 0) return null;
 
         const brands = {};
         const fuels = ['precio_g93', 'precio_g95', 'precio_g97', 'precio_diesel', 'precio_kero'];
@@ -35,17 +38,28 @@ const StatisticsPanel = ({ markers, historicalMarkers }) => {
             globalMinMax[f] = { min: Infinity, max: -Infinity, minStation: null, maxStation: null };
         });
 
-        markers.forEach(m => {
-            const brand = m.Marca || 'Otras';
+        dataSource.forEach(m => {
+            const brandName = m.Marca || 'Otras';
+            // Rename "Unknown" to "Blanco"
+            const brand = brandName === 'Unknown' ? 'Blanco' : brandName;
+
             if (!brands[brand]) {
-                brands[brand] = { count: 0, totals: {}, counts: {}, prices: {} };
+                brands[brand] = {
+                    uniqueStations: new Set(), // Track unique stations
+                    totals: {},
+                    counts: {},
+                    prices: {}
+                };
                 fuels.forEach(f => {
                     brands[brand].totals[f] = 0;
                     brands[brand].counts[f] = 0;
                     brands[brand].prices[f] = [];
                 });
             }
-            brands[brand].count++;
+
+            // Track unique stations using pbl or lat/lng as identifier
+            const stationId = m.pbl || m.id || `${m.lat}_${m.lng}`;
+            brands[brand].uniqueStations.add(stationId);
 
             fuels.forEach(f => {
                 // Handle different field names if necessary (based on markerUtils)
@@ -97,11 +111,16 @@ const StatisticsPanel = ({ markers, historicalMarkers }) => {
                     }
                 }
             });
-            return { brand: b, count: brands[b].count, averages: avgs, medians: medians };
+            return {
+                brand: b,
+                count: brands[b].uniqueStations.size, // Use unique station count
+                averages: avgs,
+                medians: medians
+            };
         });
 
         return { brandStats, globalMinMax, fuelLabels };
-    }, [markers]);
+    }, [markers, allMarkers, scopeMode]);
 
     if (!stats) return <div className="stats-empty">Sin datos para mostrar</div>;
 
@@ -114,11 +133,27 @@ const StatisticsPanel = ({ markers, historicalMarkers }) => {
                 <div className="stats-header-row" onClick={() => toggleSection('brands')} style={{ cursor: 'pointer' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span className={`accordion-icon ${expandedSections.brands ? 'open' : ''}`}>▼</span>
-                        <h4 className="stats-title">Resumen por Marca</h4>
+                        <h4 className="stats-title">Resumen</h4>
                     </div>
 
                     {expandedSections.brands && (
                         <div className="toggle-container" onClick={(e) => e.stopPropagation()}>
+                            {/* Scope Toggle */}
+                            <span className={`toggle-label ${scopeMode === 'regional' ? 'active' : ''}`}>Regional</span>
+                            <label className="switch">
+                                <input
+                                    type="checkbox"
+                                    checked={scopeMode === 'national'}
+                                    onChange={() => setScopeMode(prev => prev === 'regional' ? 'national' : 'regional')}
+                                />
+                                <span className="slider round"></span>
+                            </label>
+                            <span className={`toggle-label ${scopeMode === 'national' ? 'active' : ''}`}>Nacional</span>
+
+                            {/* Separator */}
+                            <div style={{ width: '1px', height: '20px', background: '#dee2e6', margin: '0 12px' }}></div>
+
+                            {/* Calculation Mode Toggle */}
                             <span className={`toggle-label ${calculationMode === 'average' ? 'active' : ''}`}>Prom</span>
                             <label className="switch">
                                 <input
