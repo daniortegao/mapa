@@ -2,10 +2,21 @@
    POPUP DE ICON MARKERS – ESTILOS RESPONSIVE Y RESIZE
    ========================================================= */
 
+/* ============================================================
+   AJUSTE DE ANCHO DEL POPUP
+   Para cambiar el ancho del popup, modifica estos 4 valores:
+   - Línea 17: .icon-markers-popup-content { width: 100px; }
+   - Línea 40: .popup-info-header { min-width: 100px; }
+   - Línea 107: .popup-tabs-container { width: 100px; }
+   - Línea 441: .leaflet-popup-content { min-width: 320px; } ← ESTE ES EL MÁS IMPORTANTE
+   Los 4 valores deben ser iguales para mantener la consistencia.
+   ============================================================ */
+
 /* BASE DEL POPUP */
 .icon-markers-popup-content {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  width: 300px;
+  width: 100px;
+  /* ← ANCHO PRINCIPAL DEL POPUP */
   color: #333;
   padding: 0;
   box-sizing: border-box;
@@ -28,7 +39,8 @@
 /* HEADER DE INFORMACIÓN */
 .popup-info-header {
   width: 100%;
-  min-width: 300px;
+  min-width: 100px;
+  /* ← Debe coincidir con el ancho del popup */
   position: relative;
   padding: 2px;
   background-color: #eff0f3;
@@ -40,7 +52,8 @@
   display: inline-table;
   justify-content: flex-start;
   gap: 3px;
-  padding: 2px 0;
+  padding: 2px 5px;
+  /* ← ESPACIO VERTICAL: Aumenta este valor para más espacio entre líneas */
   font-size: calc(var(--fz) - 1px);
   line-height: 1.3;
 }
@@ -94,7 +107,8 @@
 
 /* SISTEMA DE TABS */
 .popup-tabs-container {
-  width: 300px;
+  width: 100px;
+  /* ← Debe coincidir con el ancho del popup */
   max-width: 100%;
   box-sizing: border-box;
   border: 1px solid #c0c0c0;
@@ -418,7 +432,8 @@
   margin: 5px 5px 5px 5px !important;
   resize: none !important;
   overflow: auto;
-  min-width: 300px;
+  min-width: 320px;
+  /* ← ESTE ES EL VALOR MÁS IMPORTANTE - Debe coincidir con el ancho del popup */
   min-height: 340px;
   max-height: 340px;
   transition: none !important;
@@ -595,46 +610,6 @@
 
 .nivel-toggle-btn.active,
 .nivel-toggle-btn:hover {
-  background: #1973e7;
-  color: #fff;
-}
-
-/* Price Differences Display */
-.price-differences-container {
-  background-color: #17a2b8;
-  border-radius: 8px;
-  padding: 3px 3px;
-  margin: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  width: fit-content;
-}
-
-.price-diff-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #ecf0f1;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-  text-align: center;
-}
-
-.price-diff-values {
-  display: flex;
-  gap: 3px;
-}
-
-.price-diff-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-
-.diff-fuel-name {
-  font-size: 10px;
-  font-weight: 500;
-  color: #090909;
   text-transform: uppercase;
 }
 
@@ -656,4 +631,43 @@
 .diff-value.negative {
   color: #e74c3c;
   background: #d9d2d2;
+}
+
+/* Table Header Differences */
+.diff-header-row th {
+  padding: 4px;
+  background-color: #f1f3f5;
+  color: #19191a;
+  font-weight: 750;
+  /* Light gray background */
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.diff-label-cell {
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.diff-value-table {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  padding: 2px 6px;
+  border-radius: 12px;
+  /* Pill shape */
+  min-width: 30px;
+}
+
+.diff-value-table.positive {
+  color: #28a745;
+  background-color: rgba(40, 167, 69, 0.15);
+}
+
+.diff-value-table.negative {
+  color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.15);
 }

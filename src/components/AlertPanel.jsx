@@ -28,17 +28,17 @@ function parseFecha(fechaStr) {
   const parts = fechaStr.trim().split(' ');
   const datePart = parts[0];
   const timePart = parts[1];
-  
+
   if (!datePart) return new Date();
-  
+
   const dateParts = datePart.split('-');
   if (dateParts.length !== 3) return new Date();
-  
+
   const [day, month, year] = dateParts.map(Number);
   const [hours, minutes] = timePart ? timePart.split(':').map(Number) : [0, 0];
-  
+
   if (isNaN(day) || isNaN(month) || isNaN(year)) return new Date();
-  
+
   return new Date(year, month - 1, day, hours || 0, minutes || 0);
 }
 
@@ -80,18 +80,18 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
         getDataBaseguerra(),
         getDataBaseajuste()
       ]);
-      
+
       setAlertas(Array.isArray(alertasData) ? alertasData : []);
       setHistorico(Array.isArray(historicoData) ? historicoData : []);
-    
+
       const guerraArr =
         Array.isArray(guerraDataResult) ? guerraDataResult :
-        Array.isArray(guerraDataResult?.data) ? guerraDataResult.data : [];
+          Array.isArray(guerraDataResult?.data) ? guerraDataResult.data : [];
       setGuerraData(guerraArr);
 
       const ajustesArr =
         Array.isArray(ajustesDataResult) ? ajustesDataResult :
-        Array.isArray(ajustesDataResult?.data) ? ajustesDataResult.data : [];
+          Array.isArray(ajustesDataResult?.data) ? ajustesDataResult.data : [];
       setAjustesData(ajustesArr);
 
     } catch {
@@ -109,7 +109,7 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
 
   const estacionesGuerra = useMemo(() => {
     if (!Array.isArray(guerraData)) return [];
-    
+
     return guerraData
       .filter(item => item.Activa === 'Si')
       .sort((a, b) => {
@@ -125,7 +125,7 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
 
     if (filterNombreEstacion.trim() !== '') {
       const searchTerm = filterNombreEstacion.toLowerCase();
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         (item.Nom_Eds || '').toLowerCase().includes(searchTerm)
       );
     }
@@ -152,13 +152,13 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
 
     if (filterNombreAjuste.trim() !== '') {
       const searchTerm = filterNombreAjuste.toLowerCase();
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         (item.Nom_Eds || '').toLowerCase().includes(searchTerm)
       );
     }
 
     if (filterCombustible.trim() !== '') {
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         item.combustible === filterCombustible
       );
     }
@@ -172,7 +172,7 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
 
   const totalPages = Math.max(1, Math.ceil(historicoSorted.length / ITEMS_PER_PAGE));
   const totalPagesAjustes = Math.max(1, Math.ceil(ajustesSorted.length / ITEMS_PER_PAGE));
-  
+
   const historicoPageSlice = historicoSorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
   const ajustesPageSlice = ajustesSorted.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
@@ -202,7 +202,7 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
           >
             Alertas Activas ({cantidadEstaciones})
           </button>
-          
+
           <button
             className={`alert-tab ${activeTab === 'historico' ? 'active' : ''}`}
             onClick={() => setActiveTab('historico')}
@@ -231,7 +231,7 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
             <GuerraPreciosPanel data={estacionesGuerra} />
           ) : activeTab === 'historico' ? (
             <>
-              <HistoricoAlertas 
+              <HistoricoAlertas
                 data={historicoPageSlice}
                 filterNombreEstacion={filterNombreEstacion}
                 setFilterNombreEstacion={setFilterNombreEstacion}
@@ -273,25 +273,25 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
           <div className="modal-expandido-contenido" onClick={(e) => e.stopPropagation()}>
             <div className="modal-expandido-header">
               <h2>📊 Histórico de Movimiento - Vista Completa</h2>
-              <button 
+              <button
                 className="modal-close-btn"
                 onClick={() => setModalExpanded(false)}
               >
                 ✕
               </button>
             </div>
-            
+
             <div className="modal-expandido-body">
-              <HistoricoAlertas 
+              <HistoricoAlertas
                 data={historicoPageSlice}
                 filterNombreEstacion={filterNombreEstacion}
                 setFilterNombreEstacion={setFilterNombreEstacion}
                 filterSoloGuerra={filterSoloGuerra}
                 setFilterSoloGuerra={setFilterSoloGuerra}
                 totalItems={historicoSorted.length}
-                onExpand={() => {}}
+                onExpand={() => { }}
               />
-              
+
               <div style={{ marginTop: 10, textAlign: 'center', padding: '10px', background: 'white' }}>
                 <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
                 <span style={{ margin: '0 10px' }}>Página {page} de {totalPages}</span>
@@ -353,17 +353,34 @@ const AlertasActivas = ({ agrupadas }) => {
               </tbody>
             </table>
             <div style={{ marginTop: '8px', color: '#999', fontSize: '12px' }}>
-              {alerts.map(a =>
-                <div key={a.Combustible}>
-                  <span>Actual: {a.Fecha}, Anterior: {a.FechaAnterior}</span>
-                  {a.Guerra_Precio === "Si" && <span style={{ marginLeft: 8, color: "#e67e22" }}>⚡ GUERRA DE PRECIO</span>}
-                </div>
-              )}
+              {(() => {
+                // Deduplicate footer lines
+                const uniqueFooters = new Set();
+                const footerContent = [];
+
+                alerts.forEach(a => {
+                  const text = `Actual: ${a.Fecha}, Anterior: ${a.FechaAnterior}`;
+                  const isGuerra = a.Guerra_Precio === "Si";
+                  const key = `${text}_${isGuerra}`;
+
+                  if (!uniqueFooters.has(key)) {
+                    uniqueFooters.add(key);
+                    footerContent.push({ text, isGuerra });
+                  }
+                });
+
+                return footerContent.map((item, idx) => (
+                  <div key={idx}>
+                    <span>{item.text}</span>
+                    {item.isGuerra && <span style={{ marginLeft: 8, color: "#e67e22" }}>⚡ GUERRA DE PRECIO</span>}
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         );
       })}
-    </div>
+    </div >
   );
 };
 
@@ -402,19 +419,19 @@ const GuerraPreciosPanel = ({ data }) => {
   );
 };
 
-const HistoricoAlertas = ({ 
-  data, 
-  filterNombreEstacion, 
-  setFilterNombreEstacion, 
-  filterSoloGuerra, 
+const HistoricoAlertas = ({
+  data,
+  filterNombreEstacion,
+  setFilterNombreEstacion,
+  filterSoloGuerra,
   setFilterSoloGuerra,
   totalItems,
   onExpand
 }) => {
   if (!Array.isArray(data)) return <div className="alert-empty">⚠️ Error: Los datos no son un array</div>;
-  
+
   const hayFiltrosActivos = filterNombreEstacion.trim() !== '' || filterSoloGuerra;
-  
+
   const limpiarFiltros = () => {
     setFilterNombreEstacion('');
     setFilterSoloGuerra(false);
@@ -429,7 +446,7 @@ const HistoricoAlertas = ({
     };
   };
 
-    return (
+  return (
     <div className="historico-wrapper">
       <div className="historico-filtros">
         <input
@@ -448,9 +465,9 @@ const HistoricoAlertas = ({
           />
           <span>Solo estaciones en guerra</span>
         </label>
-        
+
         {hayFiltrosActivos && (
-          <button 
+          <button
             className="btn-limpiar-filtros"
             onClick={limpiarFiltros}
             title="Limpiar todos los filtros"
@@ -458,10 +475,10 @@ const HistoricoAlertas = ({
             ✕ Limpiar
           </button>
         )}
-        
+
         {/* BOTÓN EXPANDIR */}
         {onExpand && (
-          <button 
+          <button
             className="btn-expandir-vista"
             onClick={onExpand}
             title="Expandir vista"
@@ -469,7 +486,7 @@ const HistoricoAlertas = ({
             ⛶ Expandir
           </button>
         )}
-        
+
         <span style={{ marginLeft: 'auto', color: '#666', fontSize: '13px', fontWeight: 600 }}>
           Mostrando {data.length} de {totalItems}
         </span>
@@ -484,7 +501,7 @@ const HistoricoAlertas = ({
               {filterNombreEstacion && <strong> "{filterNombreEstacion}"</strong>}
               {filterSoloGuerra && <span> (solo guerra)</span>}
             </p>
-            <button 
+            <button
               className="btn-limpiar-filtros-destacado"
               onClick={limpiarFiltros}
             >
@@ -521,20 +538,20 @@ const HistoricoAlertas = ({
               const diferencia = precioActual - precioAnterior;
               const guerra = item.Guerra_Precio === 'Si';
               const marcadorPrincipal = item.Marcador_Principal === 'Si';
-              
+
               const cambioClass = diferencia > 0 ? 'precio-sube' : diferencia < 0 ? 'precio-baja' : 'precio-igual';
               const cambioIcon = diferencia > 0 ? '↑' : diferencia < 0 ? '↓' : '=';
               const cambioSigno = diferencia > 0 ? '+' : '';
-              
+
               const tipoIcon = item.tipo_atencion === 'Asistido' ? '👤' : item.tipo_atencion === 'Autoservicio' ? '⛽' : '❓';
-              
+
               const fechaActual = formatFechaCompacta(item.Fecha);
               const fechaAnterior = formatFechaCompacta(item.FechaAnterior);
               const fechaCarga = formatFechaCompacta(item.FechaCarga);
-              
+
               return (
-                <tr 
-                  key={idx} 
+                <tr
+                  key={idx}
                   className={`historico-row ${guerra ? 'guerra-row' : ''} ${marcadorPrincipal ? 'principal-row' : ''}`}
                 >
                   <td className="td-estacion" title={item.Nom_Eds}>
@@ -588,8 +605,8 @@ const HistoricoAlertas = ({
   );
 };
 
-const AjustesTabla = ({ 
-  data, 
+const AjustesTabla = ({
+  data,
   filterNombreAjuste,
   setFilterNombreAjuste,
   filterCombustible,
@@ -600,7 +617,7 @@ const AjustesTabla = ({
   const [vistaDetallada, setVistaDetallada] = useState(false);
 
   const hayFiltrosActivos = filterNombreAjuste.trim() !== '' || filterCombustible.trim() !== '';
-  
+
   const limpiarFiltros = () => {
     setFilterNombreAjuste('');
     setFilterCombustible('');
@@ -621,14 +638,14 @@ const AjustesTabla = ({
       }
       grupos[key].combustibles.push(item);
     });
-    
+
     return Object.values(grupos).map(grupo => {
       const subgrupos = {};
       grupo.combustibles.forEach(comb => {
         const difComp = comb.Diferencia_Competencia || 0;
         const difPropia = comb.Estrategia_Propia || 0;
         const combinedKey = `${difComp}_${difPropia}`;
-        
+
         if (!subgrupos[combinedKey]) {
           subgrupos[combinedKey] = {
             diferencia_competencia: difComp,
@@ -638,7 +655,7 @@ const AjustesTabla = ({
         }
         subgrupos[combinedKey].combustibles.push(comb);
       });
-      
+
       return {
         ...grupo,
         subgrupos: Object.values(subgrupos)
@@ -676,7 +693,7 @@ const AjustesTabla = ({
             <option key={comb} value={comb}>{comb}</option>
           ))}
         </select>
-        
+
         <label className="check-filtro-hist">
           <input
             type="checkbox"
@@ -687,7 +704,7 @@ const AjustesTabla = ({
         </label>
 
         {hayFiltrosActivos && (
-          <button 
+          <button
             className="btn-limpiar-filtros"
             onClick={limpiarFiltros}
             title="Limpiar todos los filtros"
@@ -710,7 +727,7 @@ const AjustesTabla = ({
               {filterNombreAjuste && <strong> "{filterNombreAjuste}"</strong>}
               {filterCombustible && <span> ({filterCombustible})</span>}
             </p>
-            <button 
+            <button
               className="btn-limpiar-filtros-destacado"
               onClick={limpiarFiltros}
             >
@@ -745,7 +762,7 @@ const AjustesTabla = ({
               const precioAsistido = item.precio_asistido || 0;
               const precioAutoservicio = item.precio_autoservicio || 0;
               const cambioPrecio = item.cambio_precio || 'Mantiene Diferencia';
-              
+
               return (
                 <tr key={idx}>
                   <td className="td-estacion" title={item.Nom_Eds}>
@@ -807,7 +824,7 @@ const AjustesTabla = ({
                 const fechaVig = formatFecha(subgrupo.combustibles[0]?.FechaVigenciaSugerida);
                 const difComp = subgrupo.diferencia_competencia;
                 const difPropia = subgrupo.diferencia_propia;
-                
+
                 return (
                   <tr key={`${idx}-${subIdx}`}>
                     {subIdx === 0 && (

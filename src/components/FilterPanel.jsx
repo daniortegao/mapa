@@ -7,6 +7,7 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
   const [selectedEds, setSelectedEds] = useState('');
   const [edsSearchTerm, setEdsSearchTerm] = useState('');
   const [globalEdsSearch, setGlobalEdsSearch] = useState('');
+  const [globalEdsSearchTerm, setGlobalEdsSearchTerm] = useState('');
   const [soloGuerraPrecios, setSoloGuerraPrecios] = useState(false);
   const [soloEstacionesPES, setSoloEstacionesPES] = useState(false);
 
@@ -262,6 +263,23 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
     }
   }, [selectedComuna, markers]);
 
+  // Center map when EDS is selected
+  React.useEffect(() => {
+    if (selectedEds && window.leafletMap) {
+      // Find the marker for the selected EDS
+      const edsMarker = markers.find(m => m.eds === selectedEds);
+
+      if (edsMarker && edsMarker.lat && edsMarker.lng) {
+        const lat = parseFloat(edsMarker.lat);
+        const lng = parseFloat(edsMarker.lng);
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+          window.leafletMap.setView([lat, lng], 16); // Zoom level 16 for station view
+        }
+      }
+    }
+  }, [selectedEds, markers]);
+
   const handleClearFilters = () => {
     setSelectedComuna('');
     setSelectedMarca('');
@@ -335,29 +353,78 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
         </select>
       </div>
 
-      <div className="filter-group">
+      <div className="filter-group" style={{ position: 'relative' }}>
         <label htmlFor="global-eds-search">EDS todas</label>
-        <select
+        <input
           id="global-eds-search"
-          value={globalEdsSearch}
+          type="text"
+          value={globalEdsSearchTerm}
           onChange={(e) => {
-            const selectedPbl = e.target.value;
-            setGlobalEdsSearch(selectedPbl);
-            if (selectedPbl && onStationSelect) {
-              const station = allStations.find(s => s.pbl === selectedPbl);
-              if (station) {
-                onStationSelect(station);
-              }
+            setGlobalEdsSearchTerm(e.target.value);
+            if (!e.target.value) {
+              setGlobalEdsSearch('');
             }
           }}
-        >
-          <option value="">Selecciona una estación...</option>
-          {allStations.map(station => (
-            <option key={station.pbl} value={station.pbl}>
-              {station.eds} - {station.comuna} ({station.region})
-            </option>
-          ))}
-        </select>
+          placeholder="Buscar estación..."
+          style={{
+            width: '100%',
+            padding: '8px',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            fontSize: '14px'
+          }}
+        />
+        {globalEdsSearchTerm && (
+          <div style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            maxHeight: '250px',
+            overflowY: 'auto',
+            backgroundColor: 'white',
+            border: '1px solid #ccc',
+            borderTop: 'none',
+            borderRadius: '0 0 4px 4px',
+            zIndex: 1000,
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+          }}>
+            {allStations
+              .filter(station =>
+                station.eds.toLowerCase().includes(globalEdsSearchTerm.toLowerCase()) ||
+                station.comuna.toLowerCase().includes(globalEdsSearchTerm.toLowerCase()) ||
+                station.pbl.toLowerCase().includes(globalEdsSearchTerm.toLowerCase())
+              )
+              .slice(0, 50)
+              .map(station => (
+                <div
+                  key={station.pbl}
+                  onClick={() => {
+                    setGlobalEdsSearchTerm(`${station.eds} - ${station.comuna}`);
+                    setGlobalEdsSearch(station.pbl);
+                    if (onStationSelect) {
+                      onStationSelect(station);
+                    }
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #f0f0f0',
+                    fontSize: '13px',
+                    backgroundColor: globalEdsSearch === station.pbl ? '#e3f2fd' : 'white'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = globalEdsSearch === station.pbl ? '#e3f2fd' : 'white'}
+                >
+                  <div style={{ fontWeight: 'bold' }}>{station.eds}</div>
+                  <div style={{ fontSize: '11px', color: '#666' }}>
+                    {station.comuna} ({station.region})
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        )}
       </div>
 
 

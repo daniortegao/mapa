@@ -114,55 +114,11 @@ const MapPopup = ({
                                         {nivel}
                                     </button>
                                 ))}
-
-                                {priceDifferences && (
-                                    <div className="price-differences-container">
-                                        <div className="price-diff-values">
-                                            {priceDifferences.g93 !== null && (
-                                                <div className="price-diff-item">
-                                                    <span className="diff-fuel-name">G93:</span>
-                                                    <span className={`diff-value ${priceDifferences.g93 >= 0 ? 'positive' : 'negative'}`}>
-                                                        {priceDifferences.g93 >= 0 ? '+' : ''}{priceDifferences.g93.toFixed(0)}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {priceDifferences.g95 !== null && (
-                                                <div className="price-diff-item">
-                                                    <span className="diff-fuel-name">G95:</span>
-                                                    <span className={`diff-value ${priceDifferences.g95 >= 0 ? 'positive' : 'negative'}`}>
-                                                        {priceDifferences.g95 >= 0 ? '+' : ''}{priceDifferences.g95.toFixed(0)}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {priceDifferences.g97 !== null && (
-                                                <div className="price-diff-item">
-                                                    <span className="diff-fuel-name">G97:</span>
-                                                    <span className={`diff-value ${priceDifferences.g97 >= 0 ? 'positive' : 'negative'}`}>
-                                                        {priceDifferences.g97 >= 0 ? '+' : ''}{priceDifferences.g97.toFixed(0)}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {priceDifferences.diesel !== null && (
-                                                <div className="price-diff-item">
-                                                    <span className="diff-fuel-name">Diesel:</span>
-                                                    <span className={`diff-value ${priceDifferences.diesel >= 0 ? 'positive' : 'negative'}`}>
-                                                        {priceDifferences.diesel >= 0 ? '+' : ''}{priceDifferences.diesel.toFixed(0)}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {priceDifferences.kero !== null && (
-                                                <div className="price-diff-item">
-                                                    <span className="diff-fuel-name">Kero:</span>
-                                                    <span className={`diff-value ${priceDifferences.kero >= 0 ? 'positive' : 'negative'}`}>
-                                                        {priceDifferences.kero >= 0 ? '+' : ''}{priceDifferences.kero.toFixed(0)}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
-                            <div className={`popup-table-wrapper ${variantClass}`}>
+                            <div
+                                className={`popup-table-wrapper ${variantClass}`}
+                                onWheel={(e) => e.stopPropagation()}
+                            >
                                 {datosTabla.length === 0 ? (
                                     <div style={{ padding: '12px', textAlign: 'center', fontSize: '12px', color: '#999', fontStyle: 'italic' }}>
                                         Sin datos disponibles
@@ -170,6 +126,48 @@ const MapPopup = ({
                                 ) : (
                                     <table className={`popup-table ${variantClass}`}>
                                         <thead>
+                                            {/* Fila de Diferencias */}
+                                            {priceDifferences && (
+                                                <tr className="diff-header-row">
+                                                    <th className="diff-label-cell">PES/AUT</th>
+                                                    <th>
+                                                        {priceDifferences.g93 !== null && (
+                                                            <span className={`diff-value-table ${priceDifferences.g93 >= 0 ? 'positive' : 'negative'}`}>
+                                                                {priceDifferences.g93 >= 0 ? '+' : ''}{priceDifferences.g93.toFixed(0)}
+                                                            </span>
+                                                        )}
+                                                    </th>
+                                                    <th>
+                                                        {priceDifferences.g95 !== null && (
+                                                            <span className={`diff-value-table ${priceDifferences.g95 >= 0 ? 'positive' : 'negative'}`}>
+                                                                {priceDifferences.g95 >= 0 ? '+' : ''}{priceDifferences.g95.toFixed(0)}
+                                                            </span>
+                                                        )}
+                                                    </th>
+                                                    <th>
+                                                        {priceDifferences.g97 !== null && (
+                                                            <span className={`diff-value-table ${priceDifferences.g97 >= 0 ? 'positive' : 'negative'}`}>
+                                                                {priceDifferences.g97 >= 0 ? '+' : ''}{priceDifferences.g97.toFixed(0)}
+                                                            </span>
+                                                        )}
+                                                    </th>
+                                                    <th>
+                                                        {priceDifferences.diesel !== null && (
+                                                            <span className={`diff-value-table ${priceDifferences.diesel >= 0 ? 'positive' : 'negative'}`}>
+                                                                {priceDifferences.diesel >= 0 ? '+' : ''}{priceDifferences.diesel.toFixed(0)}
+                                                            </span>
+                                                        )}
+                                                    </th>
+                                                    <th>
+                                                        {priceDifferences.kero !== null && (
+                                                            <span className={`diff-value-table ${priceDifferences.kero >= 0 ? 'positive' : 'negative'}`}>
+                                                                {priceDifferences.kero >= 0 ? '+' : ''}{priceDifferences.kero.toFixed(0)}
+                                                            </span>
+                                                        )}
+                                                    </th>
+                                                </tr>
+                                            )}
+                                            {/* Fila de Encabezados Normal */}
                                             <tr>
                                                 <th>Fecha</th>
                                                 <th>G93</th>
@@ -266,15 +264,17 @@ const MapPopup = ({
                 </div>
             </div>
 
-            {marker.pbl && (marker.Marca === 'Aramco' || marker.Marca === 'Petrobras') && (
-                <button
-                    className="popup-button-mercado"
-                    onClick={() => onShowAssociated(marker.pbl, marker.lat, marker.lng, marker.id)}
-                >
-                    Mercado
-                </button>
-            )}
-        </div>
+            {
+                marker.pbl && (marker.Marca === 'Aramco' || marker.Marca === 'Petrobras') && (
+                    <button
+                        className="popup-button-mercado"
+                        onClick={() => onShowAssociated(marker.pbl, marker.lat, marker.lng, marker.id)}
+                    >
+                        Mercado
+                    </button>
+                )
+            }
+        </div >
     );
 };
 

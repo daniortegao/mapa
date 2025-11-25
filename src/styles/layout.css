@@ -971,9 +971,9 @@
 }
 
 .last-update-time {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
-  color: rgba(46, 45, 45, 0.85);
+  color: black;
   text-transform: uppercase;
   letter-spacing: 1.2px;
   line-height: 2;

@@ -267,7 +267,7 @@ function App() {
         />
       </div>
 
-      <div className="navbar-version">v2.0</div>
+      <div className="navbar-version">V3.0</div>
     </div>
   );
 }
