@@ -2,7 +2,7 @@
   "name": "mapa-v2",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://de250329.esmax.cl/proyecto_resumen/",
+  "homepage": "http://de250329.esmax.cl/Mapa/",
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

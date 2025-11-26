@@ -57,6 +57,7 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
   // Estados para filtros histórico
   const [filterNombreEstacion, setFilterNombreEstacion] = useState('');
   const [filterSoloGuerra, setFilterSoloGuerra] = useState(false);
+  const [filterSoloSeguimiento, setFilterSoloSeguimiento] = useState(false); // ← NUEVO
 
   // Estados para filtros ajustes
   const [filterNombreAjuste, setFilterNombreAjuste] = useState('');
@@ -120,6 +121,15 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
   }, [guerraData]);
 
   // Filtrado del histórico
+  // Conjunto de estaciones en seguimiento (Guerra_Precio === 'No')
+  const estacionesSeguimientoSet = useMemo(() => {
+    return new Set(
+      guerraData
+        .filter(g => g.Guerra_Precio === 'No')
+        .map(g => g.Nom_Eds)
+    );
+  }, [guerraData]);
+
   const historicoFiltrado = useMemo(() => {
     let filtered = [...historico];
 
@@ -139,8 +149,13 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
       filtered = filtered.filter(item => estacionesEnGuerra.has(item.Nom_Eds));
     }
 
+    // Nuevo filtro: Solo En Seguimiento (usando el Set calculado desde guerraData)
+    if (filterSoloSeguimiento) {
+      filtered = filtered.filter(item => estacionesSeguimientoSet.has(item.Nom_Eds));
+    }
+
     return filtered;
-  }, [historico, filterNombreEstacion, filterSoloGuerra, guerraData]);
+  }, [historico, filterNombreEstacion, filterSoloGuerra, filterSoloSeguimiento, guerraData, estacionesSeguimientoSet]);
 
   const historicoSorted = useMemo(() => {
     return [...historicoFiltrado].sort((a, b) => parseFecha(b.Fecha) - parseFecha(a.Fecha));
@@ -182,7 +197,7 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
   // Reset página al cambiar filtros o tab
   useEffect(() => {
     setPage(1);
-  }, [filterNombreEstacion, filterSoloGuerra, filterNombreAjuste, filterCombustible, activeTab]);
+  }, [filterNombreEstacion, filterSoloGuerra, filterSoloSeguimiento, filterNombreAjuste, filterCombustible, activeTab]);
 
   const combustiblesUnicos = useMemo(() => {
     return [...new Set(ajustesData.map(a => a.combustible))].filter(Boolean);
@@ -237,16 +252,19 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
                 setFilterNombreEstacion={setFilterNombreEstacion}
                 filterSoloGuerra={filterSoloGuerra}
                 setFilterSoloGuerra={setFilterSoloGuerra}
+                filterSoloSeguimiento={filterSoloSeguimiento}
+                setFilterSoloSeguimiento={setFilterSoloSeguimiento}
+                estacionesSeguimientoSet={estacionesSeguimientoSet}
                 totalItems={historicoSorted.length}
                 onExpand={() => setModalExpanded(true)}
               />
-              <div style={{ marginTop: 10, textAlign: 'center', padding: '10px', background: 'white' }}>
+              <div className="pagination-controls">
                 <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
                 <span style={{ margin: '0 10px' }}>Página {page} de {totalPages}</span>
                 <button onClick={handleNextPage} disabled={page === totalPages}>Siguiente</button>
               </div>
             </>
-          ) : (
+          ) : activeTab === 'ajustes' ? (
             <>
               <AjustesTabla
                 data={ajustesPageSlice}
@@ -257,49 +275,36 @@ const AlertPanel = ({ isVisible, onClose, alertasExternas }) => {
                 combustiblesUnicos={combustiblesUnicos}
                 totalItems={ajustesSorted.length}
               />
-              <div style={{ marginTop: 10, textAlign: 'center', padding: '10px', background: 'white' }}>
+              <div className="pagination-controls">
                 <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
                 <span style={{ margin: '0 10px' }}>Página {page} de {totalPagesAjustes}</span>
                 <button onClick={handleNextPage} disabled={page === totalPagesAjustes}>Siguiente</button>
               </div>
             </>
-          )}
+          ) : null}
         </div>
       </aside>
 
-      {/* MODAL EXPANDIDO */}
       {modalExpanded && (
-        <div className="modal-expandido-overlay" onClick={() => setModalExpanded(false)}>
-          <div className="modal-expandido-contenido" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-expandido-header">
-              <h2>📊 Histórico de Movimiento - Vista Completa</h2>
-              <button
-                className="modal-close-btn"
-                onClick={() => setModalExpanded(false)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="modal-expandido-body">
-              <HistoricoAlertas
-                data={historicoPageSlice}
-                filterNombreEstacion={filterNombreEstacion}
-                setFilterNombreEstacion={setFilterNombreEstacion}
-                filterSoloGuerra={filterSoloGuerra}
-                setFilterSoloGuerra={setFilterSoloGuerra}
-                totalItems={historicoSorted.length}
-                onExpand={() => { }}
-              />
-
-              <div style={{ marginTop: 10, textAlign: 'center', padding: '10px', background: 'white' }}>
-                <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
-                <span style={{ margin: '0 10px' }}>Página {page} de {totalPages}</span>
-                <button onClick={handleNextPage} disabled={page === totalPages}>Siguiente</button>
-              </div>
-            </div>
+        <HistoricoExpandedModal onClose={() => setModalExpanded(false)}>
+          <HistoricoAlertas
+            data={historicoPageSlice}
+            filterNombreEstacion={filterNombreEstacion}
+            setFilterNombreEstacion={setFilterNombreEstacion}
+            filterSoloGuerra={filterSoloGuerra}
+            setFilterSoloGuerra={setFilterSoloGuerra}
+            filterSoloSeguimiento={filterSoloSeguimiento}
+            setFilterSoloSeguimiento={setFilterSoloSeguimiento}
+            estacionesSeguimientoSet={estacionesSeguimientoSet}
+            totalItems={historicoSorted.length}
+            style={{ maxHeight: 'none', height: '100%', border: 'none', boxShadow: 'none' }}
+          />
+          <div className="pagination-controls" style={{ borderTop: '1px solid #dee2e6' }}>
+            <button onClick={handlePrevPage} disabled={page === 1}>Prev</button>
+            <span style={{ margin: '0 10px' }}>Página {page} de {totalPages}</span>
+            <button onClick={handleNextPage} disabled={page === totalPages}>Siguiente</button>
           </div>
-        </div>
+        </HistoricoExpandedModal>
       )}
     </>
   );
@@ -384,6 +389,22 @@ const AlertasActivas = ({ agrupadas }) => {
   );
 };
 
+const HistoricoExpandedModal = ({ onClose, children }) => {
+  return (
+    <div className="modal-expandido-overlay" onClick={onClose}>
+      <div className="modal-expandido-contenido" onClick={e => e.stopPropagation()}>
+        <div className="modal-expandido-header">
+          <h2>Histórico de Movimientos - Vista Ampliada</h2>
+          <button className="modal-close-btn" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-expandido-body">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const GuerraPreciosPanel = ({ data }) => {
   if (!Array.isArray(data) || data.length === 0) {
     return <div className="alert-empty">No hay estaciones disponibles</div>;
@@ -425,16 +446,21 @@ const HistoricoAlertas = ({
   setFilterNombreEstacion,
   filterSoloGuerra,
   setFilterSoloGuerra,
+  filterSoloSeguimiento,
+  setFilterSoloSeguimiento,
+  estacionesSeguimientoSet, // ← NUEVO
   totalItems,
-  onExpand
+  onExpand,
+  style
 }) => {
   if (!Array.isArray(data)) return <div className="alert-empty">⚠️ Error: Los datos no son un array</div>;
 
-  const hayFiltrosActivos = filterNombreEstacion.trim() !== '' || filterSoloGuerra;
+  const hayFiltrosActivos = filterNombreEstacion.trim() !== '' || filterSoloGuerra || filterSoloSeguimiento;
 
   const limpiarFiltros = () => {
     setFilterNombreEstacion('');
     setFilterSoloGuerra(false);
+    setFilterSoloSeguimiento(false);
   };
 
   const formatFechaCompacta = (fechaStr) => {
@@ -463,7 +489,16 @@ const HistoricoAlertas = ({
             checked={filterSoloGuerra}
             onChange={(e) => setFilterSoloGuerra(e.target.checked)}
           />
-          <span>Solo estaciones en guerra</span>
+          <span>EDS en guerra</span>
+        </label>
+
+        <label className="check-filtro-hist">
+          <input
+            type="checkbox"
+            checked={filterSoloSeguimiento}
+            onChange={(e) => setFilterSoloSeguimiento(e.target.checked)}
+          />
+          <span>EDS en seguimiento</span>
         </label>
 
         {hayFiltrosActivos && (
@@ -500,6 +535,7 @@ const HistoricoAlertas = ({
               No se encontraron resultados para la búsqueda
               {filterNombreEstacion && <strong> "{filterNombreEstacion}"</strong>}
               {filterSoloGuerra && <span> (solo guerra)</span>}
+              {filterSoloSeguimiento && <span> (solo seguimiento)</span>}
             </p>
             <button
               className="btn-limpiar-filtros-destacado"
@@ -537,6 +573,8 @@ const HistoricoAlertas = ({
               const precioAnterior = Number(item.PrecioAnterior) || 0;
               const diferencia = precioActual - precioAnterior;
               const guerra = item.Guerra_Precio === 'Si';
+              // const seguimiento = item.Guerra_Precio === 'No'; // ANTERIOR
+              const seguimiento = estacionesSeguimientoSet && estacionesSeguimientoSet.has(item.Nom_Eds); // NUEVO
               const marcadorPrincipal = item.Marcador_Principal === 'Si';
 
               const cambioClass = diferencia > 0 ? 'precio-sube' : diferencia < 0 ? 'precio-baja' : 'precio-igual';
@@ -552,7 +590,7 @@ const HistoricoAlertas = ({
               return (
                 <tr
                   key={idx}
-                  className={`historico-row ${guerra ? 'guerra-row' : ''} ${marcadorPrincipal ? 'principal-row' : ''}`}
+                  className={`historico-row ${guerra ? 'guerra-row' : ''} ${seguimiento ? 'seguimiento-row' : ''} ${marcadorPrincipal ? 'principal-row' : ''}`}
                 >
                   <td className="td-estacion" title={item.Nom_Eds}>
                     {item.Nom_Eds?.slice(0, 18) || 'S/N'}

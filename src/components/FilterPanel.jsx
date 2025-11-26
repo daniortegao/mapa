@@ -21,10 +21,18 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
   };
 
   const comunas = useMemo(() => {
-    const filtered = markers.filter(m => m.Region === selectedRegion);
+    let filtered = markers.filter(m => m.Region === selectedRegion);
+
+    // If a Jefe de Zona is selected, only show comunas for that jefe
+    if (selectedJefeZona) {
+      filtered = filtered.filter(m =>
+        normalizeString(m.nombre) === normalizeString(selectedJefeZona)
+      );
+    }
+
     const comunaSet = new Set(filtered.map(m => m.Comuna).filter(c => c));
     return Array.from(comunaSet).sort();
-  }, [markers, selectedRegion]);
+  }, [markers, selectedRegion, selectedJefeZona]);
 
   // Clear comuna filter when region changes
   React.useEffect(() => {
@@ -44,7 +52,35 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
     const filtered = markers.filter(
       m => m.Region === selectedRegion && m.nombre && tuasMarcas.includes(m.Marca)
     );
-    return [...new Set(filtered.map(m => m.nombre))].sort();
+    const nombres = [...new Set(filtered.map(m => m.nombre))];
+
+    console.log('🔍 DEBUG Jefes de Zona - Nombres únicos encontrados:', nombres);
+
+    // Filter out names that look like station names
+    const jefesLimpios = nombres.filter(nombre => {
+      // Exclude if it contains numbers (likely a station code)
+      if (/\d/.test(nombre)) {
+        console.log('❌ Excluido por números:', nombre);
+        return false;
+      }
+      // Exclude if it's too long (likely a station address)
+      if (nombre.length > 50) {
+        console.log('❌ Excluido por longitud:', nombre);
+        return false;
+      }
+      // Exclude if it contains common station keywords
+      const stationKeywords = ['estacion', 'estación', 'eds', 'servicio', 'copec', 'shell', 'esso', 'petrobras', 'aramco'];
+      const nombreLower = nombre.toLowerCase();
+      if (stationKeywords.some(keyword => nombreLower.includes(keyword))) {
+        console.log('❌ Excluido por keyword de estación:', nombre);
+        return false;
+      }
+      console.log('✅ Incluido como jefe:', nombre);
+      return true;
+    }).sort();
+
+    console.log('✅ Jefes de Zona finales:', jefesLimpios);
+    return jefesLimpios;
   }, [markers, selectedRegion, tuasMarcas]);
 
   const comunasDelJefe = useMemo(() => {
@@ -123,7 +159,12 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
         const esDelJefe = m.nombre === selectedJefeZona;
         const esCompetenciaEnComunasDelJefe = comunasDelJefe.includes(m.Comuna);
         const jefeMatch = esDelJefe || esCompetenciaEnComunasDelJefe;
-        return regionMatch && jefeMatch && edsMatch && guerraMatch && pesMatch;
+
+        // Apply other filters if they are selected
+        const comunaMatch = !selectedComuna || normalizeString(m.Comuna) === normalizeString(selectedComuna);
+        const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
+
+        return regionMatch && jefeMatch && edsMatch && guerraMatch && pesMatch && comunaMatch && marcaMatch;
       }
 
       if (selectedComuna) {
@@ -175,7 +216,12 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
         const esDelJefe = m.nombre === selectedJefeZona;
         const esCompetenciaEnComunasDelJefe = comunasDelJefe.includes(m.Comuna);
         const jefeMatch = esDelJefe || esCompetenciaEnComunasDelJefe;
-        return regionMatch && jefeMatch && guerraMatch && pesMatch;
+
+        // Apply other filters if they are selected
+        const comunaMatch = !selectedComuna || normalizeString(m.Comuna) === normalizeString(selectedComuna);
+        const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
+
+        return regionMatch && jefeMatch && guerraMatch && pesMatch && comunaMatch && marcaMatch;
       }
 
       if (selectedComuna) {
@@ -246,22 +292,51 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
 
   // Center map when comuna is selected
   React.useEffect(() => {
-    if (selectedComuna && window.leafletMap) {
-      // Find a marker from the selected comuna to get coordinates
-      const comunaMarker = markers.find(m =>
+    console.log('🗺️ Comuna changed:', selectedComuna, 'Jefe:', selectedJefeZona);
+
+    if (selectedComuna && window.leafletMap && window.L) {
+      // Find all markers for the selected comuna
+      // We need to respect the Jefe de Zona filter if it's active
+      let markersInComuna = markers.filter(m =>
         normalizeString(m.Comuna) === normalizeString(selectedComuna)
       );
 
-      if (comunaMarker && comunaMarker.Latitud_comuna && comunaMarker.Longitud_comuna) {
-        const lat = parseFloat(comunaMarker.Latitud_comuna);
-        const lng = parseFloat(comunaMarker.Longitud_comuna);
+      if (selectedJefeZona) {
+        markersInComuna = markersInComuna.filter(m => {
+          const esDelJefe = m.nombre === selectedJefeZona;
+          const esCompetenciaEnComunasDelJefe = comunasDelJefe.includes(m.Comuna);
+          return esDelJefe || esCompetenciaEnComunasDelJefe;
+        });
+      }
 
-        if (!isNaN(lat) && !isNaN(lng)) {
-          window.leafletMap.setView([lat, lng], 12); // Zoom level 12 for comuna view
+      console.log(`🔍 Found ${markersInComuna.length} markers in comuna ${selectedComuna}`);
+
+      if (markersInComuna.length > 0) {
+        // Calculate bounds
+        const lats = markersInComuna.map(m => parseFloat(m.lat)).filter(l => !isNaN(l));
+        const lngs = markersInComuna.map(m => parseFloat(m.lng)).filter(l => !isNaN(l));
+
+        if (lats.length > 0 && lngs.length > 0) {
+          const minLat = Math.min(...lats);
+          const maxLat = Math.max(...lats);
+          const minLng = Math.min(...lngs);
+          const maxLng = Math.max(...lngs);
+
+          console.log('✅ Fitting bounds:', [[minLat, minLng], [maxLat, maxLng]]);
+
+          // Add some padding to the bounds
+          window.leafletMap.fitBounds([[minLat, minLng], [maxLat, maxLng]], {
+            padding: [50, 50],
+            maxZoom: 15 // Don't zoom in too close if there's only one station or they are very close
+          });
+        } else {
+          console.log('❌ No valid coordinates found for markers in comuna');
         }
+      } else {
+        console.log('❌ No markers found in comuna');
       }
     }
-  }, [selectedComuna, markers]);
+  }, [selectedComuna, selectedJefeZona, markers, comunasDelJefe]);
 
   // Center map when EDS is selected
   React.useEffect(() => {
