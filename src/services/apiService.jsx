@@ -42,12 +42,45 @@ export const getCoordenadasCorregidas = async () => {
 export const guardarCoordenadaCorregida = async (coordenada) => {
   try {
     const response = await axios.post(
-      `${BASE_URL}/guardar-coordenadas_corregidas_new`, 
+      `${BASE_URL}/guardar-coordenadas_corregidas_new`,
       coordenada
     );
     return response.data;
   } catch (error) {
     console.error('Error al guardar coordenada corregida:', error);
+    throw error;
+  }
+};
+
+// ✅ Obtener notas compartidas
+export const getNotasCompartidas = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/notas_compartidas`);
+    // Si el archivo está vacío o no existe, retornar string vacío
+    if (!response.data || response.data === '') {
+      return '';
+    }
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      console.log('📝 No hay notas compartidas aún (archivo vacío)');
+      return '';
+    }
+    console.error('Error al obtener notas compartidas:', error);
+    return '';
+  }
+};
+
+// ✅ Guardar notas compartidas
+export const guardarNotasCompartidas = async (notas) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/guardar-notas_compartidas`,
+      { contenido: notas }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error al guardar notas compartidas:', error);
     throw error;
   }
 };

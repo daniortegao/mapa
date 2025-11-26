@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import IconMarkersLayer from './IconMarkersLayer';
+import NotesModal from './NotesModal';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -48,11 +49,11 @@ function MapController({ regionCenter }) {
   return null;
 }
 
-function MapComponent({ 
-  selectedRegion, 
-  regionCenter, 
-  markers, 
-  markersForMercado, 
+function MapComponent({
+  selectedRegion,
+  regionCenter,
+  markers,
+  markersForMercado,
   baseCompData,
   onToggleSidebar,
   onToggleRightPanel,
@@ -66,11 +67,12 @@ function MapComponent({
   const [searchMarker, setSearchMarker] = useState(null); // ← AGREGADO
   const [panelsMenuOpen, setPanelsMenuOpen] = useState(false);
   const [layersMenuOpen, setLayersMenuOpen] = useState(false);
+  const [notesModalOpen, setNotesModalOpen] = useState(false);
   const searchTimeoutRef = useRef(null);
 
   const handleSearch = (query) => {
     setSearchQuery(query);
-    
+
     if (query.length < 3) {
       setSearchResults([]);
       setShowResults(false);
@@ -92,7 +94,7 @@ function MapComponent({
             }
           }
         );
-        
+
         const data = await response.json();
         setSearchResults(data);
         setShowResults(data.length > 0);
@@ -108,14 +110,14 @@ function MapComponent({
       const lat = parseFloat(result.lat);
       const lon = parseFloat(result.lon);
       map.setView([lat, lon], 17);
-      
+
       // ← AGREGADO: Guardar marcador
       setSearchMarker({
         position: [lat, lon],
         address: result.display_name
       });
     }
-    
+
     setSearchQuery(result.display_name.split(',')[0]); // Primera parte
     setShowResults(false);
   };
@@ -133,7 +135,7 @@ function MapComponent({
             onChange={(e) => handleSearch(e.target.value)}
             onClick={(e) => e.stopPropagation()}
           />
-          
+
           {searchQuery && (
             <button
               className="search-clear-btn"
@@ -148,7 +150,7 @@ function MapComponent({
               ✕
             </button>
           )}
-          
+
           {showResults && searchResults.length > 0 && (
             <div className="search-results-dropdown-inline">
               {searchResults.map((result, index) => (
@@ -169,14 +171,22 @@ function MapComponent({
         </div>
       </div>
 
-      {/* MENÚ CAPAS (DERECHA) */}
+      {/* MENÚ CAPAS Y NOTAS (DERECHA) */}
       <div className="map-control-right">
-        <button 
+        <button
           className="control-toggle-btn"
           onClick={() => setLayersMenuOpen(!layersMenuOpen)}
           title="Capas del Mapa"
         >
           🗺️
+        </button>
+
+        <button
+          className="control-toggle-btn"
+          onClick={() => setNotesModalOpen(true)}
+          title="Notas"
+        >
+          📝
         </button>
 
         {layersMenuOpen && (
@@ -210,7 +220,7 @@ function MapComponent({
           attribution={TILE_LAYERS[selectedLayer].attribution}
           maxZoom={19}
         />
-        
+
         {selectedLayer === 'hybrid' && (
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -220,7 +230,7 @@ function MapComponent({
         )}
 
         <MapController regionCenter={regionCenter} />
-        
+
         <IconMarkersLayer
           markers={markers}
           markersForMercado={markersForMercado}
@@ -229,31 +239,37 @@ function MapComponent({
         />
 
         {/* ← AGREGADO: MARCADOR DE BÚSQUEDA */}
-       {searchMarker && (
-  <Marker 
-    position={searchMarker.position}
-    icon={L.divIcon({
-      className: 'custom-search-marker',
-      html: '<span class="search-marker-icon">📍</span>',
-      iconSize: [40, 40],
-      iconAnchor: [20, 40],
-      popupAnchor: [0, -40]
-    })}
-  >
-    <Popup>
-      <div style={{ padding: '8px', minWidth: '200px' }}>
-        <strong style={{ color: '#02d6a8', fontSize: '13px', display: 'block', marginBottom: '8px' }}>
-          📍 Ubicación buscada
-        </strong>
-        <p style={{ margin: 0, fontSize: '12px', color: '#495057' }}>
-          {searchMarker.address}
-        </p>
-      </div>
-    </Popup>
-  </Marker>
-)}
+        {searchMarker && (
+          <Marker
+            position={searchMarker.position}
+            icon={L.divIcon({
+              className: 'custom-search-marker',
+              html: '<span class="search-marker-icon">📍</span>',
+              iconSize: [40, 40],
+              iconAnchor: [20, 40],
+              popupAnchor: [0, -40]
+            })}
+          >
+            <Popup>
+              <div style={{ padding: '8px', minWidth: '200px' }}>
+                <strong style={{ color: '#02d6a8', fontSize: '13px', display: 'block', marginBottom: '8px' }}>
+                  📍 Ubicación buscada
+                </strong>
+                <p style={{ margin: 0, fontSize: '12px', color: '#495057' }}>
+                  {searchMarker.address}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
+        )}
 
       </MapContainer>
+
+      {/* MODAL DE NOTAS */}
+      <NotesModal
+        isOpen={notesModalOpen}
+        onClose={() => setNotesModalOpen(false)}
+      />
     </div>
   );
 }
