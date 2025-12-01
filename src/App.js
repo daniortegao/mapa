@@ -8,7 +8,7 @@ import AlertPanel from './components/AlertPanel';
 import StatisticsPanel from './components/StatisticsPanel';
 import { REGION_COORDINATES, REGIONES_ORDENADAS } from './utils/constants';
 import { useMapData } from './hooks/useMapData';
-import { getDataBaseComp, getMercadoAlerta } from './services/apiService';
+import { getDataBaseComp, getMercadoAlerta, getMarcasCompartidas, guardarMarcasCompartidas } from './services/apiService';
 
 function App() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -20,6 +20,24 @@ function App() {
   const [filteredMarkersForMercado, setFilteredMarkersForMercado] = useState([]);
   const [baseCompData, setBaseCompData] = useState([]);
   const { markers, lastUpdateTime } = useMapData();
+
+  // Estado para estaciones marcadas como "Nivel 2 en Nivel 1"
+  const [nivel2EnNivel1Stations, setNivel2EnNivel1Stations] = useState([]);
+
+  // Cargar marcas compartidas al iniciar
+  useEffect(() => {
+    const loadMarcas = async () => {
+      try {
+        const marcas = await getMarcasCompartidas();
+        if (Array.isArray(marcas)) {
+          setNivel2EnNivel1Stations(marcas);
+        }
+      } catch (err) {
+        console.error('Error cargando marcas compartidas:', err);
+      }
+    };
+    loadMarcas();
+  }, []);
 
   const regions = useMemo(() => {
     const regionesConDatos = new Set(markers.map(m => m.Region));
@@ -72,6 +90,9 @@ function App() {
     };
     loadIt();
   }, []);
+
+  // NOTA: Ya no usamos localStorage para persistencia local
+  // La persistencia se maneja directamente al actualizar el estado
 
   useEffect(() => {
     const loadAlertCount = async () => {
@@ -134,6 +155,32 @@ function App() {
 
   const toggleAlertPanel = () => {
     setAlertPanelVisible(!alertPanelVisible);
+  };
+
+  const toggleNivel2EnNivel1 = async (stationId) => {
+    // Actualización optimista
+    let newStations = [];
+    setNivel2EnNivel1Stations(prev => {
+      if (prev.includes(stationId)) {
+        newStations = prev.filter(id => id !== stationId);
+      } else {
+        newStations = [...prev, stationId];
+      }
+      return newStations;
+    });
+
+    // Guardar en backend
+    try {
+      await guardarMarcasCompartidas(newStations);
+    } catch (err) {
+      console.error('Error guardando marcas compartidas:', err);
+      // Revertir en caso de error (opcional, pero recomendado)
+      // Por simplicidad, recargamos del servidor
+      const marcas = await getMarcasCompartidas();
+      if (Array.isArray(marcas)) {
+        setNivel2EnNivel1Stations(marcas);
+      }
+    }
   };
 
   return (
@@ -249,6 +296,8 @@ function App() {
           onToggleRightPanel={toggleRightPanel}
           sidebarVisible={sidebarVisible}
           rightPanelVisible={rightPanelVisible}
+          nivel2EnNivel1Stations={nivel2EnNivel1Stations}
+          onToggleNivel2EnNivel1={toggleNivel2EnNivel1}
         />
 
 

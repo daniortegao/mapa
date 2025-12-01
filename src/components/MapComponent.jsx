@@ -58,7 +58,9 @@ function MapComponent({
   onToggleSidebar,
   onToggleRightPanel,
   sidebarVisible,
-  rightPanelVisible
+  rightPanelVisible,
+  nivel2EnNivel1Stations,
+  onToggleNivel2EnNivel1
 }) {
   const [selectedLayer, setSelectedLayer] = useState('streets');
   const [searchQuery, setSearchQuery] = useState('');
@@ -236,6 +238,8 @@ function MapComponent({
           markersForMercado={markersForMercado}
           selectedRegion={selectedRegion}
           baseCompData={baseCompData}
+          nivel2EnNivel1Stations={nivel2EnNivel1Stations}
+          onToggleNivel2EnNivel1={onToggleNivel2EnNivel1}
         />
 
         {/* ← AGREGADO: MARCADOR DE BÚSQUEDA */}

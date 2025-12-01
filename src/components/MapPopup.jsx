@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import TrendChart from './TrendChart';
 import { obtenerHistoricoMarker } from '../utils/markerUtils';
 
+import { MARCAS_PROPIAS } from '../utils/constants';
+
 const MapPopup = ({
     marker,
     allMarkers,
@@ -9,10 +11,15 @@ const MapPopup = ({
     onActivateCoords,
     onSaveCoords,
     modoCorreccion,
-    variant = 'primary'
+    variant = 'primary',
+    nivel2EnNivel1Stations = [],
+    onToggleNivel2EnNivel1
 }) => {
     const [activeTab, setActiveTab] = useState('precios');
     const [selectedNivel, setSelectedNivel] = useState('Nivel 1');
+
+    const isPropia = MARCAS_PROPIAS.includes(marker.Marca);
+    const isNivel2EnNivel1 = !isPropia && nivel2EnNivel1Stations.includes(marker.id);
 
     const datosTabla = useMemo(() => {
         return obtenerHistoricoMarker(marker.id, allMarkers, selectedNivel);
@@ -70,22 +77,26 @@ const MapPopup = ({
                     />
                 )}
                 <div className="popup-info-row">
-                    <span className="popup-label">PBL: </span>
-                    <span className="popup-value-alerta">{marker.pbl || '-'}</span>
+                    <span className="popup-label">{!isPropia ? 'id' : 'PBL'}: </span>
+                    <span className="popup-value-alerta">{!isPropia ? (marker.id || '-') : (marker.pbl || '-')}</span>
                 </div>
-                <div className="popup-info-row">
-                    <span className="popup-label">EESS: </span>
-                    <span className="popup-value"> {marker.eds || '-'}</span>
-                </div>
+                {isPropia && (
+                    <div className="popup-info-row">
+                        <span className="popup-label">EESS: </span>
+                        <span className="popup-value"> {marker.eds || '-'}</span>
+                    </div>
+                )}
                 <br />
                 <div className="popup-info-row">
-                    <span className="popup-label">JZ: </span>
-                    <span className="popup-value">{marker.nombre || '-'}</span>
+                    <span className="popup-label">{!isPropia ? 'direccion' : 'JZ'}: </span>
+                    <span className="popup-value">{!isPropia ? (marker.direccion || '-') : (marker.nombre || '-')}</span>
                 </div>
-                <div className="popup-info-row">
-                    <span className="popup-label">OP: </span>
-                    <span className="popup-value">{marker.operacion || '-'}</span>
-                </div>
+                {isPropia && (
+                    <div className="popup-info-row">
+                        <span className="popup-label">OP: </span>
+                        <span className="popup-value">{marker.operacion || '-'}</span>
+                    </div>
+                )}
             </div>
 
             <div className="popup-tabs-container">
@@ -104,16 +115,32 @@ const MapPopup = ({
                 <div className="popup-tabs-content">
                     {activeTab === 'precios' && (
                         <div className="popup-tab-pane active">
-                            <div className="nivel-toggle-container">
-                                {['Nivel 1', 'Nivel 2'].map(nivel => (
+                            <div className="nivel-toggle-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                    {['Nivel 1', 'Nivel 2'].map(nivel => (
+                                        <button
+                                            key={nivel}
+                                            className={`nivel-toggle-btn ${selectedNivel === nivel ? 'active' : ''}`}
+                                            onClick={() => setSelectedNivel(nivel)}
+                                        >
+                                            {nivel}
+                                        </button>
+                                    ))}
+                                    {isNivel2EnNivel1 && (
+                                        <span className="nivel2-badge" title="Esta estación reporta precios de Nivel 2 en Nivel 1">
+                                            ⚠️ Niv 2 en Niv 1
+                                        </span>
+                                    )}
+                                </div>
+                                {/* Botón para marcar/desmarcar estación */}
+                                {!isPropia && onToggleNivel2EnNivel1 && (
                                     <button
-                                        key={nivel}
-                                        className={`nivel-toggle-btn ${selectedNivel === nivel ? 'active' : ''}`}
-                                        onClick={() => setSelectedNivel(nivel)}
+                                        className={`nivel-toggle-btn ${isNivel2EnNivel1 ? 'active' : ''}`}
+                                        onClick={() => onToggleNivel2EnNivel1(marker.id)}
                                     >
-                                        {nivel}
+                                        {isNivel2EnNivel1 ? 'Desmarcar' : 'Marcar'}
                                     </button>
-                                ))}
+                                )}
                             </div>
                             <div
                                 className={`popup-table-wrapper ${variantClass}`}
@@ -256,6 +283,29 @@ const MapPopup = ({
                                     <>
                                         <hr style={{ margin: '8px 0', border: 'none', borderTop: '1px solid #dee2e6' }} />
                                         <p><strong style={{ color: '#d9534f' }}>⚠️ Guerra de Precio Activa</strong></p>
+                                    </>
+                                )}
+                                {!isPropia && onToggleNivel2EnNivel1 && (
+                                    <>
+                                        <hr style={{ margin: '8px 0', border: 'none', borderTop: '1px solid #dee2e6' }} />
+                                        <button
+                                            className="nivel2-toggle-btn"
+                                            onClick={() => onToggleNivel2EnNivel1(marker.id)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '8px',
+                                                background: isNivel2EnNivel1 ? '#ffc107' : '#6c757d',
+                                                color: isNivel2EnNivel1 ? '#000' : 'white',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer',
+                                                fontSize: '11px',
+                                                fontWeight: 600,
+                                                marginTop: '8px'
+                                            }}
+                                        >
+                                            {isNivel2EnNivel1 ? 'Desmarcar: Nivel 2 en Nivel 1' : 'Marcar: Nivel 2 en Nivel 1'}
+                                        </button>
                                     </>
                                 )}
                             </div>

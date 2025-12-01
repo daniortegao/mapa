@@ -7,7 +7,7 @@ import { guardarCoordenadaCorregida } from '../services/apiService';
 import MapPopup from './MapPopup';
 import '../styles/iconMarkersLayer.css';
 
-const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, baseCompData = [] }) => {
+const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, baseCompData = [], nivel2EnNivel1Stations = [], onToggleNivel2EnNivel1 }) => {
   const map = useMap();
   const markersRef = useRef({});
   const guerraMarkersRef = useRef({});
@@ -228,11 +228,15 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
   const handleActivateCoordsRef = useRef(handleActivateCoords);
   const handleSaveCoordsRef = useRef(handleSaveCoords);
   const modoCorreccionRef = useRef(modoCorreccion);
+  const nivel2EnNivel1StationsRef = useRef(nivel2EnNivel1Stations);
+  const onToggleNivel2EnNivel1Ref = useRef(onToggleNivel2EnNivel1);
 
   useEffect(() => {
     handleActivateCoordsRef.current = handleActivateCoords;
     handleSaveCoordsRef.current = handleSaveCoords;
     modoCorreccionRef.current = modoCorreccion;
+    nivel2EnNivel1StationsRef.current = nivel2EnNivel1Stations;
+    onToggleNivel2EnNivel1Ref.current = onToggleNivel2EnNivel1;
   });
 
 
@@ -403,6 +407,8 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
               onSaveCoords={(...args) => handleSaveCoordsRef.current && handleSaveCoordsRef.current(...args)}
               modoCorreccion={modoCorreccionRef.current}
               variant={variant}
+              nivel2EnNivel1Stations={nivel2EnNivel1StationsRef.current}
+              onToggleNivel2EnNivel1={(...args) => onToggleNivel2EnNivel1Ref.current && onToggleNivel2EnNivel1Ref.current(...args)}
             />
           );
         }
@@ -515,6 +521,8 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
                   onSaveCoords={(...args) => handleSaveCoordsRef.current && handleSaveCoordsRef.current(...args)}
                   modoCorreccion={modoCorreccion} // Usamos el valor actual del estado
                   variant={markersForMercado && markersForMercado.includes(marker) ? 'secondary' : 'primary'}
+                  nivel2EnNivel1Stations={nivel2EnNivel1Stations} // En el efecto usamos el valor directo porque el efecto depende de él
+                  onToggleNivel2EnNivel1={onToggleNivel2EnNivel1}
                 />
               );
             }
@@ -522,7 +530,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         }
       }
     });
-  }, [modoCorreccion, map, markers, markersForMercado]);
+  }, [modoCorreccion, map, markers, markersForMercado, nivel2EnNivel1Stations]);
 
   // Re-render open popups when markers data updates (auto-refresh)
   useEffect(() => {
@@ -549,6 +557,8 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
                     onSaveCoords={(...args) => handleSaveCoordsRef.current && handleSaveCoordsRef.current(...args)}
                     modoCorreccion={modoCorreccion}
                     variant={markersForMercado && markersForMercado.includes(updatedMarker) ? 'secondary' : 'primary'}
+                    nivel2EnNivel1Stations={nivel2EnNivel1Stations} // En el efecto usamos el valor directo
+                    onToggleNivel2EnNivel1={onToggleNivel2EnNivel1}
                   />
                 );
               }
@@ -557,7 +567,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         }
       }
     });
-  }, [markers, map, markersForMercado, modoCorreccion]);
+  }, [markers, map, markersForMercado, modoCorreccion, nivel2EnNivel1Stations]);
 
 
   return null;

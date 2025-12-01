@@ -88,11 +88,9 @@ export const guardarNotasCompartidas = async (notas) => {
 export const getMercadoAlerta = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/Mercado_Alerta`);
-    // 👉 Aquí el cambio importante
     if (response.data && Array.isArray(response.data.data)) {
       return response.data.data;
     }
-    // Si por algún motivo no hay array, retorna array vacío
     return [];
   } catch (error) {
     console.error('Error al obtener Mercado_Alerta:', error);
@@ -103,7 +101,6 @@ export const getMercadoAlerta = async () => {
 export const getHistoricoAlerta = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/Historico_alerta`);
-    // 👉 Aquí el cambio
     if (response.data && Array.isArray(response.data.data)) {
       return response.data.data;
     }
@@ -130,6 +127,43 @@ export const getDataBaseajuste = async () => {
     return response.data;
   } catch (error) {
     console.error("Error al obtener datos desde la API (Base_Ajuste):", error);
+    throw error;
+  }
+};
+
+// ✅ Obtener marcas compartidas (Nivel 2)
+export const getMarcasCompartidas = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/marcas_nivel2`);
+    // Si retorna un array directamente
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    // Si retorna un objeto con data
+    if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      console.log('📍 No hay marcas compartidas aún');
+      return [];
+    }
+    console.error('Error al obtener marcas compartidas:', error);
+    return [];
+  }
+};
+
+// ✅ Guardar marcas compartidas (Nivel 2)
+export const guardarMarcasCompartidas = async (marcas) => {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/guardar-marcas_nivel2`,
+      { marcas: marcas } // Enviamos como objeto JSON
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error al guardar marcas compartidas:', error);
     throw error;
   }
 };

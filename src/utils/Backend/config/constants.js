@@ -1,0 +1,6 @@
+const BASE_PATH = "V:\\GORP_PRE\\RESERVADO\\PRECIOS\\REVENUE MANAGEMENT\\CARPETA PRECIOS\\PRECIOS 2024";
+
+module.exports = {
+  BASE_PATH,
+  PORT: process.env.PORT || 4000
+};

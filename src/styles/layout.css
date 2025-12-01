@@ -258,6 +258,8 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
   z-index: 1000;
   animation: slideDownFade 0.2s ease;
+  width: auto;
+
 }
 
 @keyframes slideDownFade {
@@ -977,4 +979,222 @@
   text-transform: uppercase;
   letter-spacing: 1.2px;
   line-height: 2;
+}
+
+.search-bar-inline {
+  display: none;
+}
+
+
+/* ============================================
+   MARCADOR DE BÚSQUEDA
+   ============================================ */
+
+.custom-search-marker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+.search-marker-icon {
+  display: block;
+  font-size: 40px;
+  line-height: 1;
+  text-align: center;
+  background: transparent;
+  border: none;
+}
+
+/* Remover todos los estilos por defecto de Leaflet */
+.leaflet-marker-icon.custom-search-marker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ============================================
+   CONTROLES DEL MAPA
+   ============================================ */
+
+.control-toggle-btn {
+  background: white;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  padding: 0;
+}
+
+.control-toggle-btn:hover {
+  background: #02d6a8;
+  border-color: #02d6a8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(2, 214, 168, 0.4);
+}
+
+.control-toggle-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.map-control-right {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.map-control-left {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.control-dropdown {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  margin-top: 8px;
+  min-width: 200px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.control-section {
+  margin-bottom: 8px;
+}
+
+.control-section:last-child {
+  margin-bottom: 0;
+}
+
+.control-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #495057;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.layer-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.layer-btn-compact {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+
+.layer-btn-compact:hover {
+  background: #f8f9fa;
+  border-color: #02d6a8;
+}
+
+.layer-btn-compact.active {
+  background: linear-gradient(135deg, #02d6a8 0%, #01a179 100%);
+  color: white;
+  border-color: #02d6a8;
+  font-weight: 600;
+}
+
+/* Clústeres normales */
+.marker-cluster-small {
+  background-color: rgba(181, 226, 140, 0.6);
+}
+
+.marker-cluster-medium {
+  background-color: rgba(241, 211, 87, 0.6);
+}
+
+.marker-cluster-large {
+  background-color: rgba(253, 156, 115, 0.6);
+}
+
+/* Círculo y borde */
+.marker-cluster {
+  border-radius: 50%;
+  border: 3px solid #fff;
+  color: #000;
+  font-size: 14px;
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Etiqueta con cantidad de marcadores */
+.marker-cluster div {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+}
+
+.last-update-time {
+  font-size: 10px;
+  font-weight: 700;
+  color: black;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  line-height: 2;
+}
+
+/* ============================================
+   NIVEL 2 EN NIVEL 1 BADGE AND TOGGLE
+   ============================================ */
+
+.nivel2-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 8px;
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+  color: #000;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3);
+}
+
+.nivel2-toggle-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
