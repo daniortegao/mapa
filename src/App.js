@@ -9,6 +9,7 @@ import StatisticsPanel from './components/StatisticsPanel';
 import { REGION_COORDINATES, REGIONES_ORDENADAS } from './utils/constants';
 import { useMapData } from './hooks/useMapData';
 import { getDataBaseComp, getMercadoAlerta, getMarcasCompartidas, guardarMarcasCompartidas } from './services/apiService';
+import TestSQL from './components/TestSQL';
 
 function App() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -300,7 +301,9 @@ function App() {
           onToggleNivel2EnNivel1={toggleNivel2EnNivel1}
         />
 
-
+        <div>
+          <TestSQL />
+        </div>
 
         <aside className={`right-panel ${!rightPanelVisible ? 'hidden' : ''}`}>
           <StatisticsPanel

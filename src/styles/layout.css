@@ -128,6 +128,7 @@
   pointer-events: all;
   position: relative;
   overflow: hidden;
+  font-size: 10px;
 }
 
 .vertical-tab-btn::before {
@@ -161,55 +162,6 @@
   font-size: 16px;
   line-height: 1;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
-}
-
-.vertical-tab-label {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  text-align: center;
-  line-height: 1.2;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  white-space: nowrap;
-  text-transform: uppercase;
-}
-
-/* ============================================
-   BUSCADOR INLINE (AL LADO DE BOTONES)
-   ============================================ */
-
-.search-bar-inline {
-  position: relative;
-  display: inline-block;
-  margin-left: 12px;
-}
-
-.search-input-inline {
-  margin-left: 500px;
-  width: 350px;
-  padding: 8px 8px 8px 8px;
-  /* padding-right para el botón X */
-  font-size: 13px;
-  border: 2px solid #dee2e6;
-  border-radius: 5px;
-  background: white;
-  color: #495057;
-  transition: all 0.3s ease;
-  font-weight: 500;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.search-input-inline:focus {
-  outline: none;
-  border-color: #02d6a8;
-  background: white;
-  box-shadow: 0 4px 12px rgba(2, 214, 168, 0.25);
-  transform: translateY(-1px);
-}
-
-.search-input-inline::placeholder {
-  color: #adb5bd;
-  font-weight: 500;
 }
 
 .search-clear-btn {

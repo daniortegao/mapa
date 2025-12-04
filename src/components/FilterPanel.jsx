@@ -140,13 +140,15 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
       selectedMarca,
       selectedJefeZona,
       selectedEds,
+      globalEdsSearch,
       totalMarkers: markers.length
     });
 
     const result = markers.filter(m => {
-      // Global EDS search (searches across all regions)
+      // Global EDS search (searches across all regions by station name/eds)
       if (globalEdsSearch.trim()) {
-        const searchMatch = m.eds && m.eds.toLowerCase().includes(globalEdsSearch.toLowerCase());
+        // Match by PBL (which is what we store when selecting from dropdown)
+        const searchMatch = m.pbl && m.pbl.toLowerCase() === globalEdsSearch.toLowerCase();
         if (!searchMatch) return false;
       }
 
@@ -349,11 +351,35 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
         const lng = parseFloat(edsMarker.lng);
 
         if (!isNaN(lat) && !isNaN(lng)) {
-          window.leafletMap.setView([lat, lng], 16); // Zoom level 16 for station view
+          // 🔧 AJUSTAR ZOOM AQUÍ: Cambia el número 16 para modificar el nivel de zoom
+          // Valores sugeridos: 14 (más alejado), 16 (medio), 18 (más cerca)
+          window.leafletMap.setView([lat, lng], 16);
         }
       }
     }
   }, [selectedEds, markers]);
+
+  // Center map when global EDS search is selected
+  React.useEffect(() => {
+    if (globalEdsSearch && window.leafletMap) {
+      // Find the marker for the selected station by PBL
+      const selectedStation = markers.find(m => m.pbl && m.pbl.toLowerCase() === globalEdsSearch.toLowerCase());
+
+      if (selectedStation && selectedStation.lat && selectedStation.lng) {
+        const lat = parseFloat(selectedStation.lat);
+        const lng = parseFloat(selectedStation.lng);
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+          console.log('🎯 Centering map on global EDS search:', selectedStation.eds, lat, lng);
+          // 🔧 AJUSTAR ZOOM AQUÍ: Cambia el número 16 para modificar el nivel de zoom
+          // Valores sugeridos: 14 (más alejado), 16 (medio), 18 (más cerca)
+          window.leafletMap.setView([lat, lng], 16);
+        }
+      } else {
+        console.log('❌ No se encontró estación con PBL:', globalEdsSearch);
+      }
+    }
+  }, [globalEdsSearch, markers]);
 
   const handleClearFilters = () => {
     setSelectedComuna('');
@@ -430,25 +456,52 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
 
       <div className="filter-group" style={{ position: 'relative' }}>
         <label htmlFor="global-eds-search">EDS todas</label>
-        <input
-          id="global-eds-search"
-          type="text"
-          value={globalEdsSearchTerm}
-          onChange={(e) => {
-            setGlobalEdsSearchTerm(e.target.value);
-            if (!e.target.value) {
-              setGlobalEdsSearch('');
-            }
-          }}
-          placeholder="Buscar estación..."
-          style={{
-            width: '100%',
-            padding: '8px',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            fontSize: '14px'
-          }}
-        />
+        <div style={{ position: 'relative' }}>
+          <input
+            id="global-eds-search"
+            type="text"
+            value={globalEdsSearchTerm}
+            onChange={(e) => {
+              setGlobalEdsSearchTerm(e.target.value);
+              if (!e.target.value) {
+                setGlobalEdsSearch('');
+              }
+            }}
+            placeholder="Buscar estación..."
+            style={{
+              width: '100%',
+              padding: '8px',
+              paddingRight: globalEdsSearchTerm ? '30px' : '8px',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}
+          />
+          {globalEdsSearchTerm && (
+            <button
+              onClick={() => {
+                setGlobalEdsSearchTerm('');
+                setGlobalEdsSearch('');
+              }}
+              style={{
+                position: 'absolute',
+                right: '5px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '16px',
+                color: '#999',
+                padding: '0 5px',
+                lineHeight: '1'
+              }}
+              title="Limpiar búsqueda"
+            >
+              ✕
+            </button>
+          )}
+        </div>
         {globalEdsSearchTerm && (
           <div style={{
             position: 'absolute',

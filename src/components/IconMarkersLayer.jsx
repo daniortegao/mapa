@@ -63,15 +63,6 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
 
       let isResizing = false;
 
-      const startResize = (e) => {
-        isResizing = true;
-        document.body.classList.add('is-resizing-popup');
-        document.body.style.cursor = 'nwse-resize';
-        document.body.style.userSelect = 'none';
-        e.preventDefault();
-        e.stopPropagation();
-      };
-
       const doResize = (e) => {
         if (!isResizing) return;
 
@@ -103,18 +94,38 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         document.body.classList.remove('is-resizing-popup');
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
+
+        // Remove listeners when resize stops
+        document.removeEventListener('mousemove', doResize);
+        document.removeEventListener('mouseup', stopResize);
+        document.removeEventListener('touchmove', doResize);
+        document.removeEventListener('touchend', stopResize);
       };
 
-      grip.addEventListener('mousedown', startResize);
-      document.addEventListener('mousemove', doResize);
-      document.addEventListener('mouseup', stopResize);
+      const startResize = (e) => {
+        isResizing = true;
+        document.body.classList.add('is-resizing-popup');
+        document.body.style.cursor = 'nwse-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+        e.stopPropagation();
 
+        // Add listeners only when resize starts
+        document.addEventListener('mousemove', doResize);
+        document.addEventListener('mouseup', stopResize);
+        document.addEventListener('touchmove', doResize, { passive: false });
+        document.addEventListener('touchend', stopResize);
+      };
+
+      // Only add mousedown/touchstart listeners to the grip
+      grip.addEventListener('mousedown', startResize);
       grip.addEventListener('touchstart', startResize, { passive: false });
-      document.addEventListener('touchmove', doResize, { passive: false });
-      document.addEventListener('touchend', stopResize);
 
       const cleanup = () => {
         content.removeEventListener('wheel', handleWheel);
+        grip.removeEventListener('mousedown', startResize);
+        grip.removeEventListener('touchstart', startResize);
+        // Clean up any active resize listeners
         document.removeEventListener('mousemove', doResize);
         document.removeEventListener('mouseup', stopResize);
         document.removeEventListener('touchmove', doResize);
