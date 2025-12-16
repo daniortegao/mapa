@@ -4,6 +4,7 @@ import IconMarkersLayer from './IconMarkersLayer';
 import NotesModal from './NotesModal';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import '../styles/searchBar.css';
 
 const TILE_LAYERS = {
   streets: {

@@ -1,0 +1,45 @@
+/* ============================================
+   BUSCADOR DE DIRECCIONES - CENTRADO
+   ============================================ */
+
+.search-bar-inline {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-input-inline {
+    width: 320px;
+    padding: 10px 40px 10px 16px;
+    font-size: 14px;
+    border: 2px solid #02d6a8;
+    border-radius: 12px;
+    background: white;
+    color: #495057;
+    transition: all 0.3s ease;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(2, 214, 168, 0.2);
+}
+
+.search-input-inline:hover {
+    border-color: #01b894;
+    box-shadow: 0 6px 16px rgba(2, 214, 168, 0.3);
+}
+
+.search-input-inline:focus {
+    outline: none;
+    border-color: #067fcf;
+    box-shadow: 0 0 0 4px rgba(6, 127, 207, 0.15);
+    background: #f8f9fa;
+}
+
+/* Centrar el buscador */
+.map-control-left {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 600;
+}

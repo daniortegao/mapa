@@ -202,32 +202,12 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       setModoCorreccion(null);
       if (map) map.getContainer().style.cursor = '';
 
-      // Re-renderizar marcadores (esto forzará un update del efecto principal)
-      // Nota: En una app real, deberíamos actualizar el estado 'markers' en el padre
-      // pero aquí simulamos el refresco limpiando y dejando que el efecto corra.
-      // Para simplificar, forzamos un re-render limpiando refs (el efecto lo notará si markers cambia, 
-      // pero como mutamos el objeto, necesitamos forzar update o confiar en que el padre refresque).
-      // Aquí asumimos que el padre refrescará o que el efecto de abajo se encargará si cambiamos algo.
-      // Como mutamos 'marker', React no detecta cambio de prop 'markers' si es el mismo array.
-
-      // ACTUALIZACIÓN OPTIMIZADA: No borrar todo. Solo mover el marcador.
+      // Actualizar marcador en el mapa
       const leafletMarker = markersRef.current[marker.id];
       if (leafletMarker) {
         const newLatLng = new L.LatLng(modoCorreccion.lat, modoCorreccion.lng);
         leafletMarker.setLatLng(newLatLng);
-
-        // Si el popup está abierto, Leaflet lo mueve con el marcador automáticamente.
-        // Pero necesitamos actualizar el contenido del popup para que refleje que ya no estamos en modo corrección
-        // y muestre las nuevas coordenadas fijas.
-        // Esto se hace abajo con el re-render manual de popups.
       }
-
-      // No borramos markersRef.current ni clearGuerraMarkers() para evitar parpadeo/cierre.
-      // Solo limpiamos si fuera necesario por lógica de negocio estricta, pero el usuario quiere que se mantenga.
-
-      // Disparamos un evento custom o callback si fuera necesario, 
-      // por ahora confiamos en que el usuario recargue o que el efecto se dispare si cambiamos algo de estado.
-      // Un truco es setear un estado dummy para forzar re-render, pero mejor dejemos que el flujo siga.
 
     } catch (error) {
       console.error("Error guardando coordenadas:", error);
@@ -250,111 +230,8 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     onToggleNivel2EnNivel1Ref.current = onToggleNivel2EnNivel1;
   });
 
-
-  // --- Lógica de Mercado (Show Associated) ---
-  const showAssociatedIds = useCallback((pbl, lat, lng, originalMarkerId) => {
-    const searchArray = markersForMercado && markersForMercado.length > 0 ? markersForMercado : markers;
-
-    // Toggle ON (o cambio de PBL)
-    // Definir associatedData aquí
-    const associatedData = baseCompData.filter(item => String(item.pbl).trim() === String(pbl).trim());
-
-    if (showingAssociated && activeMercadoPbl === pbl) {
-      // Toggle OFF
-      clearCompetenciaMarkers();
-      clearPolylines();
-      setShowingAssociated(false);
-      setActiveMercadoPbl(null);
-
-      // Restaurar marcadores originales
-      Object.values(markersRef.current).forEach(marker => {
-        try { if (map && map.hasLayer(marker)) map.removeLayer(marker); } catch (e) { }
-      });
-      markersRef.current = {};
-
-      // Re-crear todos
-      markers.forEach(marker => {
-        const leafletMarker = createMarkerWithPopup(marker, markersForMercado || markers, 'primary');
-        if (leafletMarker) {
-          map.addLayer(leafletMarker);
-          markersRef.current[marker.id] = leafletMarker;
-          addGuerraMarker(marker);
-        }
-      });
-      return;
-    }
-
-    // Si no hay datos asociados, no hacemos nada
-    if (associatedData.length === 0) return;
-
-    // Toggle ON
-    clearCompetenciaMarkers();
-    clearPolylines();
-
-    const ids = associatedData.map(item => item.id);
-
-    // Mostrar competencia
-    const associatedMarkers = searchArray.filter(item => ids.includes(item.id));
-    const uniqueAssociatedMarkers = [];
-    const seenIds = new Set();
-    associatedMarkers.forEach(marker => {
-      if (!seenIds.has(marker.id)) {
-        seenIds.add(marker.id);
-        uniqueAssociatedMarkers.push(marker);
-      }
-    });
-
-    uniqueAssociatedMarkers.forEach(marker => {
-      const leafletMarker = createMarkerWithPopup(marker, markersForMercado || baseCompData, 'secondary');
-      if (leafletMarker) {
-        map.addLayer(leafletMarker);
-        competenciaMarkersRef.current.push(leafletMarker);
-        if (marker.Guerra_Precio === 'Si') {
-          // Guerra marker logic for secondary
-          const guerraIcon = L.icon({
-            iconUrl: `${process.env.PUBLIC_URL}/iconos/calavera.jpg`,
-            iconSize: [15, 15],
-            iconAnchor: [7.5, 7.5],
-            className: 'icono-guerra'
-          });
-          const guerraMarker = L.marker([marker.lat, marker.lng], { icon: guerraIcon, interactive: false });
-          map.addLayer(guerraMarker);
-          // No lo guardamos en ref global para no borrarlo accidentalmente con clearGuerraMarkers si solo queremos borrar los principales, 
-          // aunque aquí borramos todo al cambiar de vista.
-          // Para simplificar, los agregamos a competenciaMarkersRef si queremos limpiarlos con eso, o los dejamos sueltos (pero hay que limpiarlos).
-          // Mejor los metemos en competenciaMarkersRef también (aunque sean markers distintos).
-          competenciaMarkersRef.current.push(guerraMarker);
-        }
-      }
-    });
-
-    // Polylines
-    const mainMarkersData = associatedData.filter(m => m.Marcador_Principal === 'Si');
-    mainMarkersData.forEach(mainMarker => {
-      const markerWithCoords = searchArray.find(m => m.id === mainMarker.id);
-      if (!markerWithCoords) return;
-      const mainLat = parseFloat(markerWithCoords.lat);
-      const mainLng = parseFloat(markerWithCoords.lng);
-      if (isNaN(mainLat) || isNaN(mainLng)) return;
-
-      const polyline = L.polyline(
-        [[parseFloat(lat), parseFloat(lng)], [mainLat, mainLng]],
-        { color: '#FF6B6B', weight: 3, opacity: 0.8, dashArray: '5, 5' }
-      ).addTo(map);
-      polylineRef.current.push(polyline);
-    });
-
-    setShowingAssociated(true);
-    setActiveMercadoPbl(pbl);
-
-  }, [baseCompData, markers, markersForMercado, map, showingAssociated, activeMercadoPbl, clearCompetenciaMarkers, clearPolylines, clearGuerraMarkers]);
-
-  useEffect(() => {
-    showAssociatedIdsRef.current = showAssociatedIds;
-  }, [showAssociatedIds]);
-
   // Helper para Guerra Marker
-  const addGuerraMarker = (marker) => {
+  const addGuerraMarker = useCallback((marker) => {
     if (marker.Guerra_Precio === 'Si') {
       const guerraIcon = L.icon({
         iconUrl: `${process.env.PUBLIC_URL}/iconos/calavera.jpg`,
@@ -370,7 +247,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       map.addLayer(guerraMarker);
       guerraMarkersRef.current[marker.id] = guerraMarker;
     }
-  };
+  }, [map]);
 
   // --- Crear Marcador con Popup React ---
   const createMarkerWithPopup = useCallback((marker, allMarkers, variant = 'primary') => {
@@ -450,6 +327,152 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     return leafletMarker;
   }, [makeDraggable, crearGripEnWrapper]);
 
+  // --- Lógica de Mercado (Show Associated) ---
+  const showAssociatedIds = useCallback((pbl, lat, lng, originalMarkerId) => {
+    const searchArray = markersForMercado && markersForMercado.length > 0 ? markersForMercado : markers;
+
+    console.log('🔍 MERCADO BUTTON CLICKED:', {
+      pbl,
+      searchArrayLength: searchArray.length,
+      markersForMercadoLength: markersForMercado?.length,
+      markersLength: markers.length,
+      baseCompDataLength: baseCompData.length
+    });
+
+    // Toggle ON (o cambio de PBL)
+    // Definir associatedData aquí
+    const associatedData = baseCompData.filter(item => String(item.pbl).trim() === String(pbl).trim());
+
+    console.log('📊 ASSOCIATED DATA:', {
+      pbl,
+      associatedDataLength: associatedData.length,
+      associatedIds: associatedData.map(item => item.id),
+      sampleAssociatedData: associatedData.slice(0, 3)
+    });
+
+    if (showingAssociated && activeMercadoPbl === pbl) {
+      // Toggle OFF
+      clearCompetenciaMarkers();
+      clearPolylines();
+      setShowingAssociated(false);
+      setActiveMercadoPbl(null);
+
+      // Restaurar marcadores originales
+      Object.values(markersRef.current).forEach(marker => {
+        try { if (map && map.hasLayer(marker)) map.removeLayer(marker); } catch (e) { }
+      });
+      markersRef.current = {};
+
+      // Re-crear todos
+      markers.forEach(marker => {
+        const leafletMarker = createMarkerWithPopup(marker, markersForMercado || markers, 'primary');
+        if (leafletMarker) {
+          map.addLayer(leafletMarker);
+          markersRef.current[marker.id] = leafletMarker;
+          addGuerraMarker(marker);
+        }
+      });
+      return;
+    }
+
+    // Si no hay datos asociados, no hacemos nada
+    if (associatedData.length === 0) {
+      console.warn('⚠️ NO ASSOCIATED DATA FOUND for PBL:', pbl);
+      return;
+    }
+
+    // Toggle ON
+
+    // 1. Limpiar TODOS los marcadores actuales del mapa
+    Object.values(markersRef.current).forEach(marker => {
+      try { if (map && map.hasLayer(marker)) map.removeLayer(marker); } catch (e) { }
+    });
+    markersRef.current = {}; // Reiniciar referencia de marcadores
+
+    // Limpiar otros elementos
+    clearCompetenciaMarkers();
+    clearPolylines();
+    Object.values(guerraMarkersRef.current).forEach(marker => {
+      try { if (map && map.hasLayer(marker)) map.removeLayer(marker); } catch (e) { }
+    });
+    guerraMarkersRef.current = {};
+
+    const ids = associatedData.map(item => item.id);
+
+    // Get unique IDs from associatedData
+    const uniqueIds = [...new Set(ids)];
+
+    // Encontrar estación principal y competencia
+    const mainStation = searchArray.find(m => String(m.pbl).trim() === String(pbl).trim());
+    const associatedMarkers = searchArray.filter(item => ids.includes(item.id));
+
+    console.log('🎯 MERCADO MODE ACTIVATED:', {
+      mainStation: mainStation ? mainStation.id : 'Not Found',
+      competitorsFound: associatedMarkers.length,
+      uniqueCompetitorsIds: uniqueIds
+    });
+
+    // Lista final de marcadores a mostrar (Principal + Competencia)
+    const markersToShow = [];
+    const seenIds = new Set();
+
+    // Agregar estación principal primero (si existe)
+    if (mainStation) {
+      markersToShow.push({ ...mainStation, isMain: true });
+      seenIds.add(mainStation.id);
+    }
+
+    // Agregar competencia
+    associatedMarkers.forEach(marker => {
+      if (!seenIds.has(marker.id)) {
+        seenIds.add(marker.id);
+        markersToShow.push({ ...marker, isMain: false });
+      }
+    });
+
+    // Renderizar los marcadores filtrados
+    markersToShow.forEach(marker => {
+      // Usar 'primary' para la principal, 'secondary' para competencia
+      const variant = marker.isMain ? 'primary' : 'secondary';
+      // Usar markersForMercado o baseCompData como fuente de datos para el popup
+      const dataSource = markersForMercado || baseCompData;
+
+      const leafletMarker = createMarkerWithPopup(marker, dataSource, variant);
+
+      if (leafletMarker) {
+        map.addLayer(leafletMarker);
+        // Guardar en markersRef para que funcionen como marcadores normales (popup, drag, etc)
+        markersRef.current[marker.id] = leafletMarker;
+
+        // Agregar marcador de guerra si corresponde
+        addGuerraMarker(marker);
+      }
+    });
+
+    // Polylines (Líneas de conexión)
+    const mainMarkersData = associatedData.filter(m => m.Marcador_Principal === 'Si');
+    mainMarkersData.forEach(mainMarker => {
+      const markerWithCoords = searchArray.find(m => m.id === mainMarker.id);
+      if (!markerWithCoords) return;
+      const mainLat = parseFloat(markerWithCoords.lat);
+      const mainLng = parseFloat(markerWithCoords.lng);
+      if (isNaN(mainLat) || isNaN(mainLng)) return;
+
+      const polyline = L.polyline(
+        [[parseFloat(lat), parseFloat(lng)], [mainLat, mainLng]],
+        { color: '#FF6B6B', weight: 3, opacity: 0.8, dashArray: '5, 5' }
+      ).addTo(map);
+      polylineRef.current.push(polyline);
+    });
+
+    setShowingAssociated(true);
+    setActiveMercadoPbl(pbl);
+
+  }, [baseCompData, markers, markersForMercado, map, showingAssociated, activeMercadoPbl, clearCompetenciaMarkers, clearPolylines, clearGuerraMarkers, createMarkerWithPopup, addGuerraMarker]);
+
+  useEffect(() => {
+    showAssociatedIdsRef.current = showAssociatedIds;
+  }, [showAssociatedIds]);
 
   // --- Efecto Principal de Renderizado ---
   useEffect(() => {
@@ -468,9 +491,6 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
     guerraMarkersRef.current = {};
     competenciaMarkersRef.current = [];
     polylineRef.current = []; // Polylines might need tagging too if they persist, but let's clear them via ref for now or tag them
-
-    // Also clear polylines via map iteration if possible, or just trust refs for polylines (less critical)
-    // Let's tag polylines too in showAssociatedIds just in case, but for now this fixes the main issue.
 
     clearCompetenciaMarkers();
     clearPolylines();
@@ -494,7 +514,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
       markersRef.current[markers[0].id].openPopup();
     }
 
-  }, [map, markers, markersForMercado, selectedRegion, clearCompetenciaMarkers, clearPolylines, clearGuerraMarkers, createMarkerWithPopup]);
+  }, [map, markers, markersForMercado, selectedRegion, clearCompetenciaMarkers, clearPolylines, clearGuerraMarkers, createMarkerWithPopup, addGuerraMarker]);
 
 
   // --- Efecto para Click en Mapa (Corrección Coordenadas) ---
@@ -541,7 +561,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         }
       }
     });
-  }, [modoCorreccion, map, markers, markersForMercado, nivel2EnNivel1Stations]);
+  }, [modoCorreccion, map, markers, markersForMercado, nivel2EnNivel1Stations, onToggleNivel2EnNivel1]);
 
   // Re-render open popups when markers data updates (auto-refresh)
   useEffect(() => {
@@ -578,7 +598,7 @@ const IconMarkersLayer = ({ markers, markersForMercado = null, selectedRegion, b
         }
       }
     });
-  }, [markers, map, markersForMercado, modoCorreccion, nivel2EnNivel1Stations]);
+  }, [markers, map, markersForMercado, modoCorreccion, nivel2EnNivel1Stations, onToggleNivel2EnNivel1]);
 
 
   return null;

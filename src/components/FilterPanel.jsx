@@ -208,34 +208,23 @@ const FilterPanel = ({ markers, allMarkers, selectedRegion, onFiltersChange, onS
   }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, selectedEds, comunasDelJefe, soloGuerraPrecios, soloEstacionesPES, globalEdsSearch]);
 
   // Array SIN filtro EDS para botón Mercado
+  // Solo filtra por región para que el botón Mercado muestre TODAS las estaciones de competencia
   const filteredMarkersForMercado = useMemo(() => {
-    return markers.filter(m => {
+    const result = markers.filter(m => {
       const regionMatch = m.Region === selectedRegion;
-      const guerraMatch = !soloGuerraPrecios || m.Guerra_Precio === 'Si';
-      const pesMatch = !soloEstacionesPES || (m.Surtidores_Autoservicio && m.Surtidores_Autoservicio !== null && m.Surtidores_Autoservicio !== '');
-
-      if (selectedJefeZona) {
-        const esDelJefe = m.nombre === selectedJefeZona;
-        const esCompetenciaEnComunasDelJefe = comunasDelJefe.includes(m.Comuna);
-        const jefeMatch = esDelJefe || esCompetenciaEnComunasDelJefe;
-
-        // Apply other filters if they are selected
-        const comunaMatch = !selectedComuna || normalizeString(m.Comuna) === normalizeString(selectedComuna);
-        const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
-
-        return regionMatch && jefeMatch && guerraMatch && pesMatch && comunaMatch && marcaMatch;
-      }
-
-      if (selectedComuna) {
-        const todasLasEstacionesEnComuna = normalizeString(m.Comuna) === normalizeString(selectedComuna);
-        const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
-        return regionMatch && todasLasEstacionesEnComuna && marcaMatch && guerraMatch && pesMatch;
-      }
-
-      const marcaMatch = !selectedMarca || m.Marca === selectedMarca;
-      return regionMatch && marcaMatch && guerraMatch && pesMatch;
+      // No aplicamos filtros de comuna, marca, jefe de zona, etc.
+      // Solo región para que Mercado muestre todas las estaciones de competencia
+      return regionMatch;
     });
-  }, [markers, selectedRegion, selectedComuna, selectedMarca, selectedJefeZona, comunasDelJefe, soloGuerraPrecios, soloEstacionesPES]);
+
+    console.log('🏪 FILTERED MARKERS FOR MERCADO:', {
+      selectedRegion,
+      totalMarkersInRegion: result.length,
+      sampleMarkers: result.slice(0, 5).map(m => ({ id: m.id, marca: m.Marca, eds: m.eds, pbl: m.pbl }))
+    });
+
+    return result;
+  }, [markers, selectedRegion]);
 
   // ✅ DEDUPLICAR filteredMarkers para el mapa
   const uniqueFilteredMarkers = useMemo(() => {

@@ -9,7 +9,6 @@ import StatisticsPanel from './components/StatisticsPanel';
 import { REGION_COORDINATES, REGIONES_ORDENADAS } from './utils/constants';
 import { useMapData } from './hooks/useMapData';
 import { getDataBaseComp, getMercadoAlerta, getMarcasCompartidas, guardarMarcasCompartidas } from './services/apiService';
-import TestSQL from './components/TestSQL';
 
 function App() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -184,36 +183,330 @@ function App() {
     }
   };
 
+  // Estado para intercambiar aplicaciones
+  const [activeApp, setActiveApp] = useState('mapa'); // 'mapa' | 'calculos'
+
+  // Usuario autenticado para mostrar en navbar
+  const [loggedUser, setLoggedUser] = useState(() => {
+    try {
+      return localStorage.getItem('user_calc') || null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  // Estado para Login antes de entrar a Precios
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginUser, setLoginUser] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  // URL base del proyecto frontend (Calculos)
+  // Desarrollo: normalmente corre en localhost:3002 (verificar puerto correcto según orden de inicio)
+  // Producción: Carpeta hermana '../Calculos/' (Asumiendo que Mapa está en /Mapa/ y Calculos en /Calculos/)
+  const CALCULOS_APP_BASE_URL = process.env.NODE_ENV === 'development'
+    ? 'http://localhost:3002'
+    : '../Calculos/';
+
+  // URL base del proyecto Ajuste Semanal
+  const AJUSTE_APP_BASE_URL = process.env.NODE_ENV === 'development'
+    ? 'http://localhost:3001'
+    : '../ajuste-semanal/';
+
+  const calculosSrc = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('mode', 'embed');
+    if (loggedUser) {
+      params.set('user', loggedUser);
+    }
+    return `${CALCULOS_APP_BASE_URL}?${params.toString()}`;
+  }, [CALCULOS_APP_BASE_URL, loggedUser]);
+
+  const ajusteSrc = useMemo(() => {
+    return `${AJUSTE_APP_BASE_URL}?mode=embed`;
+  }, [AJUSTE_APP_BASE_URL]);
+
+  const handleOpenPrecios = () => {
+    setLoginUser('');
+    setLoginPassword('');
+    setLoginError('');
+    setShowLogin(true);
+  };
+
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setLoginError('');
+    setLoginLoading(true);
+
+    const url = 'http://DE250329.esmax.cl/calculos/api/login.php';
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: loginUser, password: loginPassword })
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Error de autenticación';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          // Si no es JSON, leer como texto
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        try {
+          localStorage.setItem('user_calc', data.user);
+        } catch (e) {
+          // ignoramos errores de localStorage
+        }
+        const nombre = data.user || loginUser;
+        setLoggedUser(nombre);
+        setShowLogin(false);
+        setActiveApp('calculos');
+      } else {
+        setLoginError(data.error || 'Usuario o contraseña incorrectos');
+      }
+    } catch (err) {
+      // Limpiar mensaje si contiene JSON
+      let msg = err.message || 'Error al conectar con el servidor';
+      if (msg.startsWith('{') && msg.includes('error')) {
+        try {
+          const parsed = JSON.parse(msg);
+          msg = parsed.error || msg;
+        } catch (e) { }
+      }
+      setLoginError(msg);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  // Escuchar mensajes desde el iframe de cálculos (logout, etc.)
+  useEffect(() => {
+    const handleMessage = (event) => {
+      const { data } = event;
+      if (!data || typeof data !== 'object') return;
+
+      if (data.type === 'CALCULOS_LOGOUT') {
+        // Volver al mapa y limpiar usuario local
+        setActiveApp('mapa');
+        setLoggedUser(null);
+        try {
+          localStorage.removeItem('user_calc');
+        } catch (e) {
+          // ignoramos errores
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   return (
     <div className="app-container">
+      {/* LOGIN COMO PANTALLA FLOTANTE PARA PRECIOS */}
+      {showLogin && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '90px',
+            right: '24px',
+            zIndex: 9999
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '24px 28px',
+              width: '100%',
+              maxWidth: '380px',
+              boxShadow: '0 25px 50px -12px rgba(15,23,42,0.5)',
+              border: '1px solid #e2e8f0'
+            }}
+          >
+            <h2 style={{ margin: 0, marginBottom: '4px', fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>Iniciar sesión</h2>
+            <p style={{ margin: 0, marginBottom: '16px', fontSize: '13px', color: '#64748b' }}>Acceso a módulo de Cálculo de Precios</p>
+
+            {loginError && (
+              <div style={{ marginBottom: '12px', padding: '8px 10px', borderRadius: '8px', background: '#fee2e2', color: '#b91c1c', fontSize: '12px' }}>
+                {loginError}
+              </div>
+            )}
+
+            <form onSubmit={handleLoginSubmit}>
+              <div style={{ marginBottom: '12px' }}>
+                <input
+                  type="text"
+                  placeholder="Usuario"
+                  value={loginUser}
+                  onChange={(e) => setLoginUser(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px'
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <input
+                  type="password"
+                  placeholder="Contraseña"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowLogin(false)}
+                  style={{
+                    flex: 1,
+                    padding: '8px 10px',
+                    borderRadius: '999px',
+                    border: '1px solid #cbd5e1',
+                    background: 'white',
+                    color: '#0f172a',
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loginLoading}
+                  style={{
+                    flex: 1,
+                    padding: '8px 10px',
+                    borderRadius: '999px',
+                    border: 'none',
+                    background: '#0ea5e9',
+                    color: 'white',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: loginLoading ? 'default' : 'pointer',
+                    opacity: loginLoading ? 0.7 : 1
+                  }}
+                >
+                  {loginLoading ? 'Validando...' : 'Entrar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       {/* ========== NAVBAR ========== */}
       <nav className="navbar">
-        <div className="navbar-container">
+        <div className="navbar-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* LEFT: Logo y Título */}
           <div className="navbar-left">
             <h1 className="navbar-title">S.I.M.E</h1>
-            <span className="navbar-subtitle">Region {selectedRegion}</span>
-            <div className="last-update-time">
-              <span className="update-label">Última actualización:</span>
-              <span className="update-time">
-                {lastUpdateTime ? lastUpdateTime.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false }) : 'Cargando...'}
-              </span>
-            </div>
+            <span className="navbar-subtitle">Sistema Integrado de Mercado y Estrategia</span>
+            {/* Hora de Actualización */}
+            {lastUpdateTime && (
+              <div style={{
+                fontSize: '12px',
+                color: 'rgba(12, 12, 12, 0.85)',
+                marginTop: '2px'
+              }}>
+                <span style={{ fontWeight: 'bold' }}>Actualizado: </span>
+                <span>{typeof lastUpdateTime === 'string' ? lastUpdateTime : new Date(lastUpdateTime).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+              </div>
+            )}
           </div>
 
-          <div className="navbar-right">
-
-
+          {/* CENTER: App Switcher */}
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <button
-              className="navbar-alert-btn"
-              onClick={toggleAlertPanel}
-              aria-label="Ver alertas de mercado"
-              title="Alertas de mercado"
+              onClick={() => setActiveApp('mapa')}
+              style={{
+                background: activeApp === 'mapa' ? 'rgba(255,255,255,0.25)' : 'transparent',
+                color: 'white',
+                border: '1px solid rgba(255,255,255,0.5)',
+                borderRadius: '12px',
+                padding: '6px 16px',
+                fontSize: '13px',
+                cursor: 'pointer',
+                fontWeight: activeApp === 'mapa' ? 'bold' : 'normal',
+                transition: 'all 0.2s'
+              }}
             >
-              🔔
-              {alertCount > 0 && (
-                <span className="alert-badge">{alertCount}</span>
-              )}
+              🗺️ Mapa
             </button>
+            <button
+              onClick={() => setActiveApp('ajuste')}
+              style={{
+                background: activeApp === 'ajuste' ? 'rgba(255,255,255,0.25)' : 'transparent',
+                color: 'white',
+                border: '1px solid rgba(255,255,255,0.5)',
+                borderRadius: '12px',
+                padding: '6px 16px',
+                fontSize: '13px',
+                cursor: 'pointer',
+                fontWeight: activeApp === 'ajuste' ? 'bold' : 'normal',
+                transition: 'all 0.2s'
+              }}
+            >
+              📊 Ajuste Semanal
+            </button>
+            <button
+              onClick={handleOpenPrecios}
+              style={{
+                background: activeApp === 'calculos' ? 'rgba(255,255,255,0.25)' : 'transparent',
+                color: 'white',
+                border: '1px solid rgba(255,255,255,0.5)',
+                borderRadius: '12px',
+                padding: '6px 16px',
+                fontSize: '13px',
+                cursor: 'pointer',
+                fontWeight: activeApp === 'calculos' ? 'bold' : 'normal',
+                transition: 'all 0.2s'
+              }}
+            >
+              🔢 Calculo Precios
+            </button>
+          </div>
+
+          {/* RIGHT: Alertas y Logo */}
+          <div className="navbar-right" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+            {/* Alertas (solo en mapa) */}
+            {activeApp === 'mapa' && (
+              <button
+                className="navbar-alert-btn"
+                onClick={toggleAlertPanel}
+                aria-label="Ver alertas de mercado"
+                title="Alertas de mercado"
+              >
+                🔔
+                {alertCount > 0 && (
+                  <span className="alert-badge">{alertCount}</span>
+                )}
+              </button>
+            )}
 
             <img
               src={`${process.env.PUBLIC_URL}/iconos/aramco.jpg`}
@@ -225,98 +518,117 @@ function App() {
         </div>
       </nav>
 
-      {/* ========== PESTAÑAS HORIZONTALES (FUERA DEL NAV) ========== */}
-      <div className="panel-tabs-horizontal">
-        <button
-          className={`vertical-tab-btn ${sidebarVisible ? 'active' : ''}`}
-          onClick={toggleSidebar}
-        >
-          <div className="vertical-tab-label">
-            {sidebarVisible ? 'OCULTAR FILTROS' : 'MOSTRAR FILTROS'}
-          </div>
-        </button>
+      {/* ========== PESTAÑAS HORIZONTALES (Solo Mapa) ========== */}
+      {activeApp === 'mapa' && (
+        <div className="panel-tabs-horizontal">
+          <button
+            className={`vertical-tab-btn ${sidebarVisible ? 'active' : ''}`}
+            onClick={toggleSidebar}
+          >
+            <div className="vertical-tab-label">
+              {sidebarVisible ? 'OCULTAR FILTROS' : 'MOSTRAR FILTROS'}
+            </div>
+          </button>
 
-        <button
-          className={`vertical-tab-btn ${rightPanelVisible ? 'active' : ''}`}
-          onClick={toggleRightPanel}
-        >
-          <div className="vertical-tab-label">
-            {rightPanelVisible ? 'OCULTAR DATOS' : 'MOSTRAR DATOS'}
-          </div>
-        </button>
-      </div>
-
+          <button
+            className={`vertical-tab-btn ${rightPanelVisible ? 'active' : ''}`}
+            onClick={toggleRightPanel}
+          >
+            <div className="vertical-tab-label">
+              {rightPanelVisible ? 'OCULTAR DATOS' : 'MOSTRAR DATOS'}
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* ========== MAIN CONTAINER ========== */}
       <div className="main-container">
-        <aside className={`sidebar ${!sidebarVisible ? 'hidden' : ''}`}>
-          <h3 className="sidebar-title">Filtros</h3>
 
-          <div className="filter-group">
-            <label>Región</label>
-            <select
-              value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-            >
-              {regions.map(region => (
-                <option key={region} value={region}>
-                  {region}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Renderizado Condicional: MAPA vs CALCULOS */}
+        {activeApp === 'mapa' ? (
+          <>
+            <aside className={`sidebar ${!sidebarVisible ? 'hidden' : ''}`}>
+              <h3 className="sidebar-title">Filtros</h3>
+              <div className="filter-group">
+                <label>Región</label>
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                >
+                  {regions.map(region => (
+                    <option key={region} value={region}>
+                      {region}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <FilterPanel
-            markers={regionMarkers}
-            allMarkers={markers}
-            selectedRegion={selectedRegion}
-            onFiltersChange={handleFiltersChange}
-            onStationSelect={handleStationSelect}
+              <FilterPanel
+                markers={regionMarkers}
+                allMarkers={markers}
+                selectedRegion={selectedRegion}
+                onFiltersChange={handleFiltersChange}
+                onStationSelect={handleStationSelect}
+              />
+            </aside>
+
+            {(() => {
+              const markersToMap = filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers;
+              return null;
+            })()}
+
+            <MapComponent
+              selectedRegion={selectedRegion}
+              regionCenter={REGION_COORDINATES[selectedRegion]}
+              markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
+              markersForMercado={filteredMarkers.length > 0 ? filteredMarkersForMercado : regionMarkers}
+              baseCompData={baseCompData}
+              onToggleSidebar={toggleSidebar}
+              onToggleRightPanel={toggleRightPanel}
+              sidebarVisible={sidebarVisible}
+              rightPanelVisible={rightPanelVisible}
+              nivel2EnNivel1Stations={nivel2EnNivel1Stations}
+              onToggleNivel2EnNivel1={toggleNivel2EnNivel1}
+            />
+
+            <aside className={`right-panel ${!rightPanelVisible ? 'hidden' : ''}`}>
+              <StatisticsPanel
+                markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
+                historicalMarkers={filteredMarkersForMercado.length > 0 ? filteredMarkersForMercado : regionMarkers}
+                allMarkers={markers}
+              />
+            </aside>
+
+            <AlertPanel
+              isVisible={alertPanelVisible}
+              onClose={toggleAlertPanel}
+            />
+          </>
+        ) : activeApp === 'calculos' ? (
+          // IFRAME CALCULOS
+          <iframe
+            src={calculosSrc}
+            title="Calculadora Precios"
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              display: 'block'
+            }}
           />
-        </aside>
-
-        {(() => {
-          const markersToMap = filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers;
-          console.log('🗺️ MARKERS TO MAP:', {
-            filteredMarkersCount: filteredMarkers.length,
-            uniqueRegionMarkersCount: uniqueRegionMarkers.length,
-            markersToMapCount: markersToMap.length,
-            comunasInMap: [...new Set(markersToMap.map(m => m.Comuna))],
-            regionsInMap: [...new Set(markersToMap.map(m => m.Region))]
-          });
-          return null;
-        })()}
-
-        <MapComponent
-          selectedRegion={selectedRegion}
-          regionCenter={REGION_COORDINATES[selectedRegion]}
-          markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
-          markersForMercado={filteredMarkers.length > 0 ? filteredMarkersForMercado : regionMarkers}
-          baseCompData={baseCompData}
-          onToggleSidebar={toggleSidebar}
-          onToggleRightPanel={toggleRightPanel}
-          sidebarVisible={sidebarVisible}
-          rightPanelVisible={rightPanelVisible}
-          nivel2EnNivel1Stations={nivel2EnNivel1Stations}
-          onToggleNivel2EnNivel1={toggleNivel2EnNivel1}
-        />
-
-        <div>
-          <TestSQL />
-        </div>
-
-        <aside className={`right-panel ${!rightPanelVisible ? 'hidden' : ''}`}>
-          <StatisticsPanel
-            markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
-            historicalMarkers={filteredMarkersForMercado.length > 0 ? filteredMarkersForMercado : regionMarkers}
-            allMarkers={markers}
+        ) : (
+          // IFRAME AJUSTE SEMANAL
+          <iframe
+            src={ajusteSrc}
+            title="Ajuste Semanal"
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              display: 'block'
+            }}
           />
-        </aside>
-
-        <AlertPanel
-          isVisible={alertPanelVisible}
-          onClose={toggleAlertPanel}
-        />
+        )}
       </div>
 
       <div className="navbar-version">V3.0</div>
