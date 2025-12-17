@@ -195,12 +195,7 @@ function App() {
     }
   });
 
-  // Estado para Login antes de entrar a Precios
-  const [showLogin, setShowLogin] = useState(false);
-  const [loginUser, setLoginUser] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [loginLoading, setLoginLoading] = useState(false);
+
 
   // URL base del proyecto frontend (Calculos)
   // Desarrollo: normalmente corre en localhost:3002 (verificar puerto correcto según orden de inicio)
@@ -212,7 +207,7 @@ function App() {
   // URL base del proyecto Ajuste Semanal
   const AJUSTE_APP_BASE_URL = process.env.NODE_ENV === 'development'
     ? 'http://localhost:3001'
-    : '../ajuste-semanal/';
+    : '../Ajuste/';
 
   const calculosSrc = useMemo(() => {
     const params = new URLSearchParams();
@@ -228,68 +223,10 @@ function App() {
   }, [AJUSTE_APP_BASE_URL]);
 
   const handleOpenPrecios = () => {
-    setLoginUser('');
-    setLoginPassword('');
-    setLoginError('');
-    setShowLogin(true);
+    setActiveApp('calculos');
   };
 
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    setLoginError('');
-    setLoginLoading(true);
 
-    const url = 'http://DE250329.esmax.cl/calculos/api/login.php';
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: loginUser, password: loginPassword })
-      });
-
-      if (!response.ok) {
-        let errorMessage = 'Error de autenticación';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (e) {
-          // Si no es JSON, leer como texto
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        try {
-          localStorage.setItem('user_calc', data.user);
-        } catch (e) {
-          // ignoramos errores de localStorage
-        }
-        const nombre = data.user || loginUser;
-        setLoggedUser(nombre);
-        setShowLogin(false);
-        setActiveApp('calculos');
-      } else {
-        setLoginError(data.error || 'Usuario o contraseña incorrectos');
-      }
-    } catch (err) {
-      // Limpiar mensaje si contiene JSON
-      let msg = err.message || 'Error al conectar con el servidor';
-      if (msg.startsWith('{') && msg.includes('error')) {
-        try {
-          const parsed = JSON.parse(msg);
-          msg = parsed.error || msg;
-        } catch (e) { }
-      }
-      setLoginError(msg);
-    } finally {
-      setLoginLoading(false);
-    }
-  };
 
   // Escuchar mensajes desde el iframe de cálculos (logout, etc.)
   useEffect(() => {
@@ -316,109 +253,7 @@ function App() {
   return (
     <div className="app-container">
       {/* LOGIN COMO PANTALLA FLOTANTE PARA PRECIOS */}
-      {showLogin && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '90px',
-            right: '24px',
-            zIndex: 9999
-          }}
-        >
-          <div
-            style={{
-              background: 'white',
-              borderRadius: '16px',
-              padding: '24px 28px',
-              width: '100%',
-              maxWidth: '380px',
-              boxShadow: '0 25px 50px -12px rgba(15,23,42,0.5)',
-              border: '1px solid #e2e8f0'
-            }}
-          >
-            <h2 style={{ margin: 0, marginBottom: '4px', fontSize: '20px', fontWeight: 700, color: '#0f172a' }}>Iniciar sesión</h2>
-            <p style={{ margin: 0, marginBottom: '16px', fontSize: '13px', color: '#64748b' }}>Acceso a módulo de Cálculo de Precios</p>
 
-            {loginError && (
-              <div style={{ marginBottom: '12px', padding: '8px 10px', borderRadius: '8px', background: '#fee2e2', color: '#b91c1c', fontSize: '12px' }}>
-                {loginError}
-              </div>
-            )}
-
-            <form onSubmit={handleLoginSubmit}>
-              <div style={{ marginBottom: '12px' }}>
-                <input
-                  type="text"
-                  placeholder="Usuario"
-                  value={loginUser}
-                  onChange={(e) => setLoginUser(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '13px'
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <input
-                  type="password"
-                  placeholder="Contraseña"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '13px'
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowLogin(false)}
-                  style={{
-                    flex: 1,
-                    padding: '8px 10px',
-                    borderRadius: '999px',
-                    border: '1px solid #cbd5e1',
-                    background: 'white',
-                    color: '#0f172a',
-                    fontSize: '13px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={loginLoading}
-                  style={{
-                    flex: 1,
-                    padding: '8px 10px',
-                    borderRadius: '999px',
-                    border: 'none',
-                    background: '#0ea5e9',
-                    color: 'white',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: loginLoading ? 'default' : 'pointer',
-                    opacity: loginLoading ? 0.7 : 1
-                  }}
-                >
-                  {loginLoading ? 'Validando...' : 'Entrar'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
       {/* ========== NAVBAR ========== */}
       <nav className="navbar">
         <div className="navbar-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
