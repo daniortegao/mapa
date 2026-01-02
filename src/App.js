@@ -9,6 +9,7 @@ import StatisticsPanel from './components/StatisticsPanel';
 import { REGION_COORDINATES, REGIONES_ORDENADAS } from './utils/constants';
 import { useMapData } from './hooks/useMapData';
 import { getDataBaseComp, getMercadoAlerta, getMarcasCompartidas, guardarMarcasCompartidas } from './services/apiService';
+import { getCurrentAppConfig, getModuleUrl } from './config/apps.config';
 
 function App() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -183,8 +184,12 @@ function App() {
     }
   };
 
-  // Estado para intercambiar aplicaciones
-  const [activeApp, setActiveApp] = useState('mapa'); // 'mapa' | 'calculos'
+  // Obtener configuración de la app actual
+  const appConfig = getCurrentAppConfig();
+
+  // Estado para intercambiar aplicaciones (basado en configuración)
+  const defaultModule = appConfig.modules.find(m => m.defaultActive)?.id || appConfig.modules[0].id;
+  const [activeApp, setActiveApp] = useState(defaultModule);
 
   // Usuario autenticado para mostrar en navbar
   const [loggedUser, setLoggedUser] = useState(() => {
@@ -209,6 +214,11 @@ function App() {
     ? 'http://localhost:3001'
     : '../Ajuste/';
 
+  // URL base del proyecto Retail
+  const RETAIL_APP_BASE_URL = process.env.NODE_ENV === 'development'
+    ? 'http://localhost:3003'
+    : '../Retail/';
+
   const calculosSrc = useMemo(() => {
     const params = new URLSearchParams();
     params.set('mode', 'embed');
@@ -221,6 +231,10 @@ function App() {
   const ajusteSrc = useMemo(() => {
     return `${AJUSTE_APP_BASE_URL}?mode=embed`;
   }, [AJUSTE_APP_BASE_URL]);
+
+  const retailSrc = useMemo(() => {
+    return `${RETAIL_APP_BASE_URL}?mode=embed`;
+  }, [RETAIL_APP_BASE_URL]);
 
   const handleOpenPrecios = () => {
     setActiveApp('calculos');
@@ -259,8 +273,8 @@ function App() {
         <div className="navbar-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           {/* LEFT: Logo y Título */}
           <div className="navbar-left">
-            <h1 className="navbar-title">S.I.M.E</h1>
-            <span className="navbar-subtitle">Sistema Integrado de Mercado y Estrategia</span>
+            <h1 className="navbar-title">{appConfig.name}</h1>
+            <span className="navbar-subtitle">{appConfig.subtitle}</span>
             {/* Hora de Actualización */}
             {lastUpdateTime && (
               <div style={{
@@ -274,56 +288,28 @@ function App() {
             )}
           </div>
 
-          {/* CENTER: App Switcher */}
+
+          {/* CENTER: App Switcher - Renderizado Dinámico */}
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button
-              onClick={() => setActiveApp('mapa')}
-              style={{
-                background: activeApp === 'mapa' ? 'rgba(255,255,255,0.25)' : 'transparent',
-                color: 'white',
-                border: '1px solid rgba(255,255,255,0.5)',
-                borderRadius: '12px',
-                padding: '6px 16px',
-                fontSize: '13px',
-                cursor: 'pointer',
-                fontWeight: activeApp === 'mapa' ? 'bold' : 'normal',
-                transition: 'all 0.2s'
-              }}
-            >
-              🗺️ Mapa
-            </button>
-            <button
-              onClick={() => setActiveApp('ajuste')}
-              style={{
-                background: activeApp === 'ajuste' ? 'rgba(255,255,255,0.25)' : 'transparent',
-                color: 'white',
-                border: '1px solid rgba(255,255,255,0.5)',
-                borderRadius: '12px',
-                padding: '6px 16px',
-                fontSize: '13px',
-                cursor: 'pointer',
-                fontWeight: activeApp === 'ajuste' ? 'bold' : 'normal',
-                transition: 'all 0.2s'
-              }}
-            >
-              📊 Ajuste Semanal
-            </button>
-            <button
-              onClick={handleOpenPrecios}
-              style={{
-                background: activeApp === 'calculos' ? 'rgba(255,255,255,0.25)' : 'transparent',
-                color: 'white',
-                border: '1px solid rgba(255,255,255,0.5)',
-                borderRadius: '12px',
-                padding: '6px 16px',
-                fontSize: '13px',
-                cursor: 'pointer',
-                fontWeight: activeApp === 'calculos' ? 'bold' : 'normal',
-                transition: 'all 0.2s'
-              }}
-            >
-              🔢 Calculo Precios
-            </button>
+            {appConfig.modules.map(module => (
+              <button
+                key={module.id}
+                onClick={() => setActiveApp(module.id)}
+                style={{
+                  background: activeApp === module.id ? 'rgba(255,255,255,0.25)' : 'transparent',
+                  color: 'white',
+                  border: '1px solid rgba(255,255,255,0.5)',
+                  borderRadius: '12px',
+                  padding: '6px 16px',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  fontWeight: activeApp === module.id ? 'bold' : 'normal',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {module.label}
+              </button>
+            ))}
           </div>
 
           {/* RIGHT: Alertas y Logo */}
@@ -379,91 +365,87 @@ function App() {
       {/* ========== MAIN CONTAINER ========== */}
       <div className="main-container">
 
-        {/* Renderizado Condicional: MAPA vs CALCULOS */}
-        {activeApp === 'mapa' ? (
-          <>
-            <aside className={`sidebar ${!sidebarVisible ? 'hidden' : ''}`}>
-              <h3 className="sidebar-title">Filtros</h3>
-              <div className="filter-group">
-                <label>Región</label>
-                <select
-                  value={selectedRegion}
-                  onChange={(e) => setSelectedRegion(e.target.value)}
-                >
-                  {regions.map(region => (
-                    <option key={region} value={region}>
-                      {region}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        {/* Renderizado Dinámico basado en configuración */}
+        {appConfig.modules.map(module => {
+          if (activeApp !== module.id) return null;
 
-              <FilterPanel
-                markers={regionMarkers}
-                allMarkers={markers}
-                selectedRegion={selectedRegion}
-                onFiltersChange={handleFiltersChange}
-                onStationSelect={handleStationSelect}
+          if (module.type === 'component' && module.id === 'mapa') {
+            // Renderizar componente nativo del Mapa
+            return (
+              <React.Fragment key={module.id}>
+                <aside className={`sidebar ${!sidebarVisible ? 'hidden' : ''}`}>
+                  <h3 className="sidebar-title">Filtros</h3>
+                  <div className="filter-group">
+                    <label>Región</label>
+                    <select
+                      value={selectedRegion}
+                      onChange={(e) => setSelectedRegion(e.target.value)}
+                    >
+                      {regions.map(region => (
+                        <option key={region} value={region}>
+                          {region}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <FilterPanel
+                    markers={regionMarkers}
+                    allMarkers={markers}
+                    selectedRegion={selectedRegion}
+                    onFiltersChange={handleFiltersChange}
+                    onStationSelect={handleStationSelect}
+                  />
+                </aside>
+
+                <MapComponent
+                  selectedRegion={selectedRegion}
+                  regionCenter={REGION_COORDINATES[selectedRegion]}
+                  markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
+                  markersForMercado={filteredMarkers.length > 0 ? filteredMarkersForMercado : regionMarkers}
+                  baseCompData={baseCompData}
+                  onToggleSidebar={toggleSidebar}
+                  onToggleRightPanel={toggleRightPanel}
+                  sidebarVisible={sidebarVisible}
+                  rightPanelVisible={rightPanelVisible}
+                  nivel2EnNivel1Stations={nivel2EnNivel1Stations}
+                  onToggleNivel2EnNivel1={toggleNivel2EnNivel1}
+                />
+
+                <aside className={`right-panel ${!rightPanelVisible ? 'hidden' : ''}`}>
+                  <StatisticsPanel
+                    markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
+                    historicalMarkers={filteredMarkersForMercado.length > 0 ? filteredMarkersForMercado : regionMarkers}
+                    allMarkers={markers}
+                  />
+                </aside>
+
+                <AlertPanel
+                  isVisible={alertPanelVisible}
+                  onClose={toggleAlertPanel}
+                />
+              </React.Fragment>
+            );
+          } else if (module.type === 'iframe') {
+            // Renderizar iframe para módulos externos
+            const iframeSrc = getModuleUrl(module);
+            return (
+              <iframe
+                key={module.id}
+                src={iframeSrc}
+                title={module.label}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  display: 'block'
+                }}
               />
-            </aside>
+            );
+          }
 
-            {(() => {
-              const markersToMap = filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers;
-              return null;
-            })()}
-
-            <MapComponent
-              selectedRegion={selectedRegion}
-              regionCenter={REGION_COORDINATES[selectedRegion]}
-              markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
-              markersForMercado={filteredMarkers.length > 0 ? filteredMarkersForMercado : regionMarkers}
-              baseCompData={baseCompData}
-              onToggleSidebar={toggleSidebar}
-              onToggleRightPanel={toggleRightPanel}
-              sidebarVisible={sidebarVisible}
-              rightPanelVisible={rightPanelVisible}
-              nivel2EnNivel1Stations={nivel2EnNivel1Stations}
-              onToggleNivel2EnNivel1={toggleNivel2EnNivel1}
-            />
-
-            <aside className={`right-panel ${!rightPanelVisible ? 'hidden' : ''}`}>
-              <StatisticsPanel
-                markers={filteredMarkers.length > 0 ? filteredMarkers : uniqueRegionMarkers}
-                historicalMarkers={filteredMarkersForMercado.length > 0 ? filteredMarkersForMercado : regionMarkers}
-                allMarkers={markers}
-              />
-            </aside>
-
-            <AlertPanel
-              isVisible={alertPanelVisible}
-              onClose={toggleAlertPanel}
-            />
-          </>
-        ) : activeApp === 'calculos' ? (
-          // IFRAME CALCULOS
-          <iframe
-            src={calculosSrc}
-            title="Calculadora Precios"
-            style={{
-              width: '100%',
-              height: '100%',
-              border: 'none',
-              display: 'block'
-            }}
-          />
-        ) : (
-          // IFRAME AJUSTE SEMANAL
-          <iframe
-            src={ajusteSrc}
-            title="Ajuste Semanal"
-            style={{
-              width: '100%',
-              height: '100%',
-              border: 'none',
-              display: 'block'
-            }}
-          />
-        )}
+          return null;
+        })}
       </div>
 
       <div className="navbar-version">V3.0</div>
